@@ -1,0 +1,55 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "OpenList Desktop",
+  "version": "0.1.0",
+  "identifier": "io.github.openlistteam.openlist.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "OpenList Desktop",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 400,
+        "resizable": true,
+        "center": true,
+        "decorations": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "longDescription": "OpenList Desktop is a cross-platform desktop application for managing your OpenList",
+    "category": "DeveloperTool",
+    "shortDescription": "OpenList Desktop",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+    "externalBin": [
+      "binary/openlist",
+      "binary/rclone",
+      "binary/install-openlist-service",
+      "binary/openlist-desktop-service",
+      "binary/uninstall-openlist-service"
+    ]
+  },
+  "plugins": {
+    "process": {
+      "all": true
+    },
+    "fs": {
+      "requireLiteralLeadingDot": false
+    },
+    "shell": {
+      "open": true
+    },
+    "store": {}
+  }
+}

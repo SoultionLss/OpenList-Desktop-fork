@@ -1,0 +1,554 @@
+{
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "reset": "重置",
+    "close": "关闭",
+    "minimize": "最小化",
+    "maximize": "最大化",
+    "loading": "加载中...",
+    "saving": "保存中...",
+    "add": "添加"
+  },
+  "navigation": {
+    "dashboard": "主页",
+    "mount": "挂载",
+    "update": "更新",
+    "logs": "日志",
+    "settings": "设置"
+  },
+  "dashboard": {
+    "quickActions": {
+      "title": "核心管理",
+      "openlistService": "OpenList 核心",
+      "rclone": "RClone",
+      "quickSettings": "快速设置",
+      "startService": "启动核心",
+      "stopService": "停止核心",
+      "restart": "重启",
+      "openWeb": "网页界面",
+      "configRclone": "配置 RClone",
+      "startRclone": "启动 RClone",
+      "stopRclone": "停止 RClone",
+      "manageMounts": "管理挂载",
+      "autoLaunch": "自动启动核心(非桌面app)",
+      "autoMount": "自动挂载",
+      "openSettings": "打开设置",
+      "processing": "处理中...",
+      "adminPassword": "管理员密码",
+      "showAdminPassword": "显示/复制日志中的管理员密码"
+    },
+    "coreMonitor": {
+      "title": "核心监控",
+      "online": "在线",
+      "offline": "离线",
+      "uptime": "运行时间",
+      "responseTime": "响应时间",
+      "healthy": "健康",
+      "unhealthy": "不健康"
+    },
+    "versionManager": {
+      "title": "版本管理",
+      "openlist": "OpenList",
+      "rclone": "Rclone",
+      "current": "当前",
+      "selectVersion": "选择版本",
+      "update": "更新"
+    },
+    "documentation": {
+      "title": "文档",
+      "openlist": "OpenList",
+      "openlistDesc": "多存储文件列表程序",
+      "rclone": "Rclone",
+      "rcloneDesc": "多平台挂载命令行程序",
+      "openDocs": "打开文档",
+      "github": "GitHub",
+      "quickLinks": "快速链接",
+      "apiDocs": "API 文档",
+      "commands": "挂载命令",
+      "issues": "问题反馈",
+      "faq": "常见问题"
+    },
+    "serviceManagement": {
+      "title": "服务管理",
+      "serviceStatus": "OpenList 后端服务",
+      "uptime": "运行时间",
+      "port": "端口",
+      "version": "版本",
+      "install": "安装",
+      "start": "启动",
+      "stop": "停止",
+      "restart": "重启",
+      "uninstall": "卸载",
+      "recentLogs": "最近日志",
+      "noLogs": "无可用日志",
+      "status": {
+        "running": "运行中",
+        "installed": "已安装",
+        "notInstalled": "未安装",
+        "error": "错误"
+      },
+      "confirmUninstall": {
+        "title": "确认卸载",
+        "message": "您确定要卸载 OpenList 服务吗？这将停止所有功能并使应用程序无法使用，直到重新安装服务。",
+        "confirm": "卸载"
+      }
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "subtitle": "配置您的 OpenList 桌面应用程序",
+    "saveChanges": "保存更改",
+    "resetToDefaults": "重置为默认值",
+    "unsavedChanges": "您有未保存的更改",
+    "confirmReset": "您确定要将所有设置重置为默认值吗？此操作无法撤消。",
+    "saved": "设置保存成功！",
+    "saveFailed": "保存设置失败，请重试。",
+    "resetSuccess": "设置已重置为默认值！",
+    "resetFailed": "重置设置失败。",
+    "tabs": {
+      "openlist": "OpenList 服务",
+      "rclone": "Rclone 存储",
+      "app": "应用程序"
+    },
+    "theme": {
+      "title": "主题",
+      "light": "浅色",
+      "dark": "深色",
+      "auto": "自动",
+      "lightDesc": "浅色主题",
+      "darkDesc": "深色主题",
+      "autoDesc": "跟随系统",
+      "toggle": "切换主题"
+    },
+    "network": {
+      "title": "网络配置",
+      "subtitle": "配置 Web 界面和网络设置"
+    },
+    "storage": {
+      "title": "存储配置",
+      "subtitle": "配置数据目录和二进制文件位置"
+    },
+    "startup": {
+      "title": "启动选项",
+      "subtitle": "配置自动启动行为"
+    },
+    "service": {
+      "title": "服务配置",
+      "subtitle": "配置 OpenList 服务设置",
+      "network": {
+        "title": "网络配置",
+        "subtitle": "配置 Web 界面和网络设置",
+        "port": {
+          "label": "监听端口",
+          "placeholder": "5244",
+          "help": "Web 界面的端口号 (1-65535)"
+        },
+        "apiToken": {
+          "label": "API 令牌",
+          "placeholder": "可选。用于 API 访问的身份验证",
+          "help": "可选。用于 API 访问的身份验证"
+        },
+        "ssl": {
+          "title": "启用 SSL/HTTPS",
+          "description": "使用 HTTPS 进行安全通信（需要配置 SSL 证书）"
+        }
+      },
+      "storage": {
+        "title": "存储配置",
+        "subtitle": "配置数据目录和二进制文件位置",
+        "dataDir": {
+          "label": "数据目录",
+          "placeholder": "./data",
+          "help": "OpenList 存储配置和数据库的目录"
+        },
+        "binaryPath": {
+          "label": "OpenList 二进制路径",
+          "placeholder": "./binary/openlist.exe",
+          "help": "OpenList 可执行文件的路径"
+        }
+      },
+      "startup": {
+        "title": "启动选项",
+        "subtitle": "配置自动启动行为",
+        "autoLaunch": {
+          "title": "开机自启",
+          "description": "应用程序启动时自动启动 OpenList 服务"
+        }
+      }
+    },
+    "rclone": {
+      "title": "存储配置",
+      "subtitle": "配置远程存储连接",
+      "config": {
+        "title": "远程存储",
+        "subtitle": "配置 rclone 远程存储访问",
+        "label": "Rclone 配置（JSON)",
+        "invalidJson": "无效的 JSON 配置。请检查您的语法。",
+        "tips": "输入你的JSON配置",
+        "binaryPath": {
+          "label": "Rclone 二进制路径",
+          "placeholder": "./binary/rclone.exe",
+          "help": "rclone 可执行文件的路径"
+        },
+        "configName": {
+          "label": "配置名称",
+          "placeholder": "remote",
+          "help": "rclone 远程配置的名称"
+        }
+      },
+      "mount": {
+        "title": "挂载配置",
+        "subtitle": "配置远程存储的本地挂载点",
+        "mountPath": {
+          "label": "挂载路径",
+          "placeholder": "./mount",
+          "help": "远程存储将挂载到的本地目录"
+        },
+        "autoMount": {
+          "title": "启动时自动挂载",
+          "description": "服务启动时自动挂载远程存储"
+        }
+      },
+      "flags": {
+        "title": "Rclone 标志",
+        "subtitle": "rclone 的额外命令行标志",
+        "placeholder": "--flag-name=value",
+        "add": "添加标志",
+        "remove": "移除"
+      }
+    },
+    "app": {
+      "title": "应用设置",
+      "subtitle": "配置应用程序首选项和行为",
+      "theme": {
+        "title": "主题",
+        "subtitle": "选择您偏好的外观",
+        "light": "浅色",
+        "dark": "深色",
+        "auto": "自动",
+        "lightDesc": "浅色主题",
+        "darkDesc": "深色主题",
+        "autoDesc": "跟随系统"
+      },
+      "monitor": {
+        "title": "监控",
+        "subtitle": "系统监控和刷新设置",
+        "interval": {
+          "label": "监控间隔（秒）",
+          "placeholder": "5",
+          "help": "刷新系统指标和状态的频率"
+        }
+      },
+      "tutorial": {
+        "title": "教程",
+        "subtitle": "学习如何使用 OpenList 桌面版",
+        "restart": "开始教程",
+        "help": "重新启动教程以了解应用功能和导航"
+      },
+      "updates": {
+        "title": "更新",
+        "subtitle": "管理自动更新和通知",
+        "autoCheck": {
+          "title": "自动检查更新",
+          "description": "在后台自动检查并通知新的更新"
+        }
+      },
+      "autoStartApp": {
+        "title": "开机自动启动应用",
+        "subtitle": "在系统启动时自动启动 OpenList 桌面应用",
+        "description": "在系统启动时自动启动 OpenList 桌面应用"
+      },
+      "service": {
+        "title": "服务连接",
+        "subtitle": "配置与桌面服务的连接",
+        "port": {
+          "label": "服务端口",
+          "placeholder": "53211",
+          "help": "桌面服务通信的端口号"
+        },
+        "apiToken": {
+          "label": "服务 API 令牌",
+          "placeholder": "API 令牌，用于服务身份验证",
+          "help": "用于身份验证的令牌"
+        }
+      }
+    },
+    "advanced": {
+      "title": "高级设置",
+      "performance": {
+        "title": "性能",
+        "subtitle": "性能和优化设置",
+        "coming": "性能设置将在未来版本中提供"
+      },
+      "logging": {
+        "title": "日志",
+        "subtitle": "配置应用程序日志行为",
+        "coming": "日志配置将在未来版本中提供"
+      }
+    },
+    "dialogs": {
+      "selectOpenListBinary": "选择 OpenList 二进制文件",
+      "selectRcloneBinary": "选择 Rclone 二进制文件",
+      "selectDataDirectory": "选择数据目录",
+      "selectMountDirectory": "选择挂载目录"
+    }
+  },
+  "logs": {
+    "title": "日志",
+    "clear": "清除日志",
+    "search": {
+      "placeholder": "搜索日志... (Ctrl+F)"
+    },
+    "toolbar": {
+      "pause": "暂停 (Space)",
+      "resume": "恢复 (Space)",
+      "refresh": "刷新 (Ctrl+R)",
+      "showFilters": "显示筛选器",
+      "settings": "设置",
+      "copyToClipboard": "复制到剪贴板 (Ctrl+C)",
+      "exportLogs": "导出日志",
+      "clearLogs": "清除日志 (Ctrl+Delete)",
+      "toggleFullscreen": "切换全屏 (F11)",
+      "scrollToTop": "滚动到顶部 (Home)",
+      "scrollToBottom": "滚动到底部 (End)"
+    },
+    "stats": {
+      "logsCount": "{filtered} / {total}",
+      "selected": "已选择 {count} 个"
+    },
+    "filters": {
+      "all": "全部",
+      "openlist": "OpenList",
+      "rclone": "Rclone",
+      "app": "应用程序",
+      "labels": {
+        "level": "级别：",
+        "source": "来源：",
+        "search": "搜索"
+      },
+      "levels": {
+        "all": "所有级别",
+        "error": "错误",
+        "warn": "警告",
+        "info": "信息",
+        "debug": "调试"
+      },
+      "sources": {
+        "all": "所有来源",
+        "service": "服务",
+        "rclone": "Rclone",
+        "system": "系统",
+        "openlist": "OpenList"
+      },
+      "actions": {
+        "selectAll": "全选 (Ctrl+A)",
+        "clearSelection": "清除选择 (Esc)",
+        "autoScroll": "自动滚动"
+      },
+      "searchPlaceholder": "搜索日志...",
+      "clear": "清除搜索"
+    },
+    "levels": {
+      "debug": "调试",
+      "info": "信息",
+      "warn": "警告",
+      "error": "错误"
+    },
+    "empty": "没有日志条目",
+    "viewer": {
+      "noLogsFound": "没有日志显示",
+      "noLogsMatch": "没有日志匹配您的搜索条件",
+      "tryAdjusting": "尝试调整您的搜索或过滤器",
+      "logsWillAppear": "服务运行时日志将在此处显示",
+      "scrollToBottom": "滚动到底部"
+    },
+    "settings": {
+      "fontSize": "字体大小：",
+      "maxLines": "最大行数：",
+      "showTimestamp": "显示时间戳",
+      "showLevel": "显示级别",
+      "showSource": "显示来源",
+      "compactMode": "紧凑模式",
+      "stripAnsiColors": "去除 ANSI 颜色"
+    },
+    "messages": {
+      "confirmClear": "您确定要清除所有日志吗？",
+      "exported": "日志导出成功",
+      "copied": "日志已复制到剪贴板"
+    },
+    "headers": {
+      "time": "时间",
+      "timestamp": "时间",
+      "level": "级别",
+      "source": "来源",
+      "message": "消息"
+    },
+    "status": {
+      "service": "服务：",
+      "running": "运行中",
+      "stopped": "已停止",
+      "autoScroll": "自动滚动：",
+      "updates": "更新：",
+      "paused": "已暂停",
+      "live": "实时",
+      "on": "开",
+      "off": "关",
+      "showing": "显示 {filtered} / {total} 条记录"
+    }
+  },
+  "mount": {
+    "title": "挂载管理",
+    "stats": {
+      "total": "总计",
+      "mounted": "已挂载",
+      "unmounted": "未挂载",
+      "error": "错误"
+    },
+    "service": {
+      "running": "运行中",
+      "stopped": "已停止"
+    },
+    "actions": {
+      "addRemote": "添加远程",
+      "mount": "挂载",
+      "unmount": "卸载",
+      "edit": "编辑",
+      "delete": "删除"
+    },
+    "status": {
+      "status": "状态",
+      "mounted": "已挂载",
+      "unmounted": "未挂载",
+      "error": "错误"
+    },
+    "filters": {
+      "searchPlaceholder": "搜索远程配置...",
+      "allStatus": "所有状态"
+    },
+    "config": {
+      "addTitle": "添加远程配置",
+      "editTitle": "编辑远程配置",
+      "basicInfo": "基本信息",
+      "authentication": "身份认证",
+      "mountSettings": "挂载设置",
+      "name": "名称",
+      "namePlaceholder": "例如：我的webdav远程",
+      "type": "类型",
+      "url": "URL",
+      "urlPlaceholder": "例如：http://localhost:5264/dav/189",
+      "vendor": "供应商",
+      "vendorPlaceholder": "例如：189provider",
+      "username": "用户名",
+      "usernamePlaceholder": "用户名",
+      "password": "密码",
+      "passwordPlaceholder": "密码",
+      "mountPoint": "挂载点",
+      "mountPointPlaceholder": "例如：T: (Windows) 或 /mnt/remote (Linux)",
+      "volumeName": "卷名",
+      "volumeNamePlaceholder": "例如：我的云存储",
+      "autoMount": "开机自动挂载",
+      "advancedSettings": "高级设置",
+      "extraFlags": "额外标志",
+      "flagPlaceholder": "例如：--vfs-cache-mode",
+      "addFlag": "添加标志",
+      "removeFlag": "移除标志",
+      "types": {
+        "webdav": "WebDAV",
+        "s3": "Amazon S3",
+        "gdrive": "Google Drive",
+        "onedrive": "OneDrive",
+        "dropbox": "Dropbox"
+      }
+    },
+    "meta": {
+      "autoMount": "自动挂载"
+    },
+    "empty": {
+      "title": "无远程配置",
+      "description": "创建您的第一个远程配置以开始挂载云存储。"
+    },
+    "messages": {
+      "fillRequiredFields": "请填写所有必填字段",
+      "mountPointRequired": "挂载点为必填项",
+      "confirmDelete": "您确定要删除远程配置 \"{name}\" 吗？",
+      "failedToSave": "保存配置失败",
+      "failedToMount": "挂载远程失败",
+      "failedToUnmount": "卸载远程失败",
+      "failedToDelete": "删除配置失败",
+      "failedToRefresh": "刷新挂载状态失败",
+      "failedToStartService": "启动 rclone 服务失败",
+      "failedToStopService": "停止 rclone 服务失败"
+    }
+  },
+  "app": {
+    "title": "OpenList",
+    "loading": "正在初始化"
+  },
+  "language": {
+    "current": "当前语言",
+    "chinese": "中文",
+    "english": "English"
+  },
+  "tutorial": {
+    "welcome": {
+      "title": "欢迎使用 OpenList 桌面版",
+      "content": "欢迎使用 OpenList 桌面版！本教程将引导您了解主要功能，帮助您快速上手。"
+    },
+    "navigation": {
+      "title": "导航面板",
+      "content": "使用导航面板访问不同部分：仪表板用于监控，挂载用于存储管理，日志用于故障排除，设置用于配置。"
+    },
+    "service": {
+      "title": "安装并启动服务",
+      "content": "首先，您需要安装并启动 OpenList 服务。这是管理云存储连接的核心组件。"
+    },
+    "openlist": {
+      "title": "OpenList 核心访问",
+      "content": "服务运行后，您可以访问 OpenList 网页界面来管理文件和配置。"
+    },
+    "documentation": {
+      "title": "阅读文档",
+      "content": "有关详细信息和高级配置，请查看文档部分。您会找到指南、API 文档和故障排除提示。"
+    },
+    "settings": {
+      "title": "设置和配置",
+      "content": "在设置部分自定义您的 OpenList 体验。配置主题、服务选项和存储首选项。"
+    },
+    "skip": "跳过教程",
+    "next": "下一步",
+    "previous": "上一步",
+    "complete": "完成教程",
+    "neverShow": "不再显示"
+  },
+  "update": {
+    "title": "应用更新",
+    "subtitle": "保持应用程序最新，获取最新功能和安全改进",
+    "currentVersion": "当前版本",
+    "checkForUpdates": "检查更新",
+    "checking": "检查中...",
+    "updateAvailable": "发现新版本",
+    "releaseDate": "发布日期",
+    "releaseNotes": "更新说明",
+    "availableInstallers": "可用安装程序",
+    "downloadAndInstall": "下载并安装",
+    "upToDate": "应用已是最新版本",
+    "lastChecked": "上次检查",
+    "checkError": "检查更新失败",
+    "installError": "安装更新失败",
+    "autoCheck": "自动检查更新",
+    "backgroundUpdateAvailable": "后台检测到更新",
+    "showUpdate": "显示更新",
+    "startingDownload": "开始下载...",
+    "downloading": "下载中...",
+    "installingUpdate": "安装更新中...",
+    "restartingApp": "重启应用中...",
+    "noUpdatesFound": "没有可用更新",
+    "aboutUpdates": "关于更新",
+    "autoCheckInfo": "自动更新检查让您的应用保持安全和最新状态",
+    "securityInfo": "更新包含重要的安全补丁和错误修复",
+    "backupInfo": "在重大更新前，您的数据会自动备份",
+    "releaseChannels": "发布渠道",
+    "releaseChannelsInfo": "我们使用GitHub Release发布安装包，安全可靠。"
+  }
+}

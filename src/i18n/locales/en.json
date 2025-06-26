@@ -1,0 +1,554 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "reset": "Reset",
+    "close": "Close",
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "add": "Add"
+  },
+  "navigation": {
+    "dashboard": "Home",
+    "mount": "Mount",
+    "update": "Update",
+    "logs": "Logs",
+    "settings": "Config"
+  },
+  "dashboard": {
+    "quickActions": {
+      "title": "Core Management",
+      "openlistService": "OpenList Core",
+      "rclone": "RClone",
+      "quickSettings": "Quick Settings",
+      "startService": "Start Core",
+      "stopService": "Stop Core",
+      "restart": "Restart",
+      "openWeb": "Web UI",
+      "configRclone": "Configure RClone",
+      "startRclone": "Start RClone",
+      "stopRclone": "Stop RClone",
+      "manageMounts": "Manage Mounts",
+      "autoLaunch": "Auto Launch Core(not app)",
+      "autoMount": "Auto Mount",
+      "openSettings": "Open Settings",
+      "processing": "Processing...",
+      "adminPassword": "Admin Password",
+      "showAdminPassword": "Show/Copy admin password from logs"
+    },
+    "coreMonitor": {
+      "title": "Core Monitor",
+      "online": "Online",
+      "offline": "Offline",
+      "uptime": "Uptime",
+      "responseTime": "Response Time",
+      "healthy": "Healthy",
+      "unhealthy": "Unhealthy"
+    },
+    "versionManager": {
+      "title": "Version Manager",
+      "openlist": "OpenList",
+      "rclone": "Rclone",
+      "current": "Current",
+      "selectVersion": "Select Version",
+      "update": "Update"
+    },
+    "documentation": {
+      "title": "Documentation",
+      "openlist": "OpenList",
+      "openlistDesc": "Manage your cloud storage with OpenList",
+      "rclone": "Rclone",
+      "rcloneDesc": "Command line program to manage files on cloud storage",
+      "openDocs": "Open Docs",
+      "github": "GitHub",
+      "quickLinks": "Quick Links",
+      "apiDocs": "API Docs",
+      "commands": "Rclone Commands",
+      "issues": "Issues",
+      "faq": "FAQ"
+    },
+    "serviceManagement": {
+      "title": "Service Management",
+      "serviceStatus": "OpenList Backend Service",
+      "uptime": "Uptime",
+      "port": "Port",
+      "version": "Version",
+      "install": "Install",
+      "start": "Start",
+      "stop": "Stop",
+      "restart": "Restart",
+      "uninstall": "Uninstall",
+      "recentLogs": "Recent Logs",
+      "noLogs": "No logs available",
+      "status": {
+        "running": "Running",
+        "installed": "Installed",
+        "notInstalled": "Not Installed",
+        "error": "Error"
+      },
+      "confirmUninstall": {
+        "title": "Confirm Uninstall",
+        "message": "Are you sure you want to uninstall the OpenList service? This will stop all functionality and make the application unusable until the service is reinstalled.",
+        "confirm": "Uninstall"
+      }
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Configure your OpenList Desktop application",
+    "saveChanges": "Save Changes",
+    "resetToDefaults": "Reset to defaults",
+    "unsavedChanges": "You have unsaved changes",
+    "confirmReset": "Are you sure you want to reset all settings to defaults? This action cannot be undone.",
+    "saved": "Settings saved successfully!",
+    "saveFailed": "Failed to save settings. Please try again.",
+    "resetSuccess": "Settings reset to defaults successfully!",
+    "resetFailed": "Failed to reset settings.",
+    "tabs": {
+      "openlist": "OpenList Service",
+      "rclone": "Rclone Storage",
+      "app": "Application"
+    },
+    "theme": {
+      "title": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "auto": "Auto",
+      "lightDesc": "Light theme",
+      "darkDesc": "Dark theme",
+      "autoDesc": "Follow system",
+      "toggle": "Toggle theme"
+    },
+    "network": {
+      "title": "Network Configuration",
+      "subtitle": "Configure the web interface and network settings"
+    },
+    "storage": {
+      "title": "Storage Configuration",
+      "subtitle": "Configure data directory and binary locations"
+    },
+    "startup": {
+      "title": "Startup Options",
+      "subtitle": "Configure automatic startup behavior"
+    },
+    "service": {
+      "title": "Service Configuration",
+      "subtitle": "Configure OpenList service settings",
+      "network": {
+        "title": "Network Configuration",
+        "subtitle": "Configure the web interface and network settings",
+        "port": {
+          "label": "Listen Port",
+          "placeholder": "5244",
+          "help": "Port number for the web interface (1-65535)"
+        },
+        "apiToken": {
+          "label": "API Token",
+          "placeholder": "Optional. Secure API access with authentication",
+          "help": "Optional. Secure API access with authentication"
+        },
+        "ssl": {
+          "title": "Enable SSL/HTTPS",
+          "description": "Use HTTPS for secure communication (requires SSL certificate configuration)"
+        }
+      },
+      "storage": {
+        "title": "Storage Configuration",
+        "subtitle": "Configure data directory and binary locations",
+        "dataDir": {
+          "label": "Data Directory",
+          "placeholder": "./data",
+          "help": "Directory where OpenList stores its configuration and database"
+        },
+        "binaryPath": {
+          "label": "OpenList Binary Path",
+          "placeholder": "./binary/openlist.exe",
+          "help": "Path to the OpenList executable file"
+        }
+      },
+      "startup": {
+        "title": "Startup Options",
+        "subtitle": "Configure automatic startup behavior",
+        "autoLaunch": {
+          "title": "Auto-launch on startup",
+          "description": "Automatically start OpenList service when the application launches"
+        }
+      }
+    },
+    "rclone": {
+      "title": "Storage Configuration",
+      "subtitle": "Configure remote storage connections",
+      "config": {
+        "title": "Remote Storage",
+        "subtitle": "Configure rclone for remote storage access",
+        "label": "Rclone Configuration (JSON)",
+        "tips": "Enter your rclone configuration as JSON. This will be used to configure rclone remotes.",
+        "invalidJson": "Invalid JSON configuration. Please check your syntax.",
+        "binaryPath": {
+          "label": "Rclone Binary Path",
+          "placeholder": "./binary/rclone.exe",
+          "help": "Path to the rclone executable file"
+        },
+        "configName": {
+          "label": "Configuration Name",
+          "placeholder": "remote",
+          "help": "Name of the rclone remote configuration"
+        }
+      },
+      "mount": {
+        "title": "Mount Configuration",
+        "subtitle": "Configure local mount point for remote storage",
+        "mountPath": {
+          "label": "Mount Path",
+          "placeholder": "./mount",
+          "help": "Local directory where remote storage will be mounted"
+        },
+        "autoMount": {
+          "title": "Auto-mount on startup",
+          "description": "Automatically mount remote storage when the service starts"
+        }
+      },
+      "flags": {
+        "title": "Rclone Flags",
+        "subtitle": "Additional command-line flags for rclone",
+        "placeholder": "--flag-name=value",
+        "add": "Add Flag",
+        "remove": "Remove"
+      }
+    },
+    "app": {
+      "title": "Application Settings",
+      "subtitle": "Configure application preferences and behavior",
+      "theme": {
+        "title": "Theme",
+        "subtitle": "Choose your preferred appearance",
+        "light": "Light",
+        "dark": "Dark",
+        "auto": "Auto",
+        "lightDesc": "Light theme",
+        "darkDesc": "Dark theme",
+        "autoDesc": "Follow system"
+      },
+      "monitor": {
+        "title": "Monitoring",
+        "subtitle": "System monitoring and refresh settings",
+        "interval": {
+          "label": "Monitor Interval (seconds)",
+          "placeholder": "5",
+          "help": "How often to refresh system metrics and status"
+        }
+      },
+      "tutorial": {
+        "title": "Tutorial",
+        "subtitle": "Learn how to use OpenList Desktop",
+        "restart": "Start Tutorial",
+        "help": "Restart the tutorial to learn about app features and navigation"
+      },
+      "updates": {
+        "title": "Updates",
+        "subtitle": "Manage automatic updates and notifications",
+        "autoCheck": {
+          "title": "Automatic Update Checks",
+          "description": "Automatically check for and notify about new updates in the background"
+        }
+      },
+      "autoStartApp": {
+        "title": "Auto-launch on startup",
+        "subtitle": "Automatically start OpenList Desktop application when the system starts",
+        "description": "Automatically start OpenList service when the application launches"
+      },
+      "service": {
+        "title": "Service Connection",
+        "subtitle": "Configure connection to the desktop service",
+        "port": {
+          "label": "Service Port",
+          "placeholder": "53211",
+          "help": "Port number for the desktop service communication"
+        },
+        "apiToken": {
+          "label": "Service API Token",
+          "placeholder": "API token for service authentication",
+          "help": "Token used to authenticate with the desktop service"
+        }
+      }
+    },
+    "advanced": {
+      "title": "Advanced Settings",
+      "performance": {
+        "title": "Performance",
+        "subtitle": "Performance and optimization settings",
+        "coming": "Performance settings will be available in a future update"
+      },
+      "logging": {
+        "title": "Logging",
+        "subtitle": "Configure application logging behavior",
+        "coming": "Logging configuration will be available in a future update"
+      }
+    },
+    "dialogs": {
+      "selectOpenListBinary": "Select OpenList Binary",
+      "selectRcloneBinary": "Select Rclone Binary",
+      "selectDataDirectory": "Select Data Directory",
+      "selectMountDirectory": "Select Mount Directory"
+    }
+  },
+  "logs": {
+    "title": "Logs",
+    "clear": "Clear Logs",
+    "search": {
+      "placeholder": "Search logs... (Ctrl+F)"
+    },
+    "toolbar": {
+      "pause": "Pause (Space)",
+      "resume": "Resume (Space)",
+      "refresh": "Refresh (Ctrl+R)",
+      "showFilters": "Show Filters",
+      "settings": "Settings",
+      "copyToClipboard": "Copy to Clipboard (Ctrl+C)",
+      "exportLogs": "Export Logs",
+      "clearLogs": "Clear Logs (Ctrl+Delete)",
+      "toggleFullscreen": "Toggle Fullscreen (F11)",
+      "scrollToTop": "Scroll to Top (Home)",
+      "scrollToBottom": "Scroll to Bottom (End)"
+    },
+    "stats": {
+      "logsCount": "{filtered} / {total}",
+      "selected": "{count} selected"
+    },
+    "filters": {
+      "all": "All",
+      "openlist": "OpenList",
+      "rclone": "Rclone",
+      "app": "App",
+      "labels": {
+        "level": "Level:",
+        "source": "Source:",
+        "search": "Search"
+      },
+      "levels": {
+        "all": "All Levels",
+        "error": "Error",
+        "warn": "Warning",
+        "info": "Info",
+        "debug": "Debug"
+      },
+      "sources": {
+        "all": "All Sources",
+        "service": "Service",
+        "rclone": "Rclone",
+        "system": "System",
+        "openlist": "OpenList"
+      },
+      "actions": {
+        "selectAll": "Select All (Ctrl+A)",
+        "clearSelection": "Clear Selection (Esc)",
+        "autoScroll": "Auto-scroll"
+      },
+      "searchPlaceholder": "Search logs...",
+      "clear": "Clear search"
+    },
+    "levels": {
+      "debug": "Debug",
+      "info": "Info",
+      "warn": "Warning",
+      "error": "Error"
+    },
+    "empty": "No log entries",
+    "viewer": {
+      "noLogsFound": "No logs to display",
+      "noLogsMatch": "No logs match your search criteria",
+      "tryAdjusting": "Try adjusting your search or filters",
+      "logsWillAppear": "Logs will appear here when services are running",
+      "scrollToBottom": "Scroll to bottom"
+    },
+    "settings": {
+      "fontSize": "Font Size:",
+      "maxLines": "Max Lines:",
+      "showTimestamp": "Show Timestamp",
+      "showLevel": "Show Level",
+      "showSource": "Show Source",
+      "compactMode": "Compact Mode",
+      "stripAnsiColors": "Strip ANSI Colors"
+    },
+    "messages": {
+      "confirmClear": "Are you sure you want to clear all logs?",
+      "exported": "Logs exported successfully",
+      "copied": "Logs copied to clipboard"
+    },
+    "headers": {
+      "time": "Time",
+      "timestamp": "Timestamp",
+      "level": "Level",
+      "source": "Source",
+      "message": "Message"
+    },
+    "status": {
+      "service": "Service:",
+      "running": "Running",
+      "stopped": "Stopped",
+      "autoScroll": "Auto-scroll:",
+      "updates": "Updates:",
+      "paused": "Paused",
+      "live": "Live",
+      "on": "On",
+      "off": "Off",
+      "showing": "Showing {filtered} of {total} entries"
+    }
+  },
+  "mount": {
+    "title": "Mount Management",
+    "stats": {
+      "total": "Total",
+      "mounted": "Mounted",
+      "unmounted": "Unmounted",
+      "error": "Error"
+    },
+    "service": {
+      "running": "Running",
+      "stopped": "Stopped"
+    },
+    "actions": {
+      "addRemote": "Add Remote",
+      "mount": "Mount",
+      "unmount": "Unmount",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "status": {
+      "status": "Status",
+      "mounted": "Mounted",
+      "unmounted": "Unmounted",
+      "error": "Error"
+    },
+    "filters": {
+      "searchPlaceholder": "Search remotes...",
+      "allStatus": "All Status"
+    },
+    "config": {
+      "addTitle": "Add Remote Configuration",
+      "editTitle": "Edit Remote Configuration",
+      "basicInfo": "Basic Information",
+      "authentication": "Authentication",
+      "mountSettings": "Mount Settings",
+      "name": "Name",
+      "namePlaceholder": "e.g., my-webdav-remote",
+      "type": "Type",
+      "url": "URL",
+      "urlPlaceholder": "e.g., http://localhost:5264/dav/189",
+      "vendor": "Vendor",
+      "vendorPlaceholder": "e.g., 189provider",
+      "username": "Username",
+      "usernamePlaceholder": "Username",
+      "password": "Password",
+      "passwordPlaceholder": "Password",
+      "mountPoint": "Mount Point",
+      "mountPointPlaceholder": "e.g., T: (Windows) or /mnt/remote (Linux)",
+      "volumeName": "Volume Name",
+      "volumeNamePlaceholder": "e.g., My Cloud Storage",
+      "autoMount": "Auto-mount on startup",
+      "advancedSettings": "Advanced Settings",
+      "extraFlags": "Extra Flags",
+      "flagPlaceholder": "e.g., --vfs-cache-mode",
+      "addFlag": "Add Flag",
+      "removeFlag": "Remove Flag",
+      "types": {
+        "webdav": "WebDAV",
+        "s3": "Amazon S3",
+        "gdrive": "Google Drive",
+        "onedrive": "OneDrive",
+        "dropbox": "Dropbox"
+      }
+    },
+    "meta": {
+      "autoMount": "Auto Mount"
+    },
+    "empty": {
+      "title": "No Remote Configurations",
+      "description": "Create your first remote configuration to start mounting cloud storage."
+    },
+    "messages": {
+      "fillRequiredFields": "Please fill in all required fields",
+      "mountPointRequired": "Mount point is required",
+      "confirmDelete": "Are you sure you want to delete the remote configuration \"{name}\"?",
+      "failedToSave": "Failed to save configuration",
+      "failedToMount": "Failed to mount remote",
+      "failedToUnmount": "Failed to unmount remote",
+      "failedToDelete": "Failed to delete configuration",
+      "failedToRefresh": "Failed to refresh mount status",
+      "failedToStartService": "Failed to start rclone service",
+      "failedToStopService": "Failed to stop rclone service"
+    }
+  },
+  "app": {
+    "title": "OpenList",
+    "loading": "Initializing OpenList Desktop..."
+  },
+  "language": {
+    "current": "Current Language",
+    "chinese": "中文",
+    "english": "English"
+  },
+  "tutorial": {
+    "welcome": {
+      "title": "Welcome to OpenList Desktop",
+      "content": "Welcome to OpenList Desktop! This tutorial will guide you through the key features and help you get started quickly."
+    },
+    "navigation": {
+      "title": "Navigation Panel",
+      "content": "Use the navigation panel to access different sections: Dashboard for monitoring, Mount for storage management, Logs for troubleshooting, and Settings for configuration."
+    },
+    "service": {
+      "title": "Install & Start Service",
+      "content": "First, you need to install and start the OpenList service. This is the core component that manages your cloud storage connections."
+    },
+    "openlist": {
+      "title": "OpenList Core Access",
+      "content": "Once the service is running, you can access the OpenList web interface to manage your files and configurations."
+    },
+    "documentation": {
+      "title": "Read Documentation",
+      "content": "For detailed information and advanced configurations, check out the documentation section. You'll find guides, API docs, and troubleshooting tips."
+    },
+    "settings": {
+      "title": "Settings & Configuration",
+      "content": "Customize your OpenList experience in the Settings section. Configure themes, service options, and storage preferences."
+    },
+    "skip": "Skip Tutorial",
+    "next": "Next",
+    "previous": "Previous",
+    "complete": "Complete Tutorial",
+    "neverShow": "Don't show again"
+  },
+  "update": {
+    "title": "App Updates",
+    "subtitle": "Keep your application up to date with the latest features and security improvements",
+    "currentVersion": "Current Version",
+    "checkForUpdates": "Check for Updates",
+    "checking": "Checking...",
+    "updateAvailable": "Update Available",
+    "releaseDate": "Release Date",
+    "releaseNotes": "Release Notes",
+    "availableInstallers": "Available Installers",
+    "downloadAndInstall": "Download & Install",
+    "upToDate": "App is up to date",
+    "lastChecked": "Last checked",
+    "checkError": "Failed to check for updates",
+    "installError": "Failed to install update",
+    "autoCheck": "Check for updates automatically",
+    "backgroundUpdateAvailable": "Update available in background",
+    "showUpdate": "Show Update",
+    "startingDownload": "Starting download...",
+    "downloading": "Downloading",
+    "installingUpdate": "Installing update...",
+    "restartingApp": "Restarting application...",
+    "noUpdatesFound": "No updates available",
+    "aboutUpdates": "About Updates",
+    "autoCheckInfo": "Automatic update checks keep your app secure and up-to-date",
+    "securityInfo": "Updates include important security patches and bug fixes",
+    "backupInfo": "Your data is automatically backed up before major updates",
+    "releaseChannels": "Release Channels",
+    "releaseChannelsInfo": "We use GitHub releases to manage app updates."
+  }
+}

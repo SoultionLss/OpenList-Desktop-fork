@@ -1,0 +1,130 @@
+name: Documentation Issue
+description: Report issues with documentation or suggest improvements
+title: '[DOCS] '
+labels: ['documentation', 'needs-triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve the documentation! Please describe what's missing, unclear, or incorrect.
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: Documentation Type
+      description: Which type of documentation needs attention?
+      options:
+        - README.md
+        - Setup/Installation instructions
+        - Configuration guide
+        - API documentation
+        - Troubleshooting guide
+        - Code comments
+        - GitHub issue templates
+        - Contributing guidelines
+        - License/Legal documentation
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      description: What type of documentation issue is this?
+      options:
+        - Missing information
+        - Incorrect/outdated information
+        - Unclear instructions
+        - Typo/grammar error
+        - Missing examples
+        - Broken links
+        - Formatting issues
+        - Translation needed
+        - New documentation needed
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: issue-description
+    attributes:
+      label: Issue Description
+      description: Describe the documentation issue in detail.
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Location
+      description: Where is the documentation issue located?
+      placeholder: |
+        - File: e.g. README.md, docs/setup.md
+        - Section: e.g. "Installation", "Configuration"
+        - Line numbers: e.g. lines 25-30
+        - URL: if it's online documentation
+
+  - type: textarea
+    id: current-content
+    attributes:
+      label: Current Content
+      description: If applicable, paste the current content that needs to be changed.
+
+  - type: textarea
+    id: suggested-content
+    attributes:
+      label: Suggested Improvement
+      description: What should the documentation say instead? Provide your suggested content.
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this documentation fix?
+      options:
+        - Low - Minor improvement
+        - Medium - Notable issue
+        - High - Blocks users/contributors
+        - Critical - Prevents successful use
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: platforms
+    attributes:
+      label: Platform Specific
+      description: Is this documentation issue specific to certain platforms?
+      options:
+        - label: Windows-specific
+        - label: macOS-specific
+        - label: Linux-specific
+        - label: Cross-platform issue
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Are you willing to help improve the documentation?
+      options:
+        - label: I can help write/improve the content
+        - label: I can review proposed changes
+        - label: I can test the instructions
+        - label: I can provide examples or screenshots
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other context about this documentation issue.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues for similar documentation problems
+          required: true
+        - label: I have checked that this documentation issue still exists in the current version
+          required: true
