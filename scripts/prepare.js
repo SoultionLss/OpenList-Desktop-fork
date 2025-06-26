@@ -69,7 +69,7 @@ const createBinaryInfo = (name, archMap, baseUrl, version = '') => {
 }
 
 // OpenList service URL
-const serviceUrl = `https://github.com/Kuingsmile/openlist-desktop-service/releases/download/${sidecarHost}`
+const serviceUrl = `https://github.com/OpenListTeam/openlist-desktop-service/releases/download/${sidecarHost}`
 
 const getServiceInfo = exeName => {
   const ext = isWin ? '.exe' : ''
