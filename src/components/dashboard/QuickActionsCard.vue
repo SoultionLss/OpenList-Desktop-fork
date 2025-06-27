@@ -75,11 +75,6 @@
             <input type="checkbox" v-model="settings.openlist.auto_launch" @change="handleAutoLaunchToggle" />
             <span class="toggle-text">{{ t('dashboard.quickActions.autoLaunch') }}</span>
           </label>
-
-          <label class="toggle-item">
-            <input type="checkbox" v-model="settings.rclone.auto_mount" @change="saveSettings" />
-            <span class="toggle-text">{{ t('dashboard.quickActions.autoMount') }}</span>
-          </label>
         </div>
       </div>
     </div>
@@ -112,24 +107,26 @@ const serviceButtonIcon = computed(() => {
 
 const serviceButtonText = computed(() => {
   if (loading.value) return t('dashboard.quickActions.processing')
-  return isCoreRunning.value ? t('dashboard.quickActions.stopService') : t('dashboard.quickActions.startService')
+  return isCoreRunning.value
+    ? t('dashboard.quickActions.stopOpenListCore')
+    : t('dashboard.quickActions.startOpenListCore')
 })
 
 const toggleCore = async () => {
   if (isCoreRunning.value) {
-    await store.stopService()
+    await store.stopOpenListCore()
   } else {
-    await store.startService()
+    await store.startOpenListCore()
   }
 }
 
 const restartCore = async () => {
-  await store.restartService()
+  await store.restartOpenListCore()
 }
 
 const openWebUI = () => {
-  if (store.serviceUrl) {
-    window.open(store.serviceUrl, '_blank')
+  if (store.openListCoreUrl) {
+    window.open(store.openListCoreUrl, '_blank')
   }
 }
 
@@ -260,7 +257,10 @@ const saveSettings = async () => {
 
 onMounted(async () => {
   await rcloneStore.checkRcloneBackendStatus()
-  statusCheckInterval = window.setInterval(rcloneStore.checkRcloneBackendStatus, 30000)
+  statusCheckInterval = window.setInterval(
+    rcloneStore.checkRcloneBackendStatus,
+    (store.settings.app.monitor_interval || 5) * 1000
+  )
 })
 
 onUnmounted(() => {

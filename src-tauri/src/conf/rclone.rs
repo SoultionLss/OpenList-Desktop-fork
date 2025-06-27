@@ -5,8 +5,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RcloneConfig {
     pub config: serde_json::Value,
-    pub flags: Option<Vec<String>>,
-    pub auto_mount: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -62,8 +60,6 @@ impl RcloneConfig {
     pub fn new() -> Self {
         Self {
             config: serde_json::Value::Object(Default::default()),
-            flags: None,
-            auto_mount: false,
         }
     }
 }

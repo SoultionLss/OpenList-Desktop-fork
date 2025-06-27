@@ -7,8 +7,6 @@ export interface OpenListCoreConfig {
 
 export interface RcloneConfig {
   config?: any // Flexible JSON object for rclone configuration
-  flags: string[]
-  auto_mount: boolean
 }
 
 export interface RcloneWebdavConfig {
@@ -65,8 +63,6 @@ export interface RcloneMountRequest {
 export interface AppConfig {
   theme?: 'light' | 'dark' | 'auto'
   monitor_interval?: number
-  service_api_token?: string
-  service_port?: number
   auto_update_enabled?: boolean
 }
 
@@ -77,7 +73,7 @@ export interface MergedSettings {
   app: AppConfig
 }
 
-export interface ServiceStatus {
+export interface OpenListCoreStatus {
   running: boolean
   pid?: number
   port?: number
@@ -98,7 +94,7 @@ export interface FileItem {
 }
 
 export interface AppState {
-  serviceStatus: ServiceStatus
+  serviceStatus: OpenListCoreStatus
   mountStatus: MountStatus
   logs: string[]
   settings: MergedSettings

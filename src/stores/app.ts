@@ -5,11 +5,11 @@ import { TauriAPI } from '../api/tauri'
 import type {
   FileItem,
   MergedSettings,
+  OpenListCoreStatus,
   ProcessConfig,
   RcloneFormConfig,
   RcloneMountInfo,
   RcloneWebdavConfig,
-  ServiceStatus,
   UpdateCheck
 } from '../types'
 
@@ -22,20 +22,16 @@ export const useAppStore = defineStore('app', () => {
       ssl_enabled: false
     },
     rclone: {
-      config: {}, // Flexible JSON object for rclone configuration
-      flags: [],
-      auto_mount: false
+      config: {} // Flexible JSON object for rclone configuration
     },
     app: {
       theme: 'light',
       monitor_interval: 5000,
-      service_api_token: 'yeM6PCcZGaCpapyBKAbjTp2YAhcku6cUr',
-      service_port: 53211,
       auto_update_enabled: true
     }
   })
 
-  const serviceStatus = ref<ServiceStatus>({
+  const openlistCoreStatus = ref<OpenListCoreStatus>({
     running: false
   })
 
@@ -305,10 +301,10 @@ export const useAppStore = defineStore('app', () => {
   const tutorialStep = ref(0)
   const tutorialSkipped = ref(false)
 
-  const isCoreRunning = computed(() => serviceStatus.value.running)
-  const serviceUrl = computed(() => {
+  const isCoreRunning = computed(() => openlistCoreStatus.value.running)
+  const openListCoreUrl = computed(() => {
     const protocol = settings.value.openlist.ssl_enabled ? 'https' : 'http'
-    return `${protocol}://localhost:${serviceStatus.value.port}`
+    return `${protocol}://localhost:${openlistCoreStatus.value.port}`
   })
 
   async function loadSettings() {
@@ -366,7 +362,7 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function startService() {
+  async function startOpenListCore() {
     try {
       loading.value = true
 
@@ -398,9 +394,9 @@ export const useAppStore = defineStore('app', () => {
       openlistProcessId.value = processId
       await refreshServiceStatus()
 
-      await TauriAPI.updateTrayMenu(serviceStatus.value.running)
+      await TauriAPI.updateTrayMenu(openlistCoreStatus.value.running)
     } catch (err: any) {
-      serviceStatus.value = { running: false }
+      openlistCoreStatus.value = { running: false }
       let errorMessage = 'Failed to start service'
       const formattedError = formatError(err)
       if (formattedError) {
@@ -428,12 +424,12 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function stopService() {
+  async function stopOpenListCore() {
     try {
       loading.value = true
       const id = await getOpenListProcessId()
       if (!id) {
-        serviceStatus.value = { running: false }
+        openlistCoreStatus.value = { running: false }
         await TauriAPI.updateTrayMenu(false)
         return
       }
@@ -443,7 +439,7 @@ export const useAppStore = defineStore('app', () => {
         throw new Error('Failed to stop OpenList Core service - service returned false')
       }
 
-      serviceStatus.value = { running: false }
+      openlistCoreStatus.value = { running: false }
       await TauriAPI.updateTrayMenu(false)
     } catch (err: any) {
       const errorMessage = `Failed to stop service: ${formatError(err)}`
@@ -478,12 +474,12 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function restartService() {
+  async function restartOpenListCore() {
     try {
       loading.value = true
       const id = await getOpenListProcessId()
       if (!id) {
-        serviceStatus.value = { running: false }
+        openlistCoreStatus.value = { running: false }
         await TauriAPI.updateTrayMenu(false)
         return
       }
@@ -492,14 +488,14 @@ export const useAppStore = defineStore('app', () => {
         throw new Error('Failed to restart OpenList Core service - service returned false')
       }
       await refreshServiceStatus()
-      await TauriAPI.updateTrayMenu(serviceStatus.value.running)
+      await TauriAPI.updateTrayMenu(openlistCoreStatus.value.running)
     } catch (err: any) {
       const errorMessage = `Failed to restart service: ${formatError(err)}`
       error.value = errorMessage
       console.error('Failed to restart service:', err)
       try {
         await refreshServiceStatus()
-        await safeUpdateTrayMenu(serviceStatus.value.running)
+        await safeUpdateTrayMenu(openlistCoreStatus.value.running)
       } catch (refreshErr) {
         console.error('Failed to refresh service status after restart failure:', refreshErr)
       }
@@ -512,14 +508,14 @@ export const useAppStore = defineStore('app', () => {
   async function refreshServiceStatus() {
     try {
       const status = await TauriAPI.getOpenListCoreStatus()
-      const statusChanged = serviceStatus.value.running !== status.running
-      serviceStatus.value = status
+      const statusChanged = openlistCoreStatus.value.running !== status.running
+      openlistCoreStatus.value = status
       if (statusChanged) {
         await TauriAPI.updateTrayMenuDelayed(status.running)
       }
     } catch (err) {
-      const wasRunning = serviceStatus.value.running
-      serviceStatus.value = { running: false }
+      const wasRunning = openlistCoreStatus.value.running
+      openlistCoreStatus.value = { running: false }
       if (wasRunning) {
         await TauriAPI.updateTrayMenuDelayed(false)
       }
@@ -612,7 +608,7 @@ export const useAppStore = defineStore('app', () => {
   async function autoStartServiceIfEnabled() {
     try {
       if (settings.value.openlist.auto_launch) {
-        await startService()
+        await startOpenListCore()
       }
     } catch (err) {
       console.warn('Failed to auto-start service:', err)
@@ -747,7 +743,7 @@ export const useAppStore = defineStore('app', () => {
     fullRcloneConfigs,
 
     settings,
-    serviceStatus,
+    openlistCoreStatus,
     logs,
     files,
     currentPath,
@@ -761,14 +757,15 @@ export const useAppStore = defineStore('app', () => {
     tutorialSkipped,
 
     isCoreRunning,
-    serviceUrl,
+    openListCoreUrl,
 
     loadSettings,
     saveSettings,
     resetSettings,
-    startService,
-    stopService,
-    restartService,
+
+    startOpenListCore,
+    stopOpenListCore,
+    restartOpenListCore,
     enableAutoLaunch,
     refreshServiceStatus,
     loadLogs,
