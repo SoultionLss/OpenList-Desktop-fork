@@ -8,7 +8,7 @@ mod tray;
 mod utils;
 
 use cmd::binary::get_binary_version;
-use cmd::config::{load_settings, reset_settings, save_settings};
+use cmd::config::{load_settings, reset_settings, save_settings, save_settings_with_update_port};
 use cmd::custom_updater::{
     check_for_updates, download_update, get_current_version, install_update_and_restart,
     is_auto_check_enabled, restart_app, set_auto_check_enabled,
@@ -45,7 +45,7 @@ async fn update_tray_menu(
     service_running: bool,
 ) -> Result<(), String> {
     tray::update_tray_menu(&app_handle, service_running)
-        .map_err(|e| format!("Failed to update tray menu: {}", e))
+        .map_err(|e| format!("Failed to update tray menu: {e}"))
 }
 
 #[tauri::command]
@@ -54,7 +54,7 @@ async fn update_tray_menu_delayed(
     service_running: bool,
 ) -> Result<(), String> {
     tray::update_tray_menu_delayed(&app_handle, service_running)
-        .map_err(|e| format!("Failed to update tray menu (delayed): {}", e))
+        .map_err(|e| format!("Failed to update tray menu (delayed): {e}"))
 }
 
 #[tauri::command]
@@ -63,7 +63,7 @@ async fn force_update_tray_menu(
     service_running: bool,
 ) -> Result<(), String> {
     tray::force_update_tray_menu(&app_handle, service_running)
-        .map_err(|e| format!("Failed to force update tray menu: {}", e))
+        .map_err(|e| format!("Failed to force update tray menu: {e}"))
 }
 
 fn setup_background_update_checker(app_handle: &tauri::AppHandle) {
@@ -79,7 +79,7 @@ fn setup_background_update_checker(app_handle: &tauri::AppHandle) {
                     cmd::custom_updater::perform_background_update_check(app_handle_initial.clone())
                         .await
                 {
-                    log::debug!("Initial background update check failed: {}", e);
+                    log::debug!("Initial background update check failed: {e}");
                 }
             }
             _ => {
@@ -94,10 +94,10 @@ pub fn run() {
     let app_state = AppState::new();
     log::info!("Starting {}...", utils::path::APP_ID);
 
-    unsafe {
-        #[cfg(target_os = "linux")]
-        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1")
-    };
+    #[cfg(target_os = "linux")]
+    {
+        unsafe { std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1") };
+    }
 
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
@@ -142,6 +142,7 @@ pub fn run() {
             open_folder,
             open_url,
             save_settings,
+            save_settings_with_update_port,
             load_settings,
             reset_settings,
             get_logs,
@@ -174,20 +175,19 @@ pub fn run() {
             utils::init_log::init_log()?;
             utils::path::get_app_config_dir()?;
             let app_state = app.state::<AppState>();
-            if let Err(e) = app_state.init(&app_handle) {
-                log::error!("Failed to initialize app state: {}", e);
-                return Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!("App state initialization failed: {}", e),
-                )));
+            if let Err(e) = app_state.init(app_handle) {
+                log::error!("Failed to initialize app state: {e}");
+                return Err(Box::new(std::io::Error::other(format!(
+                    "App state initialization failed: {e}"
+                ))));
             }
-            if let Err(e) = tray::create_tray(&app_handle) {
-                log::error!("Failed to create system tray: {}", e);
+            if let Err(e) = tray::create_tray(app_handle) {
+                log::error!("Failed to create system tray: {e}");
             } else {
                 log::info!("System tray created successfully");
             }
 
-            setup_background_update_checker(&app_handle);
+            setup_background_update_checker(app_handle);
 
             if let Some(window) = app.get_webview_window("main") {
                 let app_handle_clone = app_handle.clone();

@@ -26,16 +26,16 @@ impl MergedSettings {
         }
     }
 
-    fn get_data_config_path() -> Result<PathBuf, String> {
+    pub fn get_data_config_path() -> Result<PathBuf, String> {
         let app_dir = std::env::current_exe()
-            .map_err(|e| format!("Failed to get current exe path: {}", e))?
+            .map_err(|e| format!("Failed to get current exe path: {e}"))?
             .parent()
             .ok_or("Failed to get parent directory")?
             .to_path_buf();
         Ok(app_dir.join("data").join("config.json"))
     }
 
-    fn read_data_config() -> Result<serde_json::Value, String> {
+    pub fn read_data_config() -> Result<serde_json::Value, String> {
         let path = Self::get_data_config_path()?;
         if !path.exists() {
             return Err("data/config.json does not exist".to_string());
@@ -78,12 +78,10 @@ impl MergedSettings {
             serde_json::from_str(&config).map_err(|e| e.to_string())?
         };
 
-        if let Ok(data_port) = Self::get_port_from_data_config() {
-            if let Some(port) = data_port {
-                if merged_settings.openlist.port != port {
-                    merged_settings.openlist.port = port;
-                    merged_settings.save()?;
-                }
+        if let Ok(Some(port)) = Self::get_port_from_data_config() {
+            if merged_settings.openlist.port != port {
+                merged_settings.openlist.port = port;
+                merged_settings.save()?;
             }
         }
 

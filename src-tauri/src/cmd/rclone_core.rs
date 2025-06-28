@@ -34,18 +34,18 @@ pub async fn create_and_start_rclone_backend(
 
 #[tauri::command]
 pub async fn create_rclone_backend_process(
-    state: State<'_, AppState>,
+    _state: State<'_, AppState>,
 ) -> Result<ProcessConfig, String> {
     let binary_path =
-        get_rclone_binary_path().map_err(|e| format!("Failed to get rclone binary path: {}", e))?;
+        get_rclone_binary_path().map_err(|e| format!("Failed to get rclone binary path: {e}"))?;
     let log_file_path =
-        get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {}", e))?;
+        get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {e}"))?;
     let rclone_conf_path = binary_path
         .parent()
         .map(|p| p.join("rclone.conf"))
         .ok_or_else(|| "Failed to determine rclone.conf path".to_string())?;
     let log_file_path = log_file_path.join("process_rclone.log");
-    let api_key = get_api_key(state);
+    let api_key = get_api_key();
     let port = get_server_port();
     let config = ProcessConfig {
         id: "rclone_backend".into(),
@@ -76,23 +76,22 @@ pub async fn create_rclone_backend_process(
     };
     let client = reqwest::Client::new();
     let response = client
-        .post(format!("http://127.0.0.1:{}/api/v1/processes", port))
+        .post(format!("http://127.0.0.1:{port}/api/v1/processes"))
         .json(&config)
-        .header("Authorization", format!("Bearer {}", api_key))
+        .header("Authorization", format!("Bearer {api_key}"))
         .send()
         .await
-        .map_err(|e| format!("Failed to send request: {}", e))?;
+        .map_err(|e| format!("Failed to send request: {e}"))?;
     if response.status().is_success() {
         let response_text = response
             .text()
             .await
-            .map_err(|e| format!("Failed to read response text: {}", e))?;
+            .map_err(|e| format!("Failed to read response text: {e}"))?;
         let process_config = match serde_json::from_str::<CreateProcessResponse>(&response_text) {
             Ok(process_config) => process_config,
             Err(e) => {
                 return Err(format!(
-                    "Failed to parse response: {}, response: {}",
-                    e, response_text
+                    "Failed to parse response: {e}, response: {response_text}"
                 ));
             }
         };
@@ -114,7 +113,7 @@ async fn is_rclone_running() -> bool {
     let client = Client::new();
 
     let response = client
-        .get(&format!("{}/", RCLONE_API_BASE))
+        .get(format!("{RCLONE_API_BASE}/"))
         .timeout(Duration::from_secs(1))
         .send()
         .await;

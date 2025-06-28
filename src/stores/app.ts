@@ -304,7 +304,7 @@ export const useAppStore = defineStore('app', () => {
   const isCoreRunning = computed(() => openlistCoreStatus.value.running)
   const openListCoreUrl = computed(() => {
     const protocol = settings.value.openlist.ssl_enabled ? 'https' : 'http'
-    return `${protocol}://localhost:${openlistCoreStatus.value.port}`
+    return `${protocol}://localhost:${settings.value.openlist.port}`
   })
 
   async function loadSettings() {
@@ -330,6 +330,17 @@ export const useAppStore = defineStore('app', () => {
       error.value = 'Failed to save settings'
       console.error('Failed to save settings:', err)
       throw err
+    }
+  }
+
+  async function saveSettingsWithUpdatePort(): Promise<boolean> {
+    try {
+      await TauriAPI.saveSettingsWithUpdatePort(settings.value)
+      return true
+    } catch (err) {
+      error.value = 'Failed to save settings'
+      console.error('Failed to save settings:', err)
+      return false
     }
   }
 
@@ -392,7 +403,7 @@ export const useAppStore = defineStore('app', () => {
       }
 
       openlistProcessId.value = processId
-      await refreshServiceStatus()
+      await refreshOpenListCoreStatus()
 
       await TauriAPI.updateTrayMenu(openlistCoreStatus.value.running)
     } catch (err: any) {
@@ -446,7 +457,7 @@ export const useAppStore = defineStore('app', () => {
       error.value = errorMessage
       console.error('Failed to stop service:', err)
       try {
-        await refreshServiceStatus()
+        await refreshOpenListCoreStatus()
       } catch (refreshErr) {
         console.error('Failed to refresh service status after stop failure:', refreshErr)
       }
@@ -485,19 +496,19 @@ export const useAppStore = defineStore('app', () => {
       }
       const result = await TauriAPI.restartProcess(id)
       if (!result) {
-        throw new Error('Failed to restart OpenList Core service - service returned false')
+        throw new Error('Failed to restart OpenList Core - service returned false')
       }
-      await refreshServiceStatus()
+      await refreshOpenListCoreStatus()
       await TauriAPI.updateTrayMenu(openlistCoreStatus.value.running)
     } catch (err: any) {
-      const errorMessage = `Failed to restart service: ${formatError(err)}`
+      const errorMessage = `Failed to restart core: ${formatError(err)}`
       error.value = errorMessage
-      console.error('Failed to restart service:', err)
+      console.error('Failed to restart core:', err)
       try {
-        await refreshServiceStatus()
+        await refreshOpenListCoreStatus()
         await safeUpdateTrayMenu(openlistCoreStatus.value.running)
       } catch (refreshErr) {
-        console.error('Failed to refresh service status after restart failure:', refreshErr)
+        console.error('Failed to refresh core status after restart failure:', refreshErr)
       }
       throw err
     } finally {
@@ -505,7 +516,7 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function refreshServiceStatus() {
+  async function refreshOpenListCoreStatus() {
     try {
       const status = await TauriAPI.getOpenListCoreStatus()
       const statusChanged = openlistCoreStatus.value.running !== status.running
@@ -605,13 +616,13 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function autoStartServiceIfEnabled() {
+  async function autoStartCoreIfEnabled() {
     try {
       if (settings.value.openlist.auto_launch) {
         await startOpenListCore()
       }
     } catch (err) {
-      console.warn('Failed to auto-start service:', err)
+      console.warn('Failed to auto-start core:', err)
     }
   }
 
@@ -654,9 +665,10 @@ export const useAppStore = defineStore('app', () => {
     try {
       initTutorial()
       await loadSettings()
-      await refreshServiceStatus()
+      await refreshOpenListCoreStatus()
+      await TauriAPI.updateTrayMenuDelayed(openlistCoreStatus.value.running)
       await loadLogs()
-      await autoStartServiceIfEnabled()
+      await autoStartCoreIfEnabled()
       await loadRemoteConfigs()
       await loadMountInfos()
     } catch (err) {
@@ -761,13 +773,14 @@ export const useAppStore = defineStore('app', () => {
 
     loadSettings,
     saveSettings,
+    saveSettingsWithUpdatePort,
     resetSettings,
 
     startOpenListCore,
     stopOpenListCore,
     restartOpenListCore,
     enableAutoLaunch,
-    refreshServiceStatus,
+    refreshOpenListCoreStatus,
     loadLogs,
     clearLogs,
     listFiles,

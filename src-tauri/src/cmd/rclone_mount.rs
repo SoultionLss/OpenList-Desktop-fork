@@ -20,39 +20,38 @@ pub async fn rclone_list_config(
 ) -> Result<serde_json::Value, String> {
     let client = Client::new();
     let response = client
-        .post(format!("{}/config/dump", RCLONE_API_BASE))
+        .post(format!("{RCLONE_API_BASE}/config/dump"))
         .header("Authorization", RCLONE_AUTH)
         .send()
         .await
-        .map_err(|e| format!("Failed to send request: {}", e))?;
+        .map_err(|e| format!("Failed to send request: {e}"))?;
     if response.status().is_success() {
         let response_text = response
             .text()
             .await
-            .map_err(|e| format!("Failed to read response text: {}", e))?;
+            .map_err(|e| format!("Failed to read response text: {e}"))?;
         let json: serde_json::Value = serde_json::from_str(&response_text)
-            .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+            .map_err(|e| format!("Failed to parse JSON: {e}"))?;
         let remotes = if remote_type.is_empty() {
             json.clone()
-        } else {
-            if let Some(obj) = json.as_object() {
-                let mut filtered_map = serde_json::Map::new();
-                for (remote_name, remote_config) in obj {
-                    if let Some(config_obj) = remote_config.as_object() {
-                        if let Some(remote_type_value) = config_obj.get("type") {
-                            if let Some(type_str) = remote_type_value.as_str() {
-                                if type_str == remote_type {
-                                    filtered_map.insert(remote_name.clone(), remote_config.clone());
-                                }
+        } else if let Some(obj) = json.as_object() {
+            let mut filtered_map = serde_json::Map::new();
+            for (remote_name, remote_config) in obj {
+                if let Some(config_obj) = remote_config.as_object() {
+                    if let Some(remote_type_value) = config_obj.get("type") {
+                        if let Some(type_str) = remote_type_value.as_str() {
+                            if type_str == remote_type {
+                                filtered_map.insert(remote_name.clone(), remote_config.clone());
                             }
                         }
                     }
                 }
-                serde_json::Value::Object(filtered_map)
-            } else {
-                serde_json::Value::Object(serde_json::Map::new())
             }
+            serde_json::Value::Object(filtered_map)
+        } else {
+            serde_json::Value::Object(serde_json::Map::new())
         };
+
         Ok(remotes)
     } else {
         Err(format!(
@@ -67,24 +66,24 @@ pub async fn rclone_list_remotes() -> Result<Vec<String>, String> {
     let client = Client::new();
 
     let response = client
-        .post(&format!("{}/config/listremotes", RCLONE_API_BASE))
+        .post(format!("{RCLONE_API_BASE}/config/listremotes"))
         .header("Authorization", RCLONE_AUTH)
         .send()
         .await
-        .map_err(|e| format!("Failed to list remotes: {}", e))?;
+        .map_err(|e| format!("Failed to list remotes: {e}"))?;
 
     if response.status().is_success() {
         let remote_list: RcloneRemoteListResponse = response
             .json()
             .await
-            .map_err(|e| format!("Failed to parse remote list response: {}", e))?;
+            .map_err(|e| format!("Failed to parse remote list response: {e}"))?;
         Ok(remote_list.remotes)
     } else {
         let error_text = response
             .text()
             .await
             .unwrap_or_else(|_| "Unknown error".to_string());
-        Err(format!("Failed to list remotes: {}", error_text))
+        Err(format!("Failed to list remotes: {error_text}"))
     }
 }
 
@@ -93,24 +92,24 @@ pub async fn rclone_list_mounts() -> Result<RcloneMountListResponse, String> {
     let client = Client::new();
 
     let response = client
-        .post(&format!("{}/mount/listmounts", RCLONE_API_BASE))
+        .post(format!("{RCLONE_API_BASE}/mount/listmounts"))
         .header("Authorization", RCLONE_AUTH)
         .send()
         .await
-        .map_err(|e| format!("Failed to list mounts: {}", e))?;
+        .map_err(|e| format!("Failed to list mounts: {e}"))?;
 
     if response.status().is_success() {
         let mount_list: RcloneMountListResponse = response
             .json()
             .await
-            .map_err(|e| format!("Failed to parse mount list response: {}", e))?;
+            .map_err(|e| format!("Failed to parse mount list response: {e}"))?;
         Ok(mount_list)
     } else {
         let error_text = response
             .text()
             .await
             .unwrap_or_else(|_| "Unknown error".to_string());
-        Err(format!("Failed to list mounts: {}", error_text))
+        Err(format!("Failed to list mounts: {error_text}"))
     }
 }
 
@@ -135,13 +134,13 @@ pub async fn rclone_create_remote(
     };
 
     let response = client
-        .post(&format!("{}/config/create", RCLONE_API_BASE))
+        .post(format!("{RCLONE_API_BASE}/config/create"))
         .header("Authorization", RCLONE_AUTH)
         .header("Content-Type", "application/json")
         .json(&create_request)
         .send()
         .await
-        .map_err(|e| format!("Failed to create remote config: {}", e))?;
+        .map_err(|e| format!("Failed to create remote config: {e}"))?;
 
     if response.status().is_success() {
         Ok(true)
@@ -150,7 +149,7 @@ pub async fn rclone_create_remote(
             .text()
             .await
             .unwrap_or_else(|_| "Unknown error".to_string());
-        Err(format!("Failed to create remote config: {}", error_text))
+        Err(format!("Failed to create remote config: {error_text}"))
     }
 }
 
@@ -164,13 +163,13 @@ pub async fn rclone_update_remote(
     let client = Client::new();
 
     let response = client
-        .post(&format!("{}/config/update", RCLONE_API_BASE))
+        .post(format!("{RCLONE_API_BASE}/config/update"))
         .header("Authorization", RCLONE_AUTH)
         .header("Content-Type", "application/json")
         .json(&json!({ "name": name, "type": r#type, "parameters": config }))
         .send()
         .await
-        .map_err(|e| format!("Failed to update remote config: {}", e))?;
+        .map_err(|e| format!("Failed to update remote config: {e}"))?;
 
     if response.status().is_success() {
         Ok(true)
@@ -179,7 +178,7 @@ pub async fn rclone_update_remote(
             .text()
             .await
             .unwrap_or_else(|_| "Unknown error".to_string());
-        Err(format!("Failed to update remote config: {}", error_text))
+        Err(format!("Failed to update remote config: {error_text}"))
     }
 }
 
@@ -191,13 +190,13 @@ pub async fn rclone_delete_remote(
     let client = Client::new();
 
     let response = client
-        .post(&format!("{}/config/delete", RCLONE_API_BASE))
+        .post(format!("{RCLONE_API_BASE}/config/delete"))
         .header("Authorization", RCLONE_AUTH)
         .header("Content-Type", "application/json")
         .json(&json!({ "name": name }))
         .send()
         .await
-        .map_err(|e| format!("Failed to delete remote config: {}", e))?;
+        .map_err(|e| format!("Failed to delete remote config: {e}"))?;
 
     if response.status().is_success() {
         Ok(true)
@@ -206,7 +205,7 @@ pub async fn rclone_delete_remote(
             .text()
             .await
             .unwrap_or_else(|_| "Unknown error".to_string());
-        Err(format!("Failed to delete remote config: {}", error_text))
+        Err(format!("Failed to delete remote config: {error_text}"))
     }
 }
 
@@ -218,13 +217,13 @@ pub async fn rclone_mount_remote(
     let client = Client::new();
 
     let response = client
-        .post(&format!("{}/mount/mount", RCLONE_API_BASE))
+        .post(format!("{RCLONE_API_BASE}/mount/mount"))
         .header("Authorization", RCLONE_AUTH)
         .header("Content-Type", "application/json")
         .json(&mount_request)
         .send()
         .await
-        .map_err(|e| format!("Failed to mount remote: {}", e))?;
+        .map_err(|e| format!("Failed to mount remote: {e}"))?;
 
     if response.status().is_success() {
         Ok(true)
@@ -233,7 +232,7 @@ pub async fn rclone_mount_remote(
             .text()
             .await
             .unwrap_or_else(|_| "Unknown error".to_string());
-        Err(format!("Failed to mount remote: {}", error_text))
+        Err(format!("Failed to mount remote: {error_text}"))
     }
 }
 
@@ -245,13 +244,13 @@ pub async fn rclone_unmount_remote(
     let client = Client::new();
 
     let response = client
-        .post(&format!("{}/mount/unmount", RCLONE_API_BASE))
+        .post(format!("{RCLONE_API_BASE}/mount/unmount"))
         .header("Authorization", RCLONE_AUTH)
         .header("Content-Type", "application/json")
         .json(&json!({ "mountPoint": mount_point }))
         .send()
         .await
-        .map_err(|e| format!("Failed to unmount remote: {}", e))?;
+        .map_err(|e| format!("Failed to unmount remote: {e}"))?;
 
     if response.status().is_success() {
         Ok(true)
@@ -260,26 +259,26 @@ pub async fn rclone_unmount_remote(
             .text()
             .await
             .unwrap_or_else(|_| "Unknown error".to_string());
-        Err(format!("Failed to unmount remote: {}", error_text))
+        Err(format!("Failed to unmount remote: {error_text}"))
     }
 }
 
 #[tauri::command]
 pub async fn create_rclone_mount_remote_process(
     config: ProcessConfig,
-    state: State<'_, AppState>,
+    _state: State<'_, AppState>,
 ) -> Result<ProcessConfig, String> {
     let binary_path =
-        get_rclone_binary_path().map_err(|e| format!("Failed to get rclone binary path: {}", e))?;
+        get_rclone_binary_path().map_err(|e| format!("Failed to get rclone binary path: {e}"))?;
     let log_file_path =
-        get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {}", e))?;
+        get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {e}"))?;
     let log_file_path = log_file_path.join("process_rclone.log");
     let rclone_conf_path = binary_path
         .parent()
         .map(|p| p.join("rclone.conf"))
         .ok_or_else(|| "Failed to determine rclone.conf path".to_string())?;
 
-    let api_key = get_api_key(state);
+    let api_key = get_api_key();
     let port = get_server_port();
     let mut args: Vec<String> = vec![
         "mount".into(),
@@ -306,23 +305,22 @@ pub async fn create_rclone_mount_remote_process(
     };
     let client = reqwest::Client::new();
     let response = client
-        .post(format!("http://127.0.0.1:{}/api/v1/processes", port))
+        .post(format!("http://127.0.0.1:{port}/api/v1/processes"))
         .json(&config)
-        .header("Authorization", format!("Bearer {}", api_key))
+        .header("Authorization", format!("Bearer {api_key}"))
         .send()
         .await
-        .map_err(|e| format!("Failed to send request: {}", e))?;
+        .map_err(|e| format!("Failed to send request: {e}"))?;
     if response.status().is_success() {
         let response_text = response
             .text()
             .await
-            .map_err(|e| format!("Failed to read response text: {}", e))?;
+            .map_err(|e| format!("Failed to read response text: {e}"))?;
         let process_config = match serde_json::from_str::<CreateProcessResponse>(&response_text) {
             Ok(process_config) => process_config,
             Err(e) => {
                 return Err(format!(
-                    "Failed to parse response: {}, response: {}",
-                    e, response_text
+                    "Failed to parse response: {e}, response: {response_text}"
                 ));
             }
         };
@@ -347,7 +345,7 @@ pub async fn check_mount_status(
     #[cfg(target_os = "windows")]
     {
         if mount_point.len() == 2 && mount_point.ends_with(':') {
-            let drive_path = format!("{}\\", mount_point);
+            let drive_path = format!("{mount_point}\\");
             match fs::read_dir(&drive_path) {
                 Ok(_) => return Ok(true),
                 Err(_) => return Ok(false),
@@ -387,12 +385,10 @@ pub async fn get_mount_info_list(
                         Ok(is_mounted) => {
                             if process.is_running {
                                 if is_mounted { "mounted" } else { "mounting" }
+                            } else if is_mounted {
+                                "unmounting"
                             } else {
-                                if is_mounted {
-                                    "unmounting"
-                                } else {
-                                    "unmounted"
-                                }
+                                "unmounted"
                             }
                         }
                         Err(_) => "error",

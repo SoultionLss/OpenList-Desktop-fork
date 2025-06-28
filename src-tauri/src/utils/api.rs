@@ -1,9 +1,6 @@
-use crate::object::structs::AppState;
-
 use std::{collections::HashMap, env};
 
 use serde::{Deserialize, Serialize};
-use tauri::State;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ProcessConfig {
@@ -56,21 +53,11 @@ pub fn get_server_port() -> u16 {
     env::var("PROCESS_MANAGER_PORT")
         .ok()
         .and_then(|port_str| port_str.parse().ok())
-        .unwrap_or_else(|| DEFAULT_HTTP_SERVER_PORT)
+        .unwrap_or(DEFAULT_HTTP_SERVER_PORT)
 }
 
-pub fn get_api_key(state: State<'_, AppState>) -> String {
-    let app_settings = state
-        .app_settings
-        .read()
-        .clone()
-        .ok_or_else(|| "Failed to read app settings".to_string())
-        .unwrap();
-    let openlist_config = app_settings.openlist;
-    if openlist_config.api_token != "" {
-        return openlist_config.api_token.clone();
-    }
-    let api_key =
-        env::var("PROCESS_MANAGER_API_KEY").unwrap_or_else(|_| DEFAULT_API_KEY.to_string());
-    api_key
+pub fn get_api_key() -> String {
+    env::var("PROCESS_MANAGER_API_KEY")
+        .ok()
+        .unwrap_or_else(|| DEFAULT_API_KEY.to_string())
 }
