@@ -74,7 +74,7 @@ pub async fn uninstall_service() -> Result<bool, Box<dyn std::error::Error>> {
 
 #[cfg(target_os = "linux")]
 pub async fn install_service() -> Result<bool, Box<dyn std::error::Error>> {
-    use users::get_effective_uid;
+    use uzers::get_effective_uid;
 
     let app_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
     let install_path = app_dir.join("install-openlist-service");
@@ -109,7 +109,7 @@ pub async fn install_service() -> Result<bool, Box<dyn std::error::Error>> {
 
 #[cfg(target_os = "linux")]
 pub async fn uninstall_service() -> Result<bool, Box<dyn std::error::Error>> {
-    use users::get_effective_uid;
+    use uzers::get_effective_uid;
 
     let app_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
     let uninstall_path = app_dir.join("uninstall-openlist-service");
@@ -586,7 +586,7 @@ async fn check_systemd_service_status(
 
 #[cfg(target_os = "linux")]
 async fn start_systemd_service(service_name: &str) -> Result<bool, Box<dyn std::error::Error>> {
-    use users::get_effective_uid;
+    use uzers::get_effective_uid;
 
     log::info!("Attempting to start systemd service: {service_name}");
 
@@ -671,7 +671,7 @@ async fn check_openrc_service_status(
 
 #[cfg(target_os = "linux")]
 async fn start_openrc_service(service_name: &str) -> Result<bool, Box<dyn std::error::Error>> {
-    use users::get_effective_uid;
+    use uzers::get_effective_uid;
 
     log::info!("Attempting to start OpenRC service: {service_name}");
     let status = match get_effective_uid() {
