@@ -12,11 +12,7 @@ on:
         required: false
         type: boolean
         default: false
-  workflow_call:
-    inputs:
-      version:
-        required: true
-        type: string
+
 permissions: write-all
 env:
   CARGO_INCREMENTAL: 0
@@ -162,7 +158,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.version == ''
         run: |
           # Update package.json
-          npm version ${{ steps.version.outputs.version }} --no-git-tag-version
+          yarn version --new-version ${{ steps.version.outputs.version }} --no-git-tag-version
           
           # Update Cargo.toml
           sed -i 's/^version = "[^"]*"/version = "${{ steps.version.outputs.version }}"/' src-tauri/Cargo.toml
@@ -352,6 +348,45 @@ jobs:
         run: |
           yarn install
           yarn run prebuild:dev --target=${{ matrix.target }}
+
+      - name: Update version for build (Windows)
+        if: needs.auto-version.outputs.version && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Update package.json
+          yarn version --new-version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
+          
+          # Update Cargo.toml
+          (Get-Content src-tauri/Cargo.toml) -replace '^version = ".*"', 'version = "${{ needs.auto-version.outputs.version }}"' | Set-Content src-tauri/Cargo.toml
+          
+          # Update tauri.conf.json
+          (Get-Content src-tauri/tauri.conf.json) -replace '"version": ".*"', '"version": "${{ needs.auto-version.outputs.version }}"' | Set-Content src-tauri/tauri.conf.json
+
+      - name: Update version for build (macOS)
+        if: needs.auto-version.outputs.version && runner.os == 'macOS'
+        shell: bash
+        run: |
+          # Update package.json
+          yarn version --new-version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
+          
+          # Update Cargo.toml
+          sed -i '' 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
+          
+          # Update tauri.conf.json
+          sed -i '' 's/"version": "[^"]*"/"version": "${{ needs.auto-version.outputs.version }}"/' src-tauri/tauri.conf.json
+
+      - name: Update version for build (Linux)
+        if: needs.auto-version.outputs.version && runner.os == 'Linux'
+        shell: bash
+        run: |
+          # Update package.json
+          yarn version --new-version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
+          
+          # Update Cargo.toml
+          sed -i 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
+          
+          # Update tauri.conf.json
+          sed -i 's/"version": "[^"]*"/"version": "${{ needs.auto-version.outputs.version }}"/' src-tauri/tauri.conf.json
           
       - name: Import Apple Developer Certificate (macOS only)
         if: matrix.os == 'macos-latest'
@@ -429,6 +464,18 @@ jobs:
           yarn install
           yarn run prebuild:dev --target=${{ matrix.target }}
 
+      - name: Update version for build
+        if: needs.auto-version.outputs.version
+        run: |
+          # Update package.json
+          yarn version --new-version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
+          
+          # Update Cargo.toml
+          sed -i 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
+          
+          # Update tauri.conf.json
+          sed -i 's/"version": "[^"]*"/"version": "${{ needs.auto-version.outputs.version }}"/' src-tauri/tauri.conf.json
+
       - name: "Setup for linux"
         run: |-
           sudo ls -lR /etc/apt/
@@ -483,7 +530,7 @@ jobs:
             export PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabihf/pkgconfig/:$PKG_CONFIG_PATH
             export PKG_CONFIG_SYSROOT_DIR=/usr/arm-linux-gnueabihf/
           fi
-          pnpm build --target ${{ matrix.target }}
+          yarn build --target ${{ matrix.target }}
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
@@ -496,14 +543,11 @@ jobs:
           echo "VERSION=$(cat package.json | jq '.version' | tr -d '"')" >> $GITHUB_ENV
           echo "BUILDTIME=$(TZ=Asia/Shanghai date)" >> $GITHUB_ENV
 
-      - name: Upload Release
-        uses: softprops/action-gh-release@v2
+      - name: Upload ARM artifacts
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ needs.changelog.outputs.tag }}
-          name: 'OpenList Desktop ${{ needs.changelog.outputs.tag }}'
-          body: ${{ needs.changelog.outputs.changelog }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          files: |
+          name: linux-${{ matrix.target }}-artifacts
+          path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
             src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.rpm
 
@@ -521,7 +565,14 @@ jobs:
         with:
           name: changelog
 
-      - name: Update release
+      - name: Download ARM artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: linux-*-artifacts
+          merge-multiple: true
+          path: arm-artifacts
+
+      - name: Update release with ARM artifacts
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ needs.changelog.outputs.tag }}
@@ -529,5 +580,8 @@ jobs:
           body_path: changelog.md
           draft: false
           prerelease: false
+          files: |
+            arm-artifacts/**/*.deb
+            arm-artifacts/**/*.rpm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
