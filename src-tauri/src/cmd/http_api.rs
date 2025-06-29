@@ -1,10 +1,11 @@
-use crate::object::structs::AppState;
-use crate::utils::api::{ListProcessResponse, ProcessStatus, get_api_key, get_server_port};
-use reqwest;
-
 use std::collections::HashMap;
 use std::str::FromStr;
+
+use reqwest;
 use tauri::State;
+
+use crate::object::structs::AppState;
+use crate::utils::api::{ListProcessResponse, ProcessStatus, get_api_key, get_server_port};
 
 #[tauri::command]
 pub async fn get_process_list(_state: State<'_, AppState>) -> Result<Vec<ProcessStatus>, String> {

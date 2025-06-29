@@ -1,5 +1,6 @@
-use regex::Regex;
 use std::env;
+
+use regex::Regex;
 
 #[tauri::command]
 pub async fn get_admin_password() -> Result<String, String> {
@@ -14,10 +15,10 @@ pub async fn get_admin_password() -> Result<String, String> {
 
     let mut last_password = None;
     for line in logs_content.lines() {
-        if let Some(captures) = re.captures(line) {
-            if let Some(password) = captures.get(1) {
-                last_password = Some(password.as_str().to_string());
-            }
+        if let Some(captures) = re.captures(line)
+            && let Some(password) = captures.get(1)
+        {
+            last_password = Some(password.as_str().to_string());
         }
     }
 
