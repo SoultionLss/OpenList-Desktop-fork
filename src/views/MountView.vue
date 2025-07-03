@@ -109,7 +109,7 @@ const editConfig = (config: RcloneFormConfig) => {
     mountPoint: config.mountPoint || '',
     volumeName: config.volumeName || '',
     autoMount: config.autoMount,
-    extraFlags: config.extraFlags || ['--vfs-cache-mode', 'full']
+    extraFlags: config.extraFlags || []
   }
   showAddForm.value = true
 }
@@ -171,7 +171,7 @@ const resetForm = () => {
     mountPoint: '',
     volumeName: '',
     autoMount: false,
-    extraFlags: ['--vfs-cache-mode', 'full']
+    extraFlags: []
   }
   editingConfig.value = null
 }

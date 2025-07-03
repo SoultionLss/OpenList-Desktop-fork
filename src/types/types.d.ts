@@ -1,9 +1,5 @@
 declare const OS_PLATFORM: Platform
 
-interface IStringMap {
-  [key: string]: any
-}
-
 interface IRemoteConfig {
   [key: string]: RcloneWebdavConfig
 }
@@ -47,29 +43,6 @@ interface RcloneMountInfo {
   status: 'mounted' | 'unmounted' | 'mounting' | 'unmounting' | 'error'
 }
 
-interface RcloneCreateRemoteRequest {
-  name: string
-  type: string
-  parameters: {
-    url: string
-    vendor?: string
-    user: string
-    pass: string
-  }
-}
-
-interface RcloneMountRequest {
-  fs: string
-  mountPoint: string
-  mountType?: string
-  vfsOpt?: Record<string, any>
-  mountOpt?: {
-    ExtraFlags?: string[]
-    ExtraOptions?: string[]
-    VolumeName?: string
-  }
-}
-
 interface AppConfig {
   theme?: 'light' | 'dark' | 'auto'
   monitor_interval?: number
@@ -102,41 +75,6 @@ interface FileItem {
   type?: string
 }
 
-interface AppState {
-  serviceStatus: OpenListCoreStatus
-  mountStatus: MountStatus
-  logs: string[]
-  settings: MergedSettings
-  currentPath: string
-  files: FileItem[]
-  loading: boolean
-  error?: string
-}
-
-interface TauriResponse<T = any> {
-  success: boolean
-  data?: T
-  error?: string
-}
-
-// Events
-interface LogEvent {
-  timestamp: string
-  level: string
-  source: string
-  message: string
-}
-
-interface ServiceEvent {
-  type: 'started' | 'stopped' | 'error'
-  data?: any
-}
-
-interface MountEvent {
-  type: 'mounted' | 'unmounted' | 'error'
-  data?: any
-}
-
 interface ProcessConfig {
   id: string
   name: string
@@ -163,25 +101,6 @@ interface ProcessStatus {
   config: ProcessConfig
 }
 
-interface GitHubRelease {
-  tag_name: string
-  name: string
-  body: string
-  published_at: string
-  assets: GitHubAsset[]
-  prerelease: boolean
-  draft: boolean
-}
-
-interface GitHubAsset {
-  id: number
-  name: string
-  size: number
-  download_count: number
-  browser_download_url: string
-  content_type: string
-}
-
 interface UpdateAsset {
   name: string
   url: string
@@ -204,11 +123,4 @@ interface DownloadProgress {
   total: number
   percentage: number
   speed: number
-}
-
-interface UpdateInfo {
-  version: string
-  date?: string
-  body: string
-  available: boolean
 }

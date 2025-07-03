@@ -3,32 +3,22 @@ import { computed, ref } from 'vue'
 
 import { TauriAPI } from '../api/tauri'
 
+type ActionFn<T = any> = () => Promise<T>
+
 export const useAppStore = defineStore('app', () => {
   const settings = ref<MergedSettings>({
-    openlist: {
-      port: 5244,
-      api_token: '',
-      auto_launch: false,
-      ssl_enabled: false
-    },
-    rclone: {
-      config: {}
-    },
-    app: {
-      theme: 'light',
-      monitor_interval: 5000,
-      auto_update_enabled: true
-    }
+    openlist: { port: 5244, api_token: '', auto_launch: false, ssl_enabled: false },
+    rclone: { config: {} },
+    app: { theme: 'light', monitor_interval: 5000, auto_update_enabled: true }
   })
-
-  const openlistCoreStatus = ref<OpenListCoreStatus>({
-    running: false
-  })
-
-  // rclone
+  const openlistCoreStatus = ref<OpenListCoreStatus>({ running: false })
   const remoteConfigs = ref<IRemoteConfig>({})
   const mountInfos = ref<RcloneMountInfo[]>([])
-  const mountedConfigs = computed(() => mountInfos.value.filter(mount => mount.status === 'mounted'))
+  const logs = ref<string[]>([])
+  const files = ref<FileItem[]>([])
+  const currentPath = ref('/')
+  const loading = ref(false)
+  const error = ref<string | undefined>()
 
   const defaultRcloneFormConfig: RcloneFormConfig = {
     name: '',
@@ -39,9 +29,90 @@ export const useAppStore = defineStore('app', () => {
     pass: '',
     mountPoint: '',
     volumeName: '',
-    extraFlags: ['--vfs-cache-mode', 'full'],
+    extraFlags: [],
     autoMount: false
   }
+
+  // Computed
+  const mountedConfigs = computed(() => mountInfos.value.filter(mount => mount.status === 'mounted'))
+
+  const fullRcloneConfigs = computed<RcloneFormConfig[]>(() => {
+    const result: RcloneFormConfig[] = []
+    for (const [key, config] of Object.entries(remoteConfigs.value)) {
+      let newConfig
+      if (settings.value.rclone.config[key]) {
+        newConfig = {
+          name: key,
+          type: 'webdav',
+          url: config.url,
+          vendor: config.vendor,
+          user: config.user,
+          pass: config.pass,
+          mountPoint: settings.value.rclone.config[key].mountPoint,
+          volumeName: settings.value.rclone.config[key].volumeName,
+          extraFlags: settings.value.rclone.config[key].extraFlags || [],
+          autoMount: settings.value.rclone.config[key].autoMount ?? false
+        }
+      } else {
+        newConfig = {
+          ...defaultRcloneFormConfig,
+          name: key,
+          url: config.url,
+          vendor: config.vendor,
+          user: config.user,
+          pass: config.pass
+        } as RcloneFormConfig
+      }
+      result.push(newConfig)
+      settings.value.rclone.config[key] = newConfig
+    }
+    return result
+  })
+  const isCoreRunning = computed(() => openlistCoreStatus.value.running)
+  const openListCoreUrl = computed(() => {
+    const protocol = settings.value.openlist.ssl_enabled ? 'https' : 'http'
+    return `${protocol}://localhost:${settings.value.openlist.port}`
+  })
+
+  // Helper
+  async function withLoading<T>(fn: ActionFn<T>, msg: string): Promise<T> {
+    loading.value = true
+    try {
+      return await fn()
+    } catch (e: any) {
+      error.value = msg
+      console.error(msg, e)
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+  // Settings
+  const loadSettings = () =>
+    withLoading(async () => {
+      const res = await TauriAPI.settings.load()
+      if (res) settings.value = res
+      applyTheme(settings.value.app.theme || 'light')
+    }, 'Failed to load settings')
+
+  const saveSettings = () => withLoading(() => TauriAPI.settings.save(settings.value), 'Failed to save settings')
+
+  async function saveSettingsWithUpdatePort(): Promise<boolean> {
+    try {
+      await TauriAPI.settings.saveWithUpdatePort(settings.value)
+      return true
+    } catch (err) {
+      error.value = 'Failed to save settings'
+      console.error('Failed to save settings:', err)
+      return false
+    }
+  }
+
+  const resetSettings = () =>
+    withLoading(async () => {
+      const res = await TauriAPI.settings.reset()
+      if (res) settings.value = res
+    }, 'Failed to reset settings')
 
   async function loadMountInfos() {
     try {
@@ -212,41 +283,6 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  const fullRcloneConfigs = computed(() => {
-    const result: RcloneFormConfig[] = []
-    for (const [key, config] of Object.entries(remoteConfigs.value)) {
-      let newConfig
-      if (settings.value.rclone.config[key]) {
-        newConfig = {
-          name: key,
-          type: 'webdav',
-          url: config.url,
-          vendor: config.vendor,
-          user: config.user,
-          pass: config.pass,
-          mountPoint: settings.value.rclone.config[key].mountPoint,
-          volumeName: settings.value.rclone.config[key].volumeName,
-          extraFlags: settings.value.rclone.config[key].extraFlags || [],
-          extraOptions: settings.value.rclone.config[key].extraOptions || {},
-          autoMount: settings.value.rclone.config[key].autoMount ?? false,
-          metadata: settings.value.rclone.config[key].metadata || {}
-        } as RcloneFormConfig
-      } else {
-        newConfig = {
-          ...defaultRcloneFormConfig,
-          name: key,
-          url: config.url,
-          vendor: config.vendor,
-          user: config.user,
-          pass: config.pass
-        } as RcloneFormConfig
-      }
-      result.push(newConfig)
-      settings.value.rclone.config[key] = newConfig
-    }
-    return result
-  })
-
   function getFullRcloneConfigs(name?: string): RcloneFormConfig[] {
     return name ? fullRcloneConfigs.value.filter(c => c.name === name) : fullRcloneConfigs.value
   }
@@ -337,75 +373,11 @@ export const useAppStore = defineStore('app', () => {
   const updateAvailable = ref(false)
   const updateCheck = ref<UpdateCheck | null>(null)
 
-  const logs = ref<string[]>([])
-  const files = ref<FileItem[]>([])
-  const currentPath = ref('/')
-  const loading = ref(false)
-  const error = ref<string | undefined>()
   const openlistProcessId = ref<string | undefined>(undefined)
 
   const showTutorial = ref(false)
   const tutorialStep = ref(0)
   const tutorialSkipped = ref(false)
-
-  const isCoreRunning = computed(() => openlistCoreStatus.value.running)
-  const openListCoreUrl = computed(() => {
-    const protocol = settings.value.openlist.ssl_enabled ? 'https' : 'http'
-    return `${protocol}://localhost:${settings.value.openlist.port}`
-  })
-
-  async function loadSettings() {
-    try {
-      loading.value = true
-      const response = await TauriAPI.settings.load()
-      if (response) {
-        settings.value = response
-      }
-      applyTheme(settings.value.app.theme || 'light')
-    } catch (err) {
-      error.value = 'Failed to load settings'
-      console.error('Failed to load settings:', err)
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function saveSettings() {
-    try {
-      console.log('value:', JSON.stringify(settings.value))
-      await TauriAPI.settings.save(settings.value)
-    } catch (err) {
-      error.value = 'Failed to save settings'
-      console.error('Failed to save settings:', err)
-      throw err
-    }
-  }
-
-  async function saveSettingsWithUpdatePort(): Promise<boolean> {
-    try {
-      await TauriAPI.settings.saveWithUpdatePort(settings.value)
-      return true
-    } catch (err) {
-      error.value = 'Failed to save settings'
-      console.error('Failed to save settings:', err)
-      return false
-    }
-  }
-
-  async function resetSettings() {
-    try {
-      loading.value = true
-      const response = await TauriAPI.settings.reset()
-      if (response) {
-        settings.value = response
-      }
-    } catch (err) {
-      error.value = 'Failed to reset settings'
-      console.error('Failed to reset settings:', err)
-    } finally {
-      loading.value = false
-    }
-  }
 
   async function getRcloneMountProcessId(name: string): Promise<string | undefined> {
     try {
@@ -608,19 +580,11 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function listFiles(path: string) {
-    try {
-      loading.value = true
-      const fileList = await TauriAPI.files.list(path)
-      files.value = fileList
+  const listFiles = (path: string) =>
+    withLoading(async () => {
+      files.value = await TauriAPI.files.list(path)
       currentPath.value = path
-    } catch (err) {
-      error.value = 'Failed to list files'
-      console.error('Failed to list files:', err)
-    } finally {
-      loading.value = false
-    }
-  }
+    }, 'Failed to list files')
 
   async function openFile(path: string) {
     try {
@@ -642,13 +606,13 @@ export const useAppStore = defineStore('app', () => {
 
   async function selectDirectory(title: string): Promise<string | null> {
     try {
-      const response = await TauriAPI.util.selectDirectory(title)
-      return response
+      return await TauriAPI.util.selectDirectory(title)
     } catch (err) {
       console.error('Failed to select directory:', err)
       return null
     }
   }
+
   function clearError() {
     error.value = undefined
   }
@@ -723,8 +687,8 @@ export const useAppStore = defineStore('app', () => {
       await loadSettings()
       await refreshOpenListCoreStatus()
       await TauriAPI.tray.updateDelayed(openlistCoreStatus.value.running)
-      await loadLogs()
-      await autoStartCoreIfEnabled()
+      loadLogs()
+      autoStartCoreIfEnabled()
       await loadRemoteConfigs()
       await loadMountInfos()
     } catch (err) {
@@ -772,8 +736,7 @@ export const useAppStore = defineStore('app', () => {
 
   async function getAdminPassword(): Promise<string | null> {
     try {
-      const password = await TauriAPI.logs.adminPassword()
-      return password
+      return await TauriAPI.logs.adminPassword()
     } catch (err) {
       console.error('Failed to get admin password:', err)
       return null
