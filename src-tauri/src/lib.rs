@@ -102,6 +102,7 @@ pub fn run() {
                 .expect("no main window")
                 .set_focus();
         }))
+        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_autostart::init(

@@ -2,16 +2,6 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
 import { TauriAPI } from '../api/tauri'
-import type {
-  FileItem,
-  MergedSettings,
-  OpenListCoreStatus,
-  ProcessConfig,
-  RcloneFormConfig,
-  RcloneMountInfo,
-  RcloneWebdavConfig,
-  UpdateCheck
-} from '../types'
 
 export const useAppStore = defineStore('app', () => {
   const settings = ref<MergedSettings>({
@@ -55,7 +45,7 @@ export const useAppStore = defineStore('app', () => {
 
   async function loadMountInfos() {
     try {
-      mountInfos.value = await TauriAPI.getMountInfoList()
+      mountInfos.value = await TauriAPI.rclone.mounts.list()
     } catch (err: any) {
       error.value = 'Failed to load mount information'
       console.error('Failed to load mount infos:', err)
@@ -83,7 +73,7 @@ export const useAppStore = defineStore('app', () => {
         user: fullConfig.user,
         pass: fullConfig.pass
       }
-      const result = await TauriAPI.createRemoteConfig(name, type, createdConfig)
+      const result = await TauriAPI.rclone.remotes.create(name, type, createdConfig)
       if (!result) {
         throw new Error('Failed to create remote configuration')
       }
@@ -126,12 +116,12 @@ export const useAppStore = defineStore('app', () => {
         if (!result) {
           throw new Error('Failed to create remote configuration')
         }
-        const deleteResult = await TauriAPI.deleteRemoteConfig(name)
+        const deleteResult = await TauriAPI.rclone.remotes.delete(name)
         if (!deleteResult) {
           throw new Error('Failed to delete old remote configuration')
         }
       } else {
-        const result = await TauriAPI.updateRemoteConfig(name, type, updatedConfig)
+        const result = await TauriAPI.rclone.remotes.update(name, type, updatedConfig)
         if (!result) {
           throw new Error('Failed to update remote configuration')
         }
@@ -144,8 +134,8 @@ export const useAppStore = defineStore('app', () => {
       const oldProcessId = await getRcloneMountProcessId(name)
       if (oldProcessId) {
         try {
-          await TauriAPI.stopProcess(oldProcessId)
-          await TauriAPI.deleteProcess(oldProcessId)
+          await TauriAPI.process.stop(oldProcessId)
+          await TauriAPI.process.delete(oldProcessId)
 
           const mountArgs = [
             `${fullConfig.name}:${fullConfig.volumeName || ''}`,
@@ -164,7 +154,7 @@ export const useAppStore = defineStore('app', () => {
             created_at: 0,
             updated_at: 0
           }
-          await TauriAPI.createRcloneMountRemoteProcess(newProcessConfig)
+          await TauriAPI.rclone.mounts.createProcess(newProcessConfig)
         } catch (err) {
           console.warn(`Failed to update mount process for renamed config ${name} -> ${config.name}:`, err)
         }
@@ -187,13 +177,13 @@ export const useAppStore = defineStore('app', () => {
       const processId = await getRcloneMountProcessId(name)
       if (processId) {
         try {
-          await TauriAPI.stopProcess(processId)
-          await TauriAPI.deleteProcess(processId)
+          await TauriAPI.process.stop(processId)
+          await TauriAPI.process.delete(processId)
         } catch (err) {
           console.warn(`Failed to stop/delete mount process for ${name}:`, err)
         }
       }
-      await TauriAPI.deleteRemoteConfig(name)
+      await TauriAPI.rclone.remotes.delete(name)
       await loadRemoteConfigs()
       if (settings.value.rclone.config[name]) {
         delete settings.value.rclone.config[name]
@@ -213,7 +203,7 @@ export const useAppStore = defineStore('app', () => {
   async function loadRemoteConfigs() {
     try {
       loading.value = true
-      remoteConfigs.value = await TauriAPI.rcloneListConfig('webdav')
+      remoteConfigs.value = await TauriAPI.rclone.remotes.listConfig('webdav')
     } catch (err: any) {
       error.value = 'Failed to load remote configurations'
       console.error('Failed to load remote configs:', err)
@@ -274,9 +264,9 @@ export const useAppStore = defineStore('app', () => {
         if (!config.mountPoint) {
           throw new Error(`Mount point is not set for remote: ${name}`)
         }
-        const mountResult = await TauriAPI.checkMountStatus(config.mountPoint)
+        const mountResult = await TauriAPI.rclone.mounts.check(config.mountPoint)
         if (!mountResult) {
-          const startResult = await TauriAPI.startProcess(processId)
+          const startResult = await TauriAPI.process.start(processId)
           if (!startResult) {
             throw new Error(`Failed to start mount process for remote: ${name}`)
           }
@@ -304,11 +294,11 @@ export const useAppStore = defineStore('app', () => {
           created_at: 0,
           updated_at: 0
         }
-        const createResponse = await TauriAPI.createRcloneMountRemoteProcess(createRemoteConfig)
+        const createResponse = await TauriAPI.rclone.mounts.createProcess(createRemoteConfig)
         if (!createResponse || !createResponse.id) {
           throw new Error('Failed to create mount process')
         }
-        const startResponse = await TauriAPI.startProcess(createResponse.id)
+        const startResponse = await TauriAPI.process.start(createResponse.id)
         if (!startResponse) {
           throw new Error('Failed to start mount process')
         }
@@ -328,7 +318,7 @@ export const useAppStore = defineStore('app', () => {
       loading.value = true
       const processId = await getRcloneMountProcessId(name)
       if (processId) {
-        const stopResult = await TauriAPI.stopProcess(processId)
+        const stopResult = await TauriAPI.process.stop(processId)
         if (!stopResult) {
           throw new Error(`Failed to stop mount process for remote: ${name}`)
         }
@@ -367,7 +357,7 @@ export const useAppStore = defineStore('app', () => {
   async function loadSettings() {
     try {
       loading.value = true
-      const response = await TauriAPI.loadSettings()
+      const response = await TauriAPI.settings.load()
       if (response) {
         settings.value = response
       }
@@ -383,7 +373,7 @@ export const useAppStore = defineStore('app', () => {
   async function saveSettings() {
     try {
       console.log('value:', JSON.stringify(settings.value))
-      await TauriAPI.saveSettings(settings.value)
+      await TauriAPI.settings.save(settings.value)
     } catch (err) {
       error.value = 'Failed to save settings'
       console.error('Failed to save settings:', err)
@@ -393,7 +383,7 @@ export const useAppStore = defineStore('app', () => {
 
   async function saveSettingsWithUpdatePort(): Promise<boolean> {
     try {
-      await TauriAPI.saveSettingsWithUpdatePort(settings.value)
+      await TauriAPI.settings.saveWithUpdatePort(settings.value)
       return true
     } catch (err) {
       error.value = 'Failed to save settings'
@@ -405,7 +395,7 @@ export const useAppStore = defineStore('app', () => {
   async function resetSettings() {
     try {
       loading.value = true
-      const response = await TauriAPI.resetSettings()
+      const response = await TauriAPI.settings.reset()
       if (response) {
         settings.value = response
       }
@@ -419,7 +409,7 @@ export const useAppStore = defineStore('app', () => {
 
   async function getRcloneMountProcessId(name: string): Promise<string | undefined> {
     try {
-      const processList = await TauriAPI.getProcessList()
+      const processList = await TauriAPI.process.list()
       const mountName = `rclone_mount_${name}_process`
       const findRcloneBackend = processList.find(p => p.config?.name === mountName)
       if (findRcloneBackend) {
@@ -437,14 +427,14 @@ export const useAppStore = defineStore('app', () => {
 
       let processId: string | undefined
       let createResponse: ProcessConfig | undefined
-      const processList = await TauriAPI.getProcessList()
+      const processList = await TauriAPI.process.list()
       const findOpenListCore = processList.find(p => p.config?.name === 'single_openlist_core_process')
 
       if (!findOpenListCore) {
-        createResponse = await TauriAPI.createOpenListCore(settings.value.openlist.auto_launch)
+        createResponse = await TauriAPI.core.create(settings.value.openlist.auto_launch)
 
         if (!createResponse || !createResponse.id) {
-          throw new Error('Invalid response from createOpenListCore: missing process ID')
+          throw new Error('Invalid response from TauriAPI.core.create: missing process ID')
         }
 
         processId = createResponse.id
@@ -455,7 +445,7 @@ export const useAppStore = defineStore('app', () => {
       if (!processId) {
         throw new Error('Failed to create or retrieve OpenList Core process ID')
       }
-      const startResponse = await TauriAPI.startProcess(processId)
+      const startResponse = await TauriAPI.process.start(processId)
       if (!startResponse) {
         throw new Error('Failed to start OpenList Core service - service returned false')
       }
@@ -463,7 +453,7 @@ export const useAppStore = defineStore('app', () => {
       openlistProcessId.value = processId
       await refreshOpenListCoreStatus()
 
-      await TauriAPI.updateTrayMenu(openlistCoreStatus.value.running)
+      await TauriAPI.tray.update(openlistCoreStatus.value.running)
     } catch (err: any) {
       openlistCoreStatus.value = { running: false }
       let errorMessage = 'Failed to start service'
@@ -482,7 +472,7 @@ export const useAppStore = defineStore('app', () => {
 
   async function getOpenListProcessId() {
     try {
-      const processList = await TauriAPI.getProcessList()
+      const processList = await TauriAPI.process.list()
       const findOpenListCore = processList.find(p => p.config?.name === 'single_openlist_core_process')
       if (findOpenListCore) {
         return findOpenListCore.id
@@ -499,17 +489,17 @@ export const useAppStore = defineStore('app', () => {
       const id = await getOpenListProcessId()
       if (!id) {
         openlistCoreStatus.value = { running: false }
-        await TauriAPI.updateTrayMenu(false)
+        await TauriAPI.tray.update(false)
         return
       }
 
-      const result = await TauriAPI.stopProcess(id)
+      const result = await TauriAPI.process.stop(id)
       if (!result) {
         throw new Error('Failed to stop OpenList Core service - service returned false')
       }
 
       openlistCoreStatus.value = { running: false }
-      await TauriAPI.updateTrayMenu(false)
+      await TauriAPI.tray.update(false)
     } catch (err: any) {
       const errorMessage = `Failed to stop service: ${formatError(err)}`
       error.value = errorMessage
@@ -529,7 +519,7 @@ export const useAppStore = defineStore('app', () => {
     try {
       const id = await getOpenListProcessId()
       if (!id) return
-      const result = await TauriAPI.updateProcess(id, {
+      const result = await TauriAPI.process.update(id, {
         auto_start: autoLaunch
       })
       if (!result) {
@@ -549,15 +539,15 @@ export const useAppStore = defineStore('app', () => {
       const id = await getOpenListProcessId()
       if (!id) {
         openlistCoreStatus.value = { running: false }
-        await TauriAPI.updateTrayMenu(false)
+        await TauriAPI.tray.update(false)
         return
       }
-      const result = await TauriAPI.restartProcess(id)
+      const result = await TauriAPI.process.restart(id)
       if (!result) {
         throw new Error('Failed to restart OpenList Core - service returned false')
       }
       await refreshOpenListCoreStatus()
-      await TauriAPI.updateTrayMenu(openlistCoreStatus.value.running)
+      await TauriAPI.tray.update(openlistCoreStatus.value.running)
     } catch (err: any) {
       const errorMessage = `Failed to restart core: ${formatError(err)}`
       error.value = errorMessage
@@ -576,17 +566,17 @@ export const useAppStore = defineStore('app', () => {
 
   async function refreshOpenListCoreStatus() {
     try {
-      const status = await TauriAPI.getOpenListCoreStatus()
+      const status = await TauriAPI.core.getStatus()
       const statusChanged = openlistCoreStatus.value.running !== status.running
       openlistCoreStatus.value = status
       if (statusChanged) {
-        await TauriAPI.updateTrayMenuDelayed(status.running)
+        await TauriAPI.tray.updateDelayed(status.running)
       }
     } catch (err) {
       const wasRunning = openlistCoreStatus.value.running
       openlistCoreStatus.value = { running: false }
       if (wasRunning) {
-        await TauriAPI.updateTrayMenuDelayed(false)
+        await TauriAPI.tray.updateDelayed(false)
       }
     }
   }
@@ -594,7 +584,7 @@ export const useAppStore = defineStore('app', () => {
   async function loadLogs(source?: 'openlist' | 'rclone' | 'app') {
     try {
       source = source || 'openlist'
-      const logEntries = await TauriAPI.getLogs(source)
+      const logEntries = await TauriAPI.logs.get(source)
       logs.value = logEntries
     } catch (err) {
       console.error('Failed to load logs:', err)
@@ -604,7 +594,7 @@ export const useAppStore = defineStore('app', () => {
   async function clearLogs(source?: 'openlist' | 'rclone' | 'app') {
     try {
       loading.value = true
-      const result = await TauriAPI.clearLogs(source)
+      const result = await TauriAPI.logs.clear(source)
       if (result) {
         logs.value = []
       } else {
@@ -621,7 +611,7 @@ export const useAppStore = defineStore('app', () => {
   async function listFiles(path: string) {
     try {
       loading.value = true
-      const fileList = await TauriAPI.listFiles(path)
+      const fileList = await TauriAPI.files.list(path)
       files.value = fileList
       currentPath.value = path
     } catch (err) {
@@ -634,7 +624,7 @@ export const useAppStore = defineStore('app', () => {
 
   async function openFile(path: string) {
     try {
-      await TauriAPI.openFile(path)
+      await TauriAPI.files.open(path)
     } catch (err) {
       error.value = 'Failed to open file'
       console.error('Failed to open file:', err)
@@ -643,7 +633,7 @@ export const useAppStore = defineStore('app', () => {
 
   async function openFolder(path: string) {
     try {
-      await TauriAPI.openFolder(path)
+      await TauriAPI.files.folder(path)
     } catch (err) {
       error.value = 'Failed to open folder'
       console.error('Failed to open folder:', err)
@@ -652,7 +642,7 @@ export const useAppStore = defineStore('app', () => {
 
   async function selectDirectory(title: string): Promise<string | null> {
     try {
-      const response = await TauriAPI.selectDirectory(title)
+      const response = await TauriAPI.util.selectDirectory(title)
       return response
     } catch (err) {
       console.error('Failed to select directory:', err)
@@ -676,7 +666,7 @@ export const useAppStore = defineStore('app', () => {
 
   async function safeUpdateTrayMenu(running: boolean) {
     try {
-      await TauriAPI.updateTrayMenu(running)
+      await TauriAPI.tray.update(running)
     } catch (err) {
       console.warn('Failed to update tray menu:', err)
     }
@@ -732,7 +722,7 @@ export const useAppStore = defineStore('app', () => {
       initTutorial()
       await loadSettings()
       await refreshOpenListCoreStatus()
-      await TauriAPI.updateTrayMenuDelayed(openlistCoreStatus.value.running)
+      await TauriAPI.tray.updateDelayed(openlistCoreStatus.value.running)
       await loadLogs()
       await autoStartCoreIfEnabled()
       await loadRemoteConfigs()
@@ -782,7 +772,7 @@ export const useAppStore = defineStore('app', () => {
 
   async function getAdminPassword(): Promise<string | null> {
     try {
-      const password = await TauriAPI.getAdminPassword()
+      const password = await TauriAPI.logs.adminPassword()
       return password
     } catch (err) {
       console.error('Failed to get admin password:', err)

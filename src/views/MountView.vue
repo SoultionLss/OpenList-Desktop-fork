@@ -20,7 +20,6 @@ import {
   Settings,
   FolderOpen
 } from 'lucide-vue-next'
-import type { RcloneFormConfig } from '../types'
 import { useAppStore } from '@/stores/app'
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 
