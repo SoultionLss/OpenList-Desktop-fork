@@ -28,6 +28,8 @@
     "nowatch": "tauri dev --no-watch",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
+    "i18n:check": "node scripts/find-unused-i18n.js",
+    "i18n:check:verbose": "node scripts/find-unused-i18n.js --verbose",
     "cz": "git-cz",
     "release": "bump-version",
     "prebuild:dev": "node scripts/prepare.js",
