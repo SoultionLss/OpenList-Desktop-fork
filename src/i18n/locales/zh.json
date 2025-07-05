@@ -172,6 +172,17 @@
           "help": "刷新系统指标和状态的频率"
         }
       },
+      "ghProxy": {
+        "title": "GitHub 代理",
+        "subtitle": "使用代理服务加速 GitHub",
+        "label": "GitHub 代理地址",
+        "placeholder": "https://ghfast.top",
+        "help": "可选。输入代理地址以加速 GitHub。例如：https://ghfast.top",
+        "api": {
+          "title": "代理 API 地址",
+          "description": "同时为 api.github.com 地址使用代理"
+        }
+      },
       "tutorial": {
         "title": "教程",
         "subtitle": "学习如何使用 OpenList 桌面版",

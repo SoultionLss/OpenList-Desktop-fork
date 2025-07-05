@@ -5,11 +5,12 @@ use std::time::Duration;
 
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 use tokio::io::AsyncWriteExt;
 
 use crate::cmd::config::save_settings;
 use crate::object::structs::AppState;
+use crate::utils::github_proxy::apply_github_proxy;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GitHubRelease {
@@ -168,14 +169,25 @@ fn compare_versions(current: &str, latest: &str) -> bool {
 }
 
 #[tauri::command]
-pub async fn check_for_updates() -> Result<UpdateCheck, String> {
+pub async fn check_for_updates(state: State<'_, AppState>) -> Result<UpdateCheck, String> {
     log::info!("Checking for updates...");
+
+    let gh_proxy = state
+        .get_settings()
+        .and_then(|settings| settings.app.gh_proxy.clone());
+
+    let gh_proxy_api = state
+        .get_settings()
+        .and_then(|settings| settings.app.gh_proxy_api);
 
     let client = Client::new();
     let url = "https://api.github.com/repos/OpenListTeam/openlist-desktop/releases/latest";
+    let proxied_url = apply_github_proxy(url, &gh_proxy, &gh_proxy_api);
+
+    log::info!("Fetching updates from: {proxied_url}");
 
     let response = client
-        .get(url)
+        .get(&proxied_url)
         .header("User-Agent", "OpenList-Desktop")
         .timeout(Duration::from_secs(30))
         .send()
@@ -212,7 +224,14 @@ pub async fn check_for_updates() -> Result<UpdateCheck, String> {
     let latest_version = release.tag_name.as_str();
 
     let has_update = compare_versions(current_version, latest_version);
-    let assets = filter_assets_for_platform(&release.assets);
+    let mut assets = filter_assets_for_platform(&release.assets);
+
+    // Apply GitHub proxy to asset URLs if proxy is configured
+    if gh_proxy.is_some() {
+        for asset in &mut assets {
+            asset.url = apply_github_proxy(&asset.url, &gh_proxy, &gh_proxy_api);
+        }
+    }
 
     log::info!(
         "Update check result: current={}, latest={}, has_update={}, assets_count={}",
@@ -237,8 +256,20 @@ pub async fn download_update(
     app: AppHandle,
     asset_url: String,
     asset_name: String,
+    state: State<'_, AppState>,
 ) -> Result<String, String> {
     log::info!("Starting download of update: {asset_name}");
+
+    let gh_proxy = state
+        .get_settings()
+        .and_then(|settings| settings.app.gh_proxy.clone());
+
+    let gh_proxy_api = state
+        .get_settings()
+        .and_then(|settings| settings.app.gh_proxy_api);
+
+    let proxied_url = apply_github_proxy(&asset_url, &gh_proxy, &gh_proxy_api);
+    log::info!("Downloading from: {proxied_url}");
 
     let client = Client::new();
 
@@ -248,7 +279,7 @@ pub async fn download_update(
     log::info!("Downloading to: {file_path:?}");
 
     let mut response = client
-        .get(&asset_url)
+        .get(&proxied_url)
         .header("User-Agent", "OpenList-Desktop")
         .timeout(Duration::from_secs(9000))
         .send()
@@ -502,10 +533,92 @@ pub async fn is_auto_check_enabled(state: State<'_, AppState>) -> Result<bool, S
     Ok(settings.app.auto_update_enabled.unwrap_or(true))
 }
 
+async fn check_for_updates_internal(app: &AppHandle) -> Result<UpdateCheck, String> {
+    log::info!("Checking for updates (background check)...");
+
+    let app_state = app.state::<AppState>();
+    let gh_proxy = app_state
+        .get_settings()
+        .and_then(|settings| settings.app.gh_proxy.clone());
+
+    let gh_proxy_api = app_state
+        .get_settings()
+        .and_then(|settings| settings.app.gh_proxy_api);
+
+    let client = Client::new();
+    let url = "https://api.github.com/repos/OpenListTeam/openlist-desktop/releases/latest";
+    let proxied_url = apply_github_proxy(url, &gh_proxy, &gh_proxy_api);
+
+    log::info!("Fetching updates from: {proxied_url}");
+
+    let response = client
+        .get(&proxied_url)
+        .header("User-Agent", "OpenList-Desktop")
+        .timeout(Duration::from_secs(30))
+        .send()
+        .await
+        .map_err(|e| {
+            let error_msg = format!("Network error while checking for updates: {e}");
+            log::error!("{error_msg}");
+            error_msg
+        })?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        let error_msg = if status.as_u16() == 404 {
+            "Repository not found. Please check the repository URL.".to_string()
+        } else if status.as_u16() == 403 {
+            "API rate limit exceeded. Please try again later.".to_string()
+        } else {
+            format!(
+                "GitHub API returned status: {} ({})",
+                status.as_u16(),
+                status.canonical_reason().unwrap_or("Unknown")
+            )
+        };
+        log::error!("{error_msg}");
+        return Err(error_msg);
+    }
+
+    let release: GitHubRelease = response.json().await.map_err(|e| {
+        log::error!("Failed to parse GitHub response: {e}");
+        format!("Failed to parse update information: {e}")
+    })?;
+
+    let current_version = env!("CARGO_PKG_VERSION");
+    let latest_version = release.tag_name.as_str();
+
+    let has_update = compare_versions(current_version, latest_version);
+    let mut assets = filter_assets_for_platform(&release.assets);
+
+    if gh_proxy.is_some() {
+        for asset in &mut assets {
+            asset.url = apply_github_proxy(&asset.url, &gh_proxy, &gh_proxy_api);
+        }
+    }
+
+    log::info!(
+        "Update check result: current={}, latest={}, has_update={}, assets_count={}",
+        current_version,
+        latest_version,
+        has_update,
+        assets.len()
+    );
+
+    Ok(UpdateCheck {
+        has_update,
+        current_version: current_version.to_string(),
+        latest_version: latest_version.to_string(),
+        release_date: release.published_at,
+        release_notes: release.body,
+        assets,
+    })
+}
+
 pub async fn perform_background_update_check(app: AppHandle) -> Result<(), String> {
     log::debug!("Performing background update check...");
 
-    match check_for_updates().await {
+    match check_for_updates_internal(&app).await {
         Ok(update_check) => {
             if update_check.has_update {
                 log::info!(

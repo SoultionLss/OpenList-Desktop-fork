@@ -70,6 +70,8 @@ onMounted(async () => {
 
   if (!appSettings.monitor_interval) appSettings.monitor_interval = 5
   if (appSettings.auto_update_enabled === undefined) appSettings.auto_update_enabled = true
+  if (!appSettings.gh_proxy) appSettings.gh_proxy = ''
+  if (appSettings.gh_proxy_api === undefined) appSettings.gh_proxy_api = false
   originalOpenlistPort = openlistCoreSettings.port || 5244
 })
 
@@ -312,6 +314,35 @@ const handleReset = async () => {
               />
               <small>{{ t('settings.app.monitor.interval.help') }}</small>
             </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h2>{{ t('settings.app.ghProxy.title') }}</h2>
+          <p>{{ t('settings.app.ghProxy.subtitle') }}</p>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>{{ t('settings.app.ghProxy.label') }}</label>
+              <input
+                v-model="appSettings.gh_proxy"
+                type="text"
+                class="form-input"
+                :placeholder="t('settings.app.ghProxy.placeholder')"
+              />
+              <small>{{ t('settings.app.ghProxy.help') }}</small>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="switch-label">
+              <input v-model="appSettings.gh_proxy_api" type="checkbox" class="switch-input" />
+              <span class="switch-slider"></span>
+              <div class="switch-content">
+                <span class="switch-title">{{ t('settings.app.ghProxy.api.title') }}</span>
+                <span class="switch-description">{{ t('settings.app.ghProxy.api.description') }}</span>
+              </div>
+            </label>
           </div>
         </div>
 

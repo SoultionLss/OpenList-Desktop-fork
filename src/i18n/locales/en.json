@@ -172,6 +172,17 @@
           "help": "How often to refresh system metrics and status"
         }
       },
+      "ghProxy": {
+        "title": "GitHub Proxy",
+        "subtitle": "Accelerate GitHub with proxy service",
+        "label": "GitHub Proxy URL",
+        "placeholder": "https://ghfast.top",
+        "help": "Optional. Enter a proxy URL to accelerate GitHub. Example: https://ghfast.top",
+        "api": {
+          "title": "Apply proxy to API URLs",
+          "description": "Also use proxy for api.github.com URLs "
+        }
+      },
       "tutorial": {
         "title": "Tutorial",
         "subtitle": "Learn how to use OpenList Desktop",

@@ -5,6 +5,7 @@ use tauri::{AppHandle, State};
 
 use crate::cmd::http_api::{get_process_list, start_process, stop_process};
 use crate::object::structs::{AppState, FileItem};
+use crate::utils::github_proxy::apply_github_proxy;
 use crate::utils::path::{get_openlist_binary_path, get_rclone_binary_path};
 
 fn normalize_path(path: &str) -> String {
@@ -127,19 +128,37 @@ pub async fn list_files(
 }
 
 #[tauri::command]
-pub async fn get_available_versions(tool: String) -> Result<Vec<String>, String> {
+pub async fn get_available_versions(
+    tool: String,
+    state: State<'_, AppState>,
+) -> Result<Vec<String>, String> {
     let url = match tool.as_str() {
         "openlist" => "https://api.github.com/repos/OpenListTeam/OpenList/releases",
         "rclone" => "https://api.github.com/repos/rclone/rclone/releases",
         _ => return Err("Unsupported tool".to_string()),
     };
 
+    let gh_proxy = state
+        .get_settings()
+        .and_then(|settings| settings.app.gh_proxy.clone());
+
+    let gh_proxy_api = state
+        .get_settings()
+        .and_then(|settings| settings.app.gh_proxy_api);
+
+    let proxied_url = apply_github_proxy(url, &gh_proxy, &gh_proxy_api);
+    log::info!("Fetching {tool} versions from: {proxied_url}");
+
     let client = reqwest::Client::builder()
         .user_agent("OpenList Desktop/1.0")
         .build()
         .map_err(|e| e.to_string())?;
 
-    let response = client.get(url).send().await.map_err(|e| e.to_string())?;
+    let response = client
+        .get(&proxied_url)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
     let releases: serde_json::Value = response.json().await.map_err(|e| e.to_string())?;
 
     let versions = releases
@@ -162,20 +181,28 @@ pub async fn update_tool_version(
 ) -> Result<String, String> {
     log::info!("Updating {tool} to version {version}");
 
-    let process_list = get_process_list(state.clone())
-        .await
-        .map_err(|e| format!("Failed to get process list: {e}"))?;
+    let process_list_result = get_process_list(state.clone()).await;
 
-    let process_name = match tool.as_str() {
-        "openlist" => "single_openlist_core_process",
-        "rclone" => "single_rclone_backend_process",
-        _ => return Err("Unsupported tool".to_string()),
+    let (was_running, process_id) = match process_list_result {
+        Ok(process_list) => {
+            let process_name = match tool.as_str() {
+                "openlist" => "single_openlist_core_process",
+                "rclone" => "single_rclone_backend_process",
+                _ => return Err("Unsupported tool".to_string()),
+            };
+
+            let running_process = process_list.iter().find(|p| p.config.name == process_name);
+            let was_running = running_process.map(|p| p.is_running).unwrap_or(false);
+            let process_id = running_process.map(|p| p.config.id.clone());
+
+            (was_running, process_id)
+        }
+        Err(e) => {
+            log::warn!("Failed to get process list (service may not be installed): {e}");
+            log::info!("Proceeding with update without stopping processes");
+            (false, None)
+        }
     };
-
-    let running_process = process_list.iter().find(|p| p.config.name == process_name);
-
-    let was_running = running_process.map(|p| p.is_running).unwrap_or(false);
-    let process_id = running_process.map(|p| p.config.id.clone());
 
     if was_running && let Some(pid) = &process_id {
         log::info!("Stopping {tool} process with ID: {pid}");
@@ -190,7 +217,15 @@ pub async fn update_tool_version(
         log::info!("Successfully stopped {tool} process");
     }
 
-    let result = download_and_replace_binary(&tool, &version).await;
+    let gh_proxy = state
+        .get_settings()
+        .and_then(|settings| settings.app.gh_proxy.clone());
+
+    let gh_proxy_api = state
+        .get_settings()
+        .and_then(|settings| settings.app.gh_proxy_api);
+
+    let result = download_and_replace_binary(&tool, &version, &gh_proxy, &gh_proxy_api).await;
 
     match result {
         Ok(_) => {
@@ -207,6 +242,10 @@ pub async fn update_tool_version(
                     _ => return Err("Unsupported tool".to_string()),
                 }
                 log::info!("Successfully restarted {tool} process");
+            } else if process_id.is_none() {
+                log::info!(
+                    "Update completed successfully. Service is not currently installed or running."
+                );
             }
 
             Ok(format!("Successfully updated {tool} to {version}"))
@@ -231,7 +270,12 @@ pub async fn update_tool_version(
     }
 }
 
-async fn download_and_replace_binary(tool: &str, version: &str) -> Result<(), String> {
+async fn download_and_replace_binary(
+    tool: &str,
+    version: &str,
+    gh_proxy: &Option<String>,
+    gh_proxy_api: &Option<bool>,
+) -> Result<(), String> {
     let platform = std::env::consts::OS;
     let arch = std::env::consts::ARCH;
 
@@ -258,13 +302,13 @@ async fn download_and_replace_binary(tool: &str, version: &str) -> Result<(), St
         "openlist" => {
             let path = get_openlist_binary_path()
                 .map_err(|e| format!("Failed to get OpenList binary path: {e}"))?;
-            let info = get_openlist_download_info(&platform_arch, version)?;
+            let info = get_openlist_download_info(&platform_arch, version, gh_proxy, gh_proxy_api)?;
             (path, info)
         }
         "rclone" => {
             let path = get_rclone_binary_path()
                 .map_err(|e| format!("Failed to get Rclone binary path: {e}"))?;
-            let info = get_rclone_download_info(&platform_arch, version)?;
+            let info = get_rclone_download_info(&platform_arch, version, gh_proxy, gh_proxy_api)?;
             (path, info)
         }
         _ => return Err("Unsupported tool".to_string()),
@@ -335,7 +379,12 @@ struct DownloadInfo {
     executable_name: String,
 }
 
-fn get_openlist_download_info(platform_arch: &str, version: &str) -> Result<DownloadInfo, String> {
+fn get_openlist_download_info(
+    platform_arch: &str,
+    version: &str,
+    gh_proxy: &Option<String>,
+    gh_proxy_api: &Option<bool>,
+) -> Result<DownloadInfo, String> {
     let arch_map = get_openlist_arch_mapping(platform_arch)?;
     let is_windows = platform_arch.starts_with("win32");
     let is_unix = platform_arch.starts_with("darwin") || platform_arch.starts_with("linux");
@@ -348,15 +397,21 @@ fn get_openlist_download_info(platform_arch: &str, version: &str) -> Result<Down
     let download_url = format!(
         "https://github.com/OpenListTeam/OpenList/releases/download/{version}/{archive_name}"
     );
+    let proxied_url = apply_github_proxy(&download_url, gh_proxy, gh_proxy_api);
 
     Ok(DownloadInfo {
-        download_url,
+        download_url: proxied_url,
         archive_name,
         executable_name,
     })
 }
 
-fn get_rclone_download_info(platform_arch: &str, version: &str) -> Result<DownloadInfo, String> {
+fn get_rclone_download_info(
+    platform_arch: &str,
+    version: &str,
+    gh_proxy: &Option<String>,
+    gh_proxy_api: &Option<bool>,
+) -> Result<DownloadInfo, String> {
     let arch_map = get_rclone_arch_mapping(platform_arch)?;
     let is_windows = platform_arch.starts_with("win32");
 
@@ -365,9 +420,10 @@ fn get_rclone_download_info(platform_arch: &str, version: &str) -> Result<Downlo
     let executable_name = format!("rclone{exe_ext}");
     let download_url =
         format!("https://github.com/rclone/rclone/releases/download/{version}/{archive_name}");
+    let proxied_url = apply_github_proxy(&download_url, gh_proxy, gh_proxy_api);
 
     Ok(DownloadInfo {
-        download_url,
+        download_url: proxied_url,
         archive_name,
         executable_name,
     })
