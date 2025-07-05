@@ -597,3 +597,62 @@ jobs:
             arm-artifacts/**/*.rpm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  winget-submit:
+    name: Submit to WinGet
+    needs: [publish, changelog, auto-version]
+    runs-on: windows-latest
+    if: always() && needs.publish.result == 'success'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get release version
+        id: version
+        run: |
+          $version = "${{ needs.auto-version.outputs.version }}"
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Download WinGet Create CLI
+        run: |
+          Write-Host "Downloading wingetcreate CLI..."
+          $url = "https://aka.ms/wingetcreate/latest"
+          Invoke-WebRequest -Uri $url -OutFile "wingetcreate.exe"
+          Write-Host "Downloaded wingetcreate.exe"
+
+      - name: Update WinGet package manifest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          # URLs for both x64 and arm64 installers
+          $x64InstallerUrl = "https://github.com/${{ github.repository }}/releases/download/v$version/OpenList.Desktop_$version`_x64-setup.exe"
+          $arm64InstallerUrl = "https://github.com/${{ github.repository }}/releases/download/v$version/OpenList.Desktop_$version`_arm64-setup.exe"
+          
+          Write-Host "Updating WinGet package for version: $version"
+          Write-Host "x64 Installer URL: $x64InstallerUrl"
+          Write-Host "arm64 Installer URL: $arm64InstallerUrl"
+          
+          Write-Host "Attempting to update existing package..."
+          ./wingetcreate.exe update OpenListTeam.OpenListDesktop `
+            --version $version `
+            --urls $x64InstallerUrl $arm64InstallerUrl `
+            --token $env:GITHUB_TOKEN `
+            --submit
+          
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "Update failed, attempting to create new package..."
+            ./wingetcreate.exe new `
+              --urls $x64InstallerUrl $arm64InstallerUrl `
+              --token $env:GITHUB_TOKEN `
+              --submit
+            
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "Successfully submitted new WinGet package"
+            } else {
+              Write-Error "Failed to create new WinGet package"
+              exit 1
+            }
+          } else {
+            Write-Host "Successfully updated existing WinGet package"
+          }
