@@ -216,9 +216,9 @@ Dashboard → Quick Actions → Start Rclone Backend
 
 Add custom Rclone flags for optimal performance:
 
-- `--vfs-cache-mode full`: Enable full VFS caching
-- `--buffer-size 256M`: Increase buffer size
-- `--transfers 10`: Concurrent transfer limit
+- `--vfs-cache-mode=full`: Enable full VFS caching
+- `--buffer-size=256M`: Increase buffer size
+- `--transfers=10`: Concurrent transfer limit
 
 #### System Tray Operations
 

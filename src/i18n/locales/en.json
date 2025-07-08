@@ -339,7 +339,7 @@
       "autoMount": "Auto-mount on startup",
       "advancedSettings": "Advanced Settings",
       "extraFlags": "Extra Flags",
-      "flagPlaceholder": "e.g., --vfs-cache-mode",
+      "flagPlaceholder": "e.g., --vfs-cache-mode=full",
       "addFlag": "Add Flag",
       "removeFlag": "Remove Flag",
       "quickFlags": "Common Used Flags",

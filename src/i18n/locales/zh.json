@@ -339,7 +339,7 @@
       "autoMount": "开机自动挂载",
       "advancedSettings": "高级设置",
       "extraFlags": "额外标志",
-      "flagPlaceholder": "例如：--vfs-cache-mode",
+      "flagPlaceholder": "例如：--vfs-cache-mode=full",
       "addFlag": "添加标志",
       "removeFlag": "移除标志",
       "quickFlags": "常用标志",
