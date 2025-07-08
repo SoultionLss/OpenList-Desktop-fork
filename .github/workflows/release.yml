@@ -341,7 +341,7 @@ jobs:
           node-version: "22"
       
       - name: Run install
-        uses: borales/actions-yarn@v4
+        uses: borales/actions-yarn@v5
         with:
           cmd: install
       - name:  install and check
@@ -390,7 +390,7 @@ jobs:
           
       - name: Import Apple Developer Certificate (macOS only)
         if: matrix.os == 'macos-latest'
-        uses: apple-actions/import-codesign-certs@v2
+        uses: apple-actions/import-codesign-certs@v5
         with:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -467,7 +467,7 @@ jobs:
           node-version: "22"
 
       - name: Run install
-        uses: borales/actions-yarn@v4
+        uses: borales/actions-yarn@v5
         with:
           cmd: install
 
@@ -585,7 +585,7 @@ jobs:
           path: arm-artifacts
 
       - name: Update release with ARM artifacts
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.changelog.outputs.tag }}
           name: 'OpenList Desktop ${{ needs.changelog.outputs.tag }}'
