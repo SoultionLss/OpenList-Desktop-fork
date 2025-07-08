@@ -5,6 +5,7 @@ use tauri::State;
 
 use crate::object::structs::AppState;
 use crate::utils::api::{ListProcessResponse, ProcessStatus, get_api_key, get_server_port};
+use crate::utils::args::split_args_vec;
 
 #[tauri::command]
 pub async fn get_process_list(_state: State<'_, AppState>) -> Result<Vec<ProcessStatus>, String> {
@@ -126,10 +127,22 @@ pub async fn update_process(
     let api_key = get_api_key();
     let port = get_server_port();
     let client = reqwest::Client::new();
+
+    let mut processed_config = update_config;
+    if let Some(args) = processed_config.get("args").and_then(|v| v.as_array()) {
+        let args_strings: Vec<String> = args
+            .iter()
+            .filter_map(|v| v.as_str())
+            .map(|s| s.to_string())
+            .collect();
+        let split_args = split_args_vec(args_strings);
+        processed_config["args"] = serde_json::json!(split_args);
+    }
+
     let response = client
         .put(format!("http://127.0.0.1:{port}/api/v1/processes/{id}"))
         .header("Authorization", format!("Bearer {api_key}"))
-        .json(&update_config)
+        .json(&processed_config)
         .send()
         .await
         .map_err(|e| format!("Failed to send request: {e}"))?;

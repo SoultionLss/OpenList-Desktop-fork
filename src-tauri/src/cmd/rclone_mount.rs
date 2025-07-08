@@ -12,6 +12,7 @@ use crate::object::structs::{
     AppState, RcloneMountInfo, RcloneMountListResponse, RcloneRemoteListResponse,
 };
 use crate::utils::api::{CreateProcessResponse, ProcessConfig, get_api_key, get_server_port};
+use crate::utils::args::split_args_vec;
 use crate::utils::path::{get_app_logs_dir, get_rclone_binary_path};
 
 #[tauri::command]
@@ -284,7 +285,7 @@ pub async fn create_rclone_mount_remote_process(
         "--config".into(),
         rclone_conf_path.to_string_lossy().into_owned(),
     ];
-    args.extend(config.args.clone());
+    args.extend(split_args_vec(config.args.clone()));
 
     let config = ProcessConfig {
         id: config.id.clone(),
