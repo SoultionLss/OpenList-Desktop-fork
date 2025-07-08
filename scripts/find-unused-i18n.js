@@ -111,12 +111,14 @@ function findFiles(dir, extensions = ['.vue', '.ts', '.js']) {
 
 function findKeyUsage(keys) {
   const usage = {}
+  const dynamicPatterns = []
 
   keys.forEach(key => {
     usage[key] = {
       used: false,
       files: [],
-      patterns: []
+      patterns: [],
+      dynamicMatch: false
     }
   })
 
@@ -131,6 +133,8 @@ function findKeyUsage(keys) {
     /(?:^|[^a-zA-Z])t\s*\(\s*['"`]([^'"`]+)['"`]/g,
     /\{\{\s*\$?t\s*\(\s*['"`]([^'"`]+)['"`]/g
   ]
+
+  const dynamicPattern = /\$?t\s*\(\s*`([^`]*\$\{[^}]+\}[^`]*)`/g
 
   sourceFiles.forEach(filePath => {
     try {
@@ -152,12 +156,81 @@ function findKeyUsage(keys) {
           }
         }
       })
+
+      let dynamicMatch
+      while ((dynamicMatch = dynamicPattern.exec(content)) !== null) {
+        const templateString = dynamicMatch[1]
+
+        const staticParts = templateString.split(/\$\{[^}]+\}/)
+
+        const patternInfo = {
+          template: templateString,
+          file: relativePath,
+          staticParts
+        }
+
+        if (!dynamicPatterns.some(p => p.template === templateString && p.file === relativePath)) {
+          dynamicPatterns.push(patternInfo)
+        }
+
+        keys.forEach(key => {
+          if (matchesDynamicPattern(key, staticParts)) {
+            if (usage[key]) {
+              usage[key].used = true
+              usage[key].dynamicMatch = true
+              if (!usage[key].files.includes(relativePath)) {
+                usage[key].files.push(relativePath)
+              }
+              if (!usage[key].patterns.includes('dynamic')) {
+                usage[key].patterns.push('dynamic')
+              }
+            }
+          }
+        })
+      }
     } catch (error) {
       console.error(colorize(`Error reading ${filePath}: ${error.message}`, 'red'))
     }
   })
 
+  usage._dynamicPatterns = dynamicPatterns
+
   return usage
+}
+
+function matchesDynamicPattern(key, staticParts) {
+  if (staticParts.length === 0) return false
+
+  let keyIndex = 0
+
+  for (let i = 0; i < staticParts.length; i++) {
+    const part = staticParts[i]
+
+    if (part === '') {
+      if (i < staticParts.length - 1) {
+        const nextPart = staticParts[i + 1]
+        if (nextPart) {
+          const nextIndex = key.indexOf(nextPart, keyIndex)
+          if (nextIndex === -1) return false
+          keyIndex = nextIndex
+        }
+      }
+      continue
+    }
+
+    if (i === 0) {
+      if (!key.startsWith(part)) return false
+      keyIndex = part.length
+    } else if (i === staticParts.length - 1) {
+      if (part && !key.endsWith(part)) return false
+    } else {
+      const index = key.indexOf(part, keyIndex)
+      if (index === -1) return false
+      keyIndex = index + part.length
+    }
+  }
+
+  return true
 }
 
 function findLocaleInconsistencies(localeData) {
@@ -206,15 +279,42 @@ function main() {
 
   console.log(colorize(`\n📊 Total unique keys found: ${allKeys.length}`, 'yellow'))
   const usage = findKeyUsage(allKeys)
+  const dynamicPatterns = usage._dynamicPatterns || []
+  delete usage._dynamicPatterns
+
   const usedKeys = allKeys.filter(key => usage[key].used)
   const unusedKeys = allKeys.filter(key => !usage[key].used)
+  const dynamicallyUsedKeys = usedKeys.filter(key => usage[key].dynamicMatch)
+  const staticUsedKeys = usedKeys.filter(key => !usage[key].dynamicMatch)
 
   const inconsistencies = findLocaleInconsistencies(localeData)
 
   console.log(colorize('\n📈 Usage Summary:', 'blue'))
   console.log(`  ${colorize('✓', 'green')} Used keys: ${usedKeys.length}`)
+  console.log(`    ${colorize('→', 'cyan')} Static usage: ${staticUsedKeys.length}`)
+  console.log(`    ${colorize('→', 'magenta')} Dynamic usage: ${dynamicallyUsedKeys.length}`)
   console.log(`  ${colorize('✗', 'red')} Unused keys: ${unusedKeys.length}`)
   console.log(`  ${colorize('📊', 'yellow')} Usage rate: ${((usedKeys.length / allKeys.length) * 100).toFixed(1)}%`)
+
+  if (dynamicPatterns.length > 0) {
+    console.log(colorize('\n🔮 Dynamic I18n Patterns Detected:', 'magenta'))
+    console.log(colorize('===================================', 'magenta'))
+
+    dynamicPatterns.forEach((pattern, index) => {
+      console.log(colorize(`\n${index + 1}. Template: \`${pattern.template}\``, 'cyan'))
+      console.log(`   File: ${pattern.file}`)
+      console.log(`   Static parts: [${pattern.staticParts.map(p => `"${p}"`).join(', ')}]`)
+
+      const matchingKeys = allKeys.filter(key => matchesDynamicPattern(key, pattern.staticParts))
+      if (matchingKeys.length > 0) {
+        console.log(
+          `   ${colorize('Matches', 'green')} (${matchingKeys.length}): ${matchingKeys.slice(0, 5).join(', ')}${
+            matchingKeys.length > 5 ? '...' : ''
+          }`
+        )
+      }
+    })
+  }
 
   if (unusedKeys.length > 0) {
     console.log(colorize('\n🗑️  Unused I18n Keys:', 'red'))
@@ -273,9 +373,25 @@ function main() {
     usedKeys.slice(0, 10).forEach(key => {
       const files = usage[key].files.slice(0, 3) // Show first 3 files
       const moreFiles = usage[key].files.length > 3 ? ` (+${usage[key].files.length - 3} more)` : ''
-      console.log(`  ${colorize('✓', 'green')} ${key}`)
+      const usageType = usage[key].dynamicMatch ? colorize('(dynamic)', 'magenta') : colorize('(static)', 'cyan')
+      console.log(`  ${colorize('✓', 'green')} ${key} ${usageType}`)
       console.log(`    Used in: ${files.join(', ')}${moreFiles}`)
     })
+
+    if (dynamicallyUsedKeys.length > 0) {
+      console.log(colorize('\n🔮 Dynamic Key Usage Details:', 'magenta'))
+      console.log(colorize('=============================', 'magenta'))
+
+      dynamicallyUsedKeys.slice(0, 5).forEach(key => {
+        const files = usage[key].files.slice(0, 2)
+        console.log(`  ${colorize('✨', 'magenta')} ${key}`)
+        console.log(`    Files: ${files.join(', ')}`)
+      })
+
+      if (dynamicallyUsedKeys.length > 5) {
+        console.log(`    ... and ${dynamicallyUsedKeys.length - 5} more dynamic keys`)
+      }
+    }
   }
 
   console.log(colorize('\n✨ Analysis complete!', 'cyan'))

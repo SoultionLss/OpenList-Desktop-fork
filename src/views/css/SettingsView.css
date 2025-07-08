@@ -1,20 +1,17 @@
-/* Use CSS variables for theme support */
 .settings-container {
   padding: 2rem;
   height: 100vh;
   background: var(--color-background-secondary);
   color: var(--color-text-primary);
   overflow-y: auto;
-  /* Hide scrollbar for webkit browsers */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .settings-container::-webkit-scrollbar {
-  display: none; /* Safari and Chrome */
+  display: none;
 }
 
-/* Override specific colors for settings */
 :root.dark .settings-container,
 :root.auto.dark .settings-container {
   background: var(--color-background-primary);
