@@ -10,7 +10,7 @@ import Navigation from './components/Navigation.vue'
 import TitleBar from './components/ui/TitleBar.vue'
 import TutorialOverlay from './components/ui/TutorialOverlay.vue'
 
-const store = useAppStore()
+const appStore = useAppStore()
 const { t } = useTranslation()
 const { updateTrayMenu } = useTray()
 const router = useRouter()
@@ -49,14 +49,14 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 onMounted(async () => {
   try {
-    store.init()
-    store.applyTheme(store.settings.app.theme || 'light')
-    await updateTrayMenu(store.openlistCoreStatus.running)
+    appStore.init()
+    appStore.applyTheme(appStore.settings.app.theme || 'light')
+    await updateTrayMenu(appStore.openlistCoreStatus.running)
 
     try {
       updateUnlisten = await TauriAPI.updater.onBackgroundUpdate(updateInfo => {
         console.log('Global update listener: Update available', updateInfo)
-        store.setUpdateAvailable(true, updateInfo)
+        appStore.setUpdateAvailable(true, updateInfo)
       })
       console.log('Global update listener set up successfully')
     } catch (err) {

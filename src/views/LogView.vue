@@ -22,7 +22,7 @@ import {
 } from 'lucide-vue-next'
 import * as chrono from 'chrono-node'
 
-const store = useAppStore()
+const appStore = useAppStore()
 const { t } = useTranslation()
 const logContainer = ref<HTMLElement>()
 const searchInputRef = ref<HTMLInputElement>()
@@ -132,7 +132,7 @@ const parseLogEntry = (logText: string) => {
 }
 
 const filteredLogs = computed(() => {
-  let logs = store.logs
+  let logs = appStore.logs
     .slice(-maxLines.value)
     .filter((log: string | string[]) => !log.includes('/ping'))
     .map(parseLogEntry)
@@ -189,7 +189,7 @@ const scrollToTop = () => {
 const clearLogs = async () => {
   if (confirm(t('logs.messages.confirmClear'))) {
     try {
-      await store.clearLogs(
+      await appStore.clearLogs(
         (filterSource.value !== 'all' && filterSource.value !== 'gin' ? filterSource.value : 'openlist') as
           | 'openlist'
           | 'rclone'
@@ -273,7 +273,7 @@ const togglePause = () => {
 }
 
 const refreshLogs = async () => {
-  await store.loadLogs()
+  await appStore.loadLogs()
   await scrollToBottom()
   if (isPaused.value) {
     isPaused.value = false
@@ -347,7 +347,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 onMounted(async () => {
-  await store.loadLogs(
+  await appStore.loadLogs(
     (filterSource.value !== 'all' && filterSource.value !== 'gin' ? filterSource.value : 'openlist') as
       | 'openlist'
       | 'rclone'
@@ -359,19 +359,19 @@ onMounted(async () => {
 
   logRefreshInterval = setInterval(async () => {
     if (!isPaused.value) {
-      const oldLength = store.logs.length
-      await store.loadLogs(
+      const oldLength = appStore.logs.length
+      await appStore.loadLogs(
         (filterSource.value !== 'all' && filterSource.value !== 'gin' ? filterSource.value : 'openlist') as
           | 'openlist'
           | 'rclone'
           | 'app'
       )
 
-      if (store.logs.length > oldLength) {
+      if (appStore.logs.length > oldLength) {
         await scrollToBottom()
       }
     }
-  }, (store.settings.app.monitor_interval || 5) * 1000)
+  }, (appStore.settings.app.monitor_interval || 5) * 1000)
 })
 
 onUnmounted(() => {
@@ -381,7 +381,7 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
 })
 
-const unwatchLogs = store.$subscribe(mutation => {
+const unwatchLogs = appStore.$subscribe(mutation => {
   if (mutation.storeId === 'app') {
     const events = Array.isArray(mutation.events) ? mutation.events : [mutation.events]
     if (events.some((event: any) => event.key === 'logs')) {
@@ -451,7 +451,7 @@ onUnmounted(() => {
       <div class="toolbar-section right">
         <div class="log-stats">
           <span class="stat">{{
-            t('logs.stats.logsCount', { filtered: filteredLogs.length, total: store.logs.length })
+            t('logs.stats.logsCount', { filtered: filteredLogs.length, total: appStore.logs.length })
           }}</span>
           <span v-if="selectedEntries.size > 0" class="stat selected">
             {{ t('logs.stats.selected', { count: selectedEntries.size }) }}
@@ -618,7 +618,7 @@ onUnmounted(() => {
 
       <div class="status-right">
         <span class="status-item">
-          {{ t('logs.status.showing', { filtered: filteredLogs.length, total: store.logs.length }) }}
+          {{ t('logs.status.showing', { filtered: filteredLogs.length, total: appStore.logs.length }) }}
         </span>
       </div>
     </div>

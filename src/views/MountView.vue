@@ -25,7 +25,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
 
 const { t } = useTranslation()
 const rcloneStore = useRcloneStore()
-const store = useAppStore()
+const appStore = useAppStore()
 
 const showAddForm = ref(false)
 const editingConfig = ref<RcloneFormConfig | null>(null)
@@ -128,7 +128,7 @@ const showFlagSelector = ref(false)
 
 const filteredConfigs: ComputedRef<RcloneFormConfig[]> = computed(() => {
   let filtered: RcloneFormConfig[] = []
-  const fullRemoteConfigs = store.fullRcloneConfigs
+  const fullRemoteConfigs = appStore.fullRcloneConfigs
 
   for (const config of fullRemoteConfigs) {
     if (!config) continue
@@ -139,7 +139,7 @@ const filteredConfigs: ComputedRef<RcloneFormConfig[]> = computed(() => {
       : true
     if (!matchesSearch) continue
 
-    const mountInfo = store.mountInfos.find(mount => mount.name === config.name)
+    const mountInfo = appStore.mountInfos.find(mount => mount.name === config.name)
     const status = mountInfo?.status || 'unmounted'
     const matchesStatus = statusFilter.value === 'all' || status === statusFilter.value
 
@@ -151,12 +151,12 @@ const filteredConfigs: ComputedRef<RcloneFormConfig[]> = computed(() => {
 })
 
 const configCounts = computed(() => {
-  const fullConfigs = store.fullRcloneConfigs
+  const fullConfigs = appStore.fullRcloneConfigs
   return {
     total: fullConfigs.length,
-    mounted: store.mountedConfigs.length,
-    unmounted: fullConfigs.length - store.mountedConfigs.length,
-    error: store.mountInfos.filter(m => m.status === 'error').length
+    mounted: appStore.mountedConfigs.length,
+    unmounted: fullConfigs.length - appStore.mountedConfigs.length,
+    error: appStore.mountInfos.filter(m => m.status === 'error').length
   }
 })
 
@@ -190,7 +190,7 @@ const saveConfig = async () => {
 
   try {
     if (editingConfig.value && editingConfig.value.name) {
-      await store.updateRemoteConfig(editingConfig.value.name, configForm.value.type, {
+      await appStore.updateRemoteConfig(editingConfig.value.name, configForm.value.type, {
         name: configForm.value.name,
         type: configForm.value.type,
         url: configForm.value.url,
@@ -203,7 +203,7 @@ const saveConfig = async () => {
         extraFlags: configForm.value.extraFlags
       })
     } else {
-      await store.createRemoteConfig(configForm.value.name, configForm.value.type, {
+      await appStore.createRemoteConfig(configForm.value.name, configForm.value.type, {
         name: configForm.value.name,
         type: configForm.value.type,
         url: configForm.value.url,
@@ -246,7 +246,7 @@ const resetForm = () => {
 
 const mountConfig = async (config: RcloneFormConfig) => {
   try {
-    await store.mountRemote(config.name)
+    await appStore.mountRemote(config.name)
   } catch (error: any) {
     console.error(error.message || t('mount.messages.failedToMount'))
   }
@@ -255,7 +255,7 @@ const mountConfig = async (config: RcloneFormConfig) => {
 const unmountConfig = async (config: RcloneFormConfig) => {
   if (!config.name) return
   try {
-    await store.unmountRemote(config.name)
+    await appStore.unmountRemote(config.name)
   } catch (error: any) {
     console.error(error.message || t('mount.messages.failedToUnmount'))
   }
@@ -277,7 +277,7 @@ const confirmDelete = async () => {
   if (!config || !config.name) return
 
   try {
-    await store.deleteRemoteConfig(config.name)
+    await appStore.deleteRemoteConfig(config.name)
   } catch (error: any) {
     console.error(error.message || t('mount.messages.failedToDelete'))
   } finally {
@@ -296,8 +296,8 @@ const startBackend = async () => {
     await rcloneStore.startRcloneBackend()
     await new Promise(resolve => setTimeout(resolve, 1000))
     await rcloneStore.checkRcloneBackendStatus()
-    await store.loadRemoteConfigs()
-    await store.loadMountInfos()
+    await appStore.loadRemoteConfigs()
+    await appStore.loadMountInfos()
   } catch (error: any) {
     console.error(error.message || t('mount.messages.failedToStartService'))
   }
@@ -305,14 +305,17 @@ const startBackend = async () => {
 
 const stopBackend = async () => {
   try {
-    await rcloneStore.stopRcloneBackend()
+    const stopped = await rcloneStore.stopRcloneBackend()
+    if (!stopped) {
+      throw new Error(t('mount.messages.failedToStopService'))
+    }
   } catch (error: any) {
     console.error(error.message || t('mount.messages.failedToStopService'))
   }
 }
 
 const getConfigStatus = (config: RcloneFormConfig) => {
-  const mountInfo = store.mountInfos.find(mount => mount.name === config.name)
+  const mountInfo = appStore.mountInfos.find(mount => mount.name === config.name)
   return mountInfo?.status || 'unmounted'
 }
 
@@ -414,8 +417,8 @@ const handleKeydown = (event: KeyboardEvent) => {
     addNewConfig()
   } else if (ctrl && key === 'r') {
     event.preventDefault()
-    store.loadRemoteConfigs()
-    store.loadMountInfos()
+    appStore.loadRemoteConfigs()
+    appStore.loadMountInfos()
   } else if (key === 'Escape') {
     event.preventDefault()
     if (showAddForm.value) {
@@ -431,7 +434,7 @@ const openInFileExplorer = async (path?: string) => {
   }
   const normalizedPath = path.trim()
   try {
-    await store.openFolder(normalizedPath)
+    await appStore.openFolder(normalizedPath)
   } catch (error: any) {
     console.error('Failed to open mount point in file explorer:', error)
     const errorMessage = error.message || error.toString() || 'Unknown error'
@@ -468,12 +471,12 @@ const shouldShowWebdavTip = computed(() => {
 onMounted(async () => {
   document.addEventListener('keydown', handleKeydown)
   await rcloneStore.checkRcloneBackendStatus()
-  await store.loadRemoteConfigs()
-  await store.loadMountInfos()
-  mountRefreshInterval = setInterval(store.loadMountInfos, (store.settings.app.monitor_interval || 5) * 1000)
+  await appStore.loadRemoteConfigs()
+  await appStore.loadMountInfos()
+  mountRefreshInterval = setInterval(appStore.loadMountInfos, (appStore.settings.app.monitor_interval || 5) * 1000)
   backendStatusCheckInterval = setInterval(() => {
     rcloneStore.checkRcloneBackendStatus()
-  }, (store.settings.app.monitor_interval || 5) * 1000)
+  }, (appStore.settings.app.monitor_interval || 5) * 1000)
   await rcloneStore.init()
 })
 
@@ -591,7 +594,7 @@ onUnmounted(() => {
           <option value="unmounted">{{ t('mount.status.unmounted') }}</option>
           <option value="error">{{ t('mount.status.error') }}</option>
         </select>
-        <button @click="store.loadMountInfos" class="refresh-btn" :disabled="rcloneStore.loading">
+        <button @click="appStore.loadMountInfos" class="refresh-btn" :disabled="rcloneStore.loading">
           <RefreshCw class="refresh-icon" :class="{ spinning: rcloneStore.loading }" />
         </button>
       </div>
@@ -645,7 +648,7 @@ onUnmounted(() => {
                 :is="getStatusIcon(getConfigStatus(config))"
                 class="status-icon"
                 :class="{
-                  spinning: isConfigMounting(config) || store.loading,
+                  spinning: isConfigMounting(config) || appStore.loading,
                   success: getConfigStatus(config) === 'mounted',
                   error: getConfigStatus(config) === 'error'
                 }"
@@ -933,7 +936,7 @@ onUnmounted(() => {
             <X class="btn-icon" />
             <span>{{ t('common.cancel') }}</span>
           </button>
-          <button @click="saveConfig" class="save-btn" :disabled="store.loading">
+          <button @click="saveConfig" class="save-btn" :disabled="appStore.loading">
             <Save class="btn-icon" />
             <span>{{ editingConfig ? t('common.save') : t('common.add') }}</span>
           </button>

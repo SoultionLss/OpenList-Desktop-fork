@@ -4,7 +4,7 @@ import { useAppStore } from '../../stores/app'
 import { useTranslation } from '../../composables/useI18n'
 import { ChevronLeft, ChevronRight, X, Check, Play, FileText, Settings, HardDrive, Home } from 'lucide-vue-next'
 
-const store = useAppStore()
+const appStore = useAppStore()
 const { t } = useTranslation()
 
 const tutorialSteps = computed(() => [
@@ -68,7 +68,7 @@ const tutorialSteps = computed(() => [
   }
 ])
 
-const currentStep = computed(() => tutorialSteps.value[store.tutorialStep] || tutorialSteps.value[0])
+const currentStep = computed(() => tutorialSteps.value[appStore.tutorialStep] || tutorialSteps.value[0])
 
 const highlightStyle = ref({})
 
@@ -248,36 +248,36 @@ const getTooltipStyle = () => {
 }
 
 const handleNext = () => {
-  if (store.tutorialStep < tutorialSteps.value.length - 1) {
-    store.nextTutorialStep()
+  if (appStore.tutorialStep < tutorialSteps.value.length - 1) {
+    appStore.nextTutorialStep()
     updateHighlight()
   }
 }
 
 const handlePrev = () => {
-  if (store.tutorialStep > 0) {
-    store.prevTutorialStep()
+  if (appStore.tutorialStep > 0) {
+    appStore.prevTutorialStep()
     updateHighlight()
   }
 }
 
 const handleSkip = () => {
-  store.skipTutorial()
+  appStore.skipTutorial()
 }
 
 const handleComplete = () => {
-  store.completeTutorial()
+  appStore.completeTutorial()
 }
 
 const handleClose = () => {
-  store.closeTutorial()
+  appStore.closeTutorial()
 }
 
 onMounted(() => {
   updateHighlight()
 
   watch(
-    () => store.tutorialStep,
+    () => appStore.tutorialStep,
     () => {
       setTimeout(() => {
         updateHighlight()
@@ -299,7 +299,7 @@ onMounted(() => {
 
 <template>
   <Teleport to="body">
-    <div v-if="store.showTutorial" class="tutorial-overlay">
+    <div v-if="appStore.showTutorial" class="tutorial-overlay">
       <div class="tutorial-backdrop" @click="handleClose" />
       <div
         v-if="currentStep.target && currentStep.position !== 'center'"
@@ -324,7 +324,7 @@ onMounted(() => {
 
         <div class="tooltip-footer">
           <div class="step-indicator">
-            <span class="step-current">{{ store.tutorialStep + 1 }}</span>
+            <span class="step-current">{{ appStore.tutorialStep + 1 }}</span>
             <span class="step-divider">/</span>
             <span class="step-total">{{ tutorialSteps.length }}</span>
           </div>

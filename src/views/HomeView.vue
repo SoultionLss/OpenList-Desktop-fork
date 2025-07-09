@@ -8,7 +8,7 @@ import VersionManagerCard from '../components/dashboard/VersionManagerCard.vue'
 import DocumentationCard from '../components/dashboard/DocumentationCard.vue'
 import ServiceManagementCard from '../components/dashboard/ServiceManagementCard.vue'
 
-const store = useAppStore()
+const appStore = useAppStore()
 
 const isLoading = ref(true)
 
@@ -23,7 +23,7 @@ const layoutClass = computed(() => ({
 }))
 
 onMounted(async () => {
-  serviceStatus.value.isRunning = store.isCoreRunning
+  serviceStatus.value.isRunning = appStore.isCoreRunning
   isLoading.value = false
 })
 </script>

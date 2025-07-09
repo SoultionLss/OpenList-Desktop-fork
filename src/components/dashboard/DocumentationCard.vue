@@ -102,13 +102,7 @@ const openRcloneGitHub = () => {
 
 const openLink = async (url: string) => {
   try {
-    const openInBrowser = appStore.settings.app.open_links_in_browser ?? false
-
-    if (openInBrowser) {
-      await TauriAPI.files.urlInBrowser(url)
-    } else {
-      await TauriAPI.files.url(url)
-    }
+    await (appStore.settings.app.open_links_in_browser ? TauriAPI.files.urlInBrowser : TauriAPI.files.url)(url)
   } catch (error) {
     console.error('Failed to open link:', error)
     window.open(url, '_blank')

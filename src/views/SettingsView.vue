@@ -6,7 +6,7 @@ import { useTranslation } from '../composables/useI18n'
 import { Settings, Server, HardDrive, Save, RotateCcw, AlertCircle, CheckCircle, Play } from 'lucide-vue-next'
 import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart'
 
-const store = useAppStore()
+const appStore = useAppStore()
 const route = useRoute()
 const router = useRouter()
 const { t } = useTranslation()
@@ -17,9 +17,9 @@ const activeTab = ref('openlist')
 const rcloneConfigJson = ref('')
 const autoStartApp = ref(false)
 
-const openlistCoreSettings = reactive({ ...store.settings.openlist })
-const rcloneSettings = reactive({ ...store.settings.rclone })
-const appSettings = reactive({ ...store.settings.app })
+const openlistCoreSettings = reactive({ ...appStore.settings.openlist })
+const rcloneSettings = reactive({ ...appStore.settings.rclone })
+const appSettings = reactive({ ...appStore.settings.app })
 let originalOpenlistPort = openlistCoreSettings.port || 5244
 
 watch(autoStartApp, async newValue => {
@@ -80,15 +80,15 @@ const hasUnsavedChanges = computed(() => {
   let rcloneConfigChanged = false
   try {
     const parsedConfig = JSON.parse(rcloneConfigJson.value)
-    rcloneConfigChanged = JSON.stringify(parsedConfig) !== JSON.stringify(store.settings.rclone.config)
+    rcloneConfigChanged = JSON.stringify(parsedConfig) !== JSON.stringify(appStore.settings.rclone.config)
   } catch {
-    rcloneConfigChanged = rcloneConfigJson.value !== JSON.stringify(store.settings.rclone.config, null, 2)
+    rcloneConfigChanged = rcloneConfigJson.value !== JSON.stringify(appStore.settings.rclone.config, null, 2)
   }
 
   return (
-    JSON.stringify(openlistCoreSettings) !== JSON.stringify(store.settings.openlist) ||
-    JSON.stringify(rcloneSettings) !== JSON.stringify(store.settings.rclone) ||
-    JSON.stringify(appSettings) !== JSON.stringify(store.settings.app) ||
+    JSON.stringify(openlistCoreSettings) !== JSON.stringify(appStore.settings.openlist) ||
+    JSON.stringify(rcloneSettings) !== JSON.stringify(appStore.settings.rclone) ||
+    JSON.stringify(appSettings) !== JSON.stringify(appStore.settings.app) ||
     rcloneConfigChanged
   )
 })
@@ -107,13 +107,13 @@ const handleSave = async () => {
       return
     }
 
-    store.settings.openlist = { ...openlistCoreSettings }
-    store.settings.rclone = { ...rcloneSettings }
-    store.settings.app = { ...appSettings }
+    appStore.settings.openlist = { ...openlistCoreSettings }
+    appStore.settings.rclone = { ...rcloneSettings }
+    appStore.settings.app = { ...appSettings }
     if (originalOpenlistPort !== openlistCoreSettings.port) {
-      await store.saveSettingsWithUpdatePort()
+      await appStore.saveSettingsWithUpdatePort()
     } else {
-      await store.saveSettings()
+      await appStore.saveSettings()
     }
     message.value = t('settings.saved')
     messageType.value = 'success'
@@ -132,7 +132,7 @@ const handleSave = async () => {
 
 async function startTutorial() {
   router.push({ name: 'Dashboard' })
-  store.startTutorial()
+  appStore.startTutorial()
 }
 
 const handleReset = async () => {
@@ -141,10 +141,10 @@ const handleReset = async () => {
   }
 
   try {
-    await store.resetSettings()
-    Object.assign(openlistCoreSettings, store.settings.openlist)
-    Object.assign(rcloneSettings, store.settings.rclone)
-    Object.assign(appSettings, store.settings.app)
+    await appStore.resetSettings()
+    Object.assign(openlistCoreSettings, appStore.settings.openlist)
+    Object.assign(rcloneSettings, appStore.settings.rclone)
+    Object.assign(appSettings, appStore.settings.app)
 
     rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
 
@@ -286,7 +286,7 @@ const handleReset = async () => {
               <label>{{ t('settings.theme.title') }}</label>
               <select
                 v-model="appSettings.theme"
-                @change="store.setTheme(appSettings.theme || 'light')"
+                @change="appStore.setTheme(appSettings.theme || 'light')"
                 class="form-input"
               >
                 <option value="light">{{ t('settings.app.theme.light') }}</option>

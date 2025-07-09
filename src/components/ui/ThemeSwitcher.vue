@@ -4,10 +4,10 @@ import { useAppStore } from '../../stores/app'
 import { useTranslation } from '../../composables/useI18n'
 import { Sun, Moon, Monitor } from 'lucide-vue-next'
 
-const store = useAppStore()
+const appStore = useAppStore()
 const { t } = useTranslation()
 
-const currentTheme = computed(() => store.settings.app.theme || 'light')
+const currentTheme = computed(() => appStore.settings.app.theme || 'light')
 
 const themeOptions = computed(() => [
   {
@@ -35,7 +35,7 @@ const currentThemeOption = computed(
 )
 
 const toggleTheme = () => {
-  store.toggleTheme()
+  appStore.toggleTheme()
 }
 </script>
 

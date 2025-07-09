@@ -77,7 +77,7 @@ import Card from '../ui/Card.vue'
 import { Globe, Activity } from 'lucide-vue-next'
 
 const { t } = useTranslation()
-const store = useAppStore()
+const appStore = useAppStore()
 
 const chartContainer = ref<HTMLElement>()
 const chartWidth = ref(400)
@@ -97,8 +97,8 @@ const tooltip = ref({
   statusText: ''
 })
 
-const isCoreRunning = computed(() => store.isCoreRunning)
-const openlistCoreStatus = computed(() => store.openlistCoreStatus)
+const isCoreRunning = computed(() => appStore.isCoreRunning)
+const openlistCoreStatus = computed(() => appStore.openlistCoreStatus)
 
 const avgResponseTime = computed(() => {
   if (dataPoints.value.length === 0) return 0
@@ -158,7 +158,7 @@ const gridColor = computed(() => {
 })
 
 const checkCoreHealth = async () => {
-  await store.refreshOpenListCoreStatus()
+  await appStore.refreshOpenListCoreStatus()
   if (!isCoreRunning.value) {
     dataPoints.value.push({
       timestamp: Date.now(),
@@ -172,7 +172,7 @@ const checkCoreHealth = async () => {
   const startTime = Date.now()
 
   try {
-    await store.refreshOpenListCoreStatus()
+    await appStore.refreshOpenListCoreStatus()
 
     const endTime = Date.now()
     const responseTimeMs = endTime - startTime
@@ -228,7 +228,7 @@ onMounted(async () => {
     startTime.value = Date.now()
   }
 
-  monitoringInterval.value = window.setInterval(checkCoreHealth, (store.settings.app.monitor_interval || 5) * 1000)
+  monitoringInterval.value = window.setInterval(checkCoreHealth, (appStore.settings.app.monitor_interval || 5) * 1000)
   window.addEventListener('resize', updateChartSize)
 })
 

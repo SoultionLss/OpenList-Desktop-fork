@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useAppStore } from '../stores/app'
 
 export function useLogs() {
-  const store = useAppStore()
+  const appStore = useAppStore()
 
   const logContainer = ref<HTMLElement>()
   const autoScroll = ref(true)
@@ -15,7 +15,7 @@ export function useLogs() {
   let logRefreshInterval: NodeJS.Timeout | null = null
 
   const filteredLogs = computed(() => {
-    let logs = store.logs || []
+    let logs = appStore.logs || []
 
     if (filterLevel.value !== 'all') {
       logs = logs.filter((log: any) => log.level === filterLevel.value)
@@ -63,7 +63,7 @@ export function useLogs() {
 
   const clearLogs = async (source?: 'openlist' | 'rclone' | 'app') => {
     try {
-      await store.clearLogs(source)
+      await appStore.clearLogs(source)
     } catch (error) {
       console.error('Failed to clear logs:', error)
       throw error
@@ -102,9 +102,9 @@ export function useLogs() {
     if (logRefreshInterval) return
 
     logRefreshInterval = setInterval(async () => {
-      const oldLength = store.logs?.length || 0
-      await store.loadLogs()
-      if (store.logs?.length > oldLength) {
+      const oldLength = appStore.logs?.length || 0
+      await appStore.loadLogs()
+      if (appStore.logs?.length > oldLength) {
         await scrollToBottom()
       }
     }, interval)
@@ -118,7 +118,7 @@ export function useLogs() {
   }
 
   onMounted(async () => {
-    await store.loadLogs()
+    await appStore.loadLogs()
     await scrollToBottom()
     startLogRefresh()
   })

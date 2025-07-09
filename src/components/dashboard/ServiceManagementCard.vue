@@ -106,10 +106,10 @@ import { TauriAPI } from '../../api/tauri'
 import { useRcloneStore } from '@/stores/rclone'
 import { useAppStore } from '../../stores/app'
 
-const store = useAppStore()
+const appStore = useAppStore()
+const rcloneStore = useRcloneStore()
 
 const { t } = useTranslation()
-const rcloneStore = useRcloneStore()
 
 const serviceStatus = ref<'not-installed' | 'installed' | 'running' | 'error' | 'stopped'>('not-installed')
 const actionLoading = ref(false)
@@ -267,7 +267,7 @@ const cancelUninstall = () => {
 
 onMounted(async () => {
   await checkServiceStatus()
-  statusCheckInterval = window.setInterval(checkServiceStatus, (store.settings.app.monitor_interval || 5) * 1000)
+  statusCheckInterval = window.setInterval(checkServiceStatus, (appStore.settings.app.monitor_interval || 5) * 1000)
 })
 
 onUnmounted(() => {

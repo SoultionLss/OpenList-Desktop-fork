@@ -24,7 +24,7 @@
             @click="openWebUI"
             :disabled="!isCoreRunning"
             class="action-btn web-btn"
-            :title="store.openListCoreUrl"
+            :title="appStore.openListCoreUrl"
           >
             <ExternalLink :size="18" />
             <span>{{ t('dashboard.quickActions.openWeb') }}</span>
@@ -46,7 +46,7 @@
         </div>
         <div class="action-buttons">
           <button
-            @click="rcloneStore.serviceRunning ? rcloneStore.stopRcloneBackend() : rcloneStore.startRcloneBackend()"
+            @click="rcloneStore.serviceRunning ? stopBackend() : startBackend()"
             :disabled="loading || rcloneStore.loading"
             :class="['action-btn', 'service-indicator-btn', { active: rcloneStore.serviceRunning }]"
           >
@@ -94,15 +94,16 @@ import { useRcloneStore } from '../../stores/rclone'
 import { useTranslation } from '../../composables/useI18n'
 import Card from '../ui/Card.vue'
 import { Play, Square, RotateCcw, ExternalLink, Settings, HardDrive, Loader, Key } from 'lucide-vue-next'
+import { TauriAPI } from '@/api/tauri'
 
 const { t } = useTranslation()
 const router = useRouter()
-const store = useAppStore()
+const appStore = useAppStore()
 const rcloneStore = useRcloneStore()
 
-const isCoreRunning = computed(() => store.isCoreRunning)
-const loading = computed(() => store.loading)
-const settings = computed(() => store.settings)
+const isCoreRunning = computed(() => appStore.isCoreRunning)
+const loading = computed(() => appStore.loading)
+const settings = computed(() => appStore.settings)
 let statusCheckInterval: number | null = null
 
 const serviceButtonIcon = computed(() => {
@@ -119,19 +120,19 @@ const serviceButtonText = computed(() => {
 
 const toggleCore = async () => {
   if (isCoreRunning.value) {
-    await store.stopOpenListCore()
+    await appStore.stopOpenListCore()
   } else {
-    await store.startOpenListCore()
+    await appStore.startOpenListCore()
   }
 }
 
 const restartCore = async () => {
-  await store.restartOpenListCore()
+  await appStore.restartOpenListCore()
 }
 
 const openWebUI = () => {
-  if (store.openListCoreUrl) {
-    window.open(store.openListCoreUrl, '_blank')
+  if (appStore.openListCoreUrl) {
+    openLink(appStore.openListCoreUrl)
   }
 }
 
@@ -145,7 +146,7 @@ const viewMounts = () => {
 
 const showAdminPassword = async () => {
   try {
-    const password = await store.getAdminPassword()
+    const password = await appStore.getAdminPassword()
     if (password) {
       await navigator.clipboard.writeText(password)
 
@@ -252,19 +253,49 @@ const showAdminPassword = async () => {
 }
 
 const handleAutoLaunchToggle = () => {
-  store.enableAutoLaunch(settings.value.openlist.auto_launch)
+  appStore.enableAutoLaunch(settings.value.openlist.auto_launch)
   saveSettings()
 }
 
 const saveSettings = async () => {
-  await store.saveSettings()
+  await appStore.saveSettings()
+}
+
+const startBackend = async () => {
+  try {
+    await rcloneStore.startRcloneBackend()
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    await rcloneStore.checkRcloneBackendStatus()
+  } catch (error: any) {
+    console.error(error.message || t('mount.messages.failedToStartService'))
+  }
+}
+
+const stopBackend = async () => {
+  try {
+    const stopped = await rcloneStore.stopRcloneBackend()
+    if (!stopped) {
+      throw new Error(t('mount.messages.failedToStopService'))
+    }
+  } catch (error: any) {
+    console.error(error.message || t('mount.messages.failedToStopService'))
+  }
+}
+
+const openLink = async (url: string) => {
+  try {
+    await (appStore.settings.app.open_links_in_browser ? TauriAPI.files.urlInBrowser : TauriAPI.files.url)(url)
+  } catch (error) {
+    console.error('Failed to open link:', error)
+    window.open(url, '_blank')
+  }
 }
 
 onMounted(async () => {
   await rcloneStore.checkRcloneBackendStatus()
   statusCheckInterval = window.setInterval(
     rcloneStore.checkRcloneBackendStatus,
-    (store.settings.app.monitor_interval || 5) * 1000
+    (appStore.settings.app.monitor_interval || 5) * 1000
   )
 })
 
