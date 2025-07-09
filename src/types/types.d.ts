@@ -49,6 +49,7 @@ interface AppConfig {
   auto_update_enabled?: boolean
   gh_proxy?: string
   gh_proxy_api?: boolean
+  open_links_in_browser?: boolean
 }
 
 interface MergedSettings {

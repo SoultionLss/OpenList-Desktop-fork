@@ -62,6 +62,17 @@ pub async fn open_url(url: String) -> Result<bool, String> {
 }
 
 #[tauri::command]
+pub async fn open_url_in_browser(url: String, app_handle: AppHandle) -> Result<bool, String> {
+    use tauri_plugin_opener::OpenerExt;
+
+    app_handle
+        .opener()
+        .open_url(url, None::<&str>)
+        .map_err(|e| e.to_string())?;
+    Ok(true)
+}
+
+#[tauri::command]
 pub fn select_directory(title: String, app_handle: AppHandle) -> Result<Option<String>, String> {
     use tauri_plugin_dialog::DialogExt;
 

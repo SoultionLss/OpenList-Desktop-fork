@@ -183,6 +183,14 @@
           "description": "同时为 api.github.com 地址使用代理"
         }
       },
+      "links": {
+        "title": "链接处理",
+        "subtitle": "配置链接的打开方式",
+        "openInBrowser": {
+          "title": "在外部浏览器中打开链接",
+          "description": "使用系统默认浏览器而不是内置窗口"
+        }
+      },
       "tutorial": {
         "title": "教程",
         "subtitle": "学习如何使用 OpenList 桌面版",

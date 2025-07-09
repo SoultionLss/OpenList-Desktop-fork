@@ -72,6 +72,7 @@ onMounted(async () => {
   if (appSettings.auto_update_enabled === undefined) appSettings.auto_update_enabled = true
   if (!appSettings.gh_proxy) appSettings.gh_proxy = ''
   if (appSettings.gh_proxy_api === undefined) appSettings.gh_proxy_api = false
+  if (appSettings.open_links_in_browser === undefined) appSettings.open_links_in_browser = false
   originalOpenlistPort = openlistCoreSettings.port || 5244
 })
 
@@ -373,6 +374,22 @@ const handleReset = async () => {
               <div class="switch-content">
                 <span class="switch-title">{{ t('settings.app.updates.autoCheck.title') }}</span>
                 <span class="switch-description">{{ t('settings.app.updates.autoCheck.description') }}</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h2>{{ t('settings.app.links.title') }}</h2>
+          <p>{{ t('settings.app.links.subtitle') }}</p>
+
+          <div class="form-group">
+            <label class="switch-label">
+              <input v-model="appSettings.open_links_in_browser" type="checkbox" class="switch-input" />
+              <span class="switch-slider"></span>
+              <div class="switch-content">
+                <span class="switch-title">{{ t('settings.app.links.openInBrowser.title') }}</span>
+                <span class="switch-description">{{ t('settings.app.links.openInBrowser.description') }}</span>
               </div>
             </label>
           </div>

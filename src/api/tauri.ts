@@ -60,7 +60,8 @@ export class TauriAPI {
     list: (path: string): Promise<FileItem[]> => call('list_files', { path }),
     open: (path: string): Promise<boolean> => call('open_file', { path }),
     folder: (path: string): Promise<boolean> => call('open_folder', { path }),
-    url: (path: string): Promise<boolean> => call('open_url', { path })
+    url: (path: string): Promise<boolean> => call('open_url', { path }),
+    urlInBrowser: (url: string): Promise<boolean> => call('open_url_in_browser', { url })
   }
 
   // --- Settings management ---

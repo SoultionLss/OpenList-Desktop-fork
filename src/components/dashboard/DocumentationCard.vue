@@ -79,8 +79,10 @@ import { useTranslation } from '../../composables/useI18n'
 import { ExternalLink, Github, BookOpen, Cloud, Code, Terminal, HelpCircle, MessageCircle } from 'lucide-vue-next'
 import Card from '../ui/Card.vue'
 import { TauriAPI } from '../../api/tauri'
+import { useAppStore } from '../../stores/app'
 
 const { t } = useTranslation()
+const appStore = useAppStore()
 
 const openOpenListDocs = () => {
   openLink('https://docs.oplist.org/')
@@ -100,7 +102,13 @@ const openRcloneGitHub = () => {
 
 const openLink = async (url: string) => {
   try {
-    await TauriAPI.files.url(url)
+    const openInBrowser = appStore.settings.app.open_links_in_browser ?? false
+
+    if (openInBrowser) {
+      await TauriAPI.files.urlInBrowser(url)
+    } else {
+      await TauriAPI.files.url(url)
+    }
   } catch (error) {
     console.error('Failed to open link:', error)
     window.open(url, '_blank')

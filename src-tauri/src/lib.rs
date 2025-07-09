@@ -19,8 +19,8 @@ use cmd::http_api::{
 use cmd::logs::{clear_logs, get_admin_password, get_logs};
 use cmd::openlist_core::{create_openlist_core_process, get_openlist_core_status};
 use cmd::os_operate::{
-    get_available_versions, list_files, open_file, open_folder, open_url, select_directory,
-    update_tool_version,
+    get_available_versions, list_files, open_file, open_folder, open_url, open_url_in_browser,
+    select_directory, update_tool_version,
 };
 use cmd::rclone_core::{
     create_and_start_rclone_backend, create_rclone_backend_process, get_rclone_backend_status,
@@ -139,6 +139,7 @@ pub fn run() {
             open_file,
             open_folder,
             open_url,
+            open_url_in_browser,
             save_settings,
             save_settings_with_update_port,
             load_settings,

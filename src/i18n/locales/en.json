@@ -183,6 +183,14 @@
           "description": "Also use proxy for api.github.com URLs "
         }
       },
+      "links": {
+        "title": "Link Handling",
+        "subtitle": "Configure how links are opened",
+        "openInBrowser": {
+          "title": "Open links in external browser",
+          "description": "Use system default browser instead of built-in window"
+        }
+      },
       "tutorial": {
         "title": "Tutorial",
         "subtitle": "Learn how to use OpenList Desktop",
