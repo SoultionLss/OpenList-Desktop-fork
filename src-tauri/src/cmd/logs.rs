@@ -1,122 +1,80 @@
 use std::env;
+use std::path::PathBuf;
 
+use once_cell::sync::Lazy;
 use regex::Regex;
+
+static ADMIN_PWD_REGEX: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"Successfully created the admin user and the initial password is: (\w+)")
+        .expect("Invalid regex pattern")
+});
+
+fn resolve_log_paths(source: Option<&str>) -> Result<Vec<PathBuf>, String> {
+    let exe_path =
+        env::current_exe().map_err(|e| format!("Failed to determine executable path: {e}"))?;
+    let app_dir = exe_path
+        .parent()
+        .ok_or("Executable has no parent directory")?
+        .to_path_buf();
+
+    let mut paths = Vec::new();
+    match source {
+        Some("openlist") => paths.push(app_dir.join("data/log/log.log")),
+        Some("app") => paths.push(app_dir.join("logs/app.log")),
+        Some("rclone") => paths.push(app_dir.join("logs/process_rclone.log")),
+        Some("openlist_core") => paths.push(app_dir.join("logs/process_openlist_core.log")),
+        None => {
+            paths.push(app_dir.join("data/log/log.log"));
+            paths.push(app_dir.join("logs/app.log"));
+            paths.push(app_dir.join("logs/process_rclone.log"));
+            paths.push(app_dir.join("logs/process_openlist_core.log"));
+        }
+        _ => return Err("Invalid log source".into()),
+    }
+    Ok(paths)
+}
 
 #[tauri::command]
 pub async fn get_admin_password() -> Result<String, String> {
-    let app_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
-    let logs_dir = app_dir.join("logs/process_openlist_core.log");
+    let paths = resolve_log_paths(Some("openlist_core"))?;
+    let content =
+        std::fs::read_to_string(&paths[0]).map_err(|e| format!("Failed to read log file: {e}"))?;
 
-    let logs_content =
-        std::fs::read_to_string(logs_dir).map_err(|e| format!("Failed to read log file: {e}"))?;
-
-    let re = Regex::new(r"Successfully created the admin user and the initial password is: (\w+)")
-        .map_err(|e| format!("Failed to create regex: {e}"))?;
-
-    let mut last_password = None;
-    for line in logs_content.lines() {
-        if let Some(captures) = re.captures(line)
-            && let Some(password) = captures.get(1)
-        {
-            last_password = Some(password.as_str().to_string());
-        }
-    }
-
-    last_password.ok_or("No admin password found in logs".to_string())
+    ADMIN_PWD_REGEX
+        .captures_iter(&content)
+        .filter_map(|cap| cap.get(1).map(|m| m.as_str().to_string()))
+        .last()
+        .ok_or_else(|| "No admin password found in logs".into())
 }
 
 #[tauri::command]
 pub async fn get_logs(source: Option<String>) -> Result<Vec<String>, String> {
-    match source.as_deref() {
-        Some("openlist") => {
-            let app_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
-            let logs_dir = app_dir.join("data/log/log.log");
-            let logs = std::fs::read_to_string(logs_dir)
-                .map_err(|e| e.to_string())?
-                .lines()
-                .map(|line| line.to_string())
-                .collect();
-            Ok(logs)
-        }
-        Some("app") => {
-            let app_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
-            let logs_dir = app_dir.join("logs/app.log");
-            let logs = std::fs::read_to_string(logs_dir)
-                .map_err(|e| e.to_string())?
-                .lines()
-                .map(|line| line.to_string())
-                .collect();
-            Ok(logs)
-        }
-        Some("rclone") => {
-            let app_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
-            let logs_dir = app_dir.join("logs/process_rclone.log");
-            let logs = std::fs::read_to_string(logs_dir)
-                .map_err(|e| e.to_string())?
-                .lines()
-                .map(|line| line.to_string())
-                .collect();
-            Ok(logs)
-        }
-        Some("openlist_core") => {
-            let app_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
-            let logs_dir = app_dir.join("logs/process_openlist_core.log");
-            let logs = std::fs::read_to_string(logs_dir)
-                .map_err(|e| e.to_string())?
-                .lines()
-                .map(|line| line.to_string())
-                .collect();
-            Ok(logs)
-        }
-        _ => Err("Invalid log source".to_string()),
+    let paths = resolve_log_paths(source.as_deref())?;
+    let mut logs = Vec::new();
+
+    for path in paths {
+        let content =
+            std::fs::read_to_string(&path).map_err(|e| format!("Failed to read {path:?}: {e}"))?;
+        logs.extend(content.lines().map(str::to_string));
     }
+    Ok(logs)
 }
 
 #[tauri::command]
 pub async fn clear_logs(source: Option<String>) -> Result<bool, String> {
-    let app_dir = env::current_exe().unwrap().parent().unwrap().to_path_buf();
-
-    let log_files = match source.as_deref() {
-        Some("openlist") => vec![app_dir.join("data/log/log.log")],
-        Some("app") => vec![app_dir.join("logs/app.log")],
-        Some("rclone") => vec![app_dir.join("logs/process_rclone.log")],
-        Some("openlist_core") => vec![app_dir.join("logs/process_openlist_core.log")],
-        None => vec![
-            app_dir.join("data/log/log.log"),
-            app_dir.join("logs/app.log"),
-            app_dir.join("logs/process_rclone.log"),
-            app_dir.join("logs/process_openlist_core.log"),
-        ],
-        _ => return Err("Invalid log source".to_string()),
-    };
-
+    let paths = resolve_log_paths(source.as_deref())?;
     let mut cleared_count = 0;
-    let mut errors = Vec::new();
 
-    for log_file in log_files {
-        if log_file.exists() {
-            match std::fs::write(&log_file, "") {
-                Ok(_) => {
-                    cleared_count += 1;
-                }
-                Err(e) => {
-                    let error_msg = format!("Failed to clear {log_file:?}: {e}");
-                    errors.push(error_msg);
-                }
-            }
+    for path in paths {
+        if path.exists() {
+            std::fs::write(&path, "").map_err(|e| format!("Failed to clear {path:?}: {e}"))?;
+            cleared_count += 1;
         }
     }
 
-    if !errors.is_empty() {
-        return Err(format!(
-            "Some log files could not be cleared: {}",
-            errors.join(", ")
-        ));
-    }
-
     if cleared_count == 0 {
-        return Err("No log files found to clear".to_string());
+        Err("No log files found to clear".into())
+    } else {
+        Ok(true)
     }
-
-    Ok(true)
 }

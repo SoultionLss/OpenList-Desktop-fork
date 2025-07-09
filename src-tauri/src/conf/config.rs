@@ -7,16 +7,17 @@ use crate::conf::core::OpenListCoreConfig;
 use crate::conf::rclone::RcloneConfig;
 use crate::utils::path::app_config_file_path;
 
-#[allow(unused)]
-pub static OPENLIST_CORE_CONFIG: &str = "data/config.json";
-#[allow(unused)]
-pub static OPENLIST_DESKTOP_SETTINGS_FILE_NAME: &str = "settings.json";
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MergedSettings {
     pub openlist: OpenListCoreConfig,
     pub rclone: RcloneConfig,
     pub app: AppConfig,
+}
+
+impl Default for MergedSettings {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MergedSettings {
@@ -29,20 +30,16 @@ impl MergedSettings {
     }
 
     pub fn get_data_config_path() -> Result<PathBuf, String> {
-        let app_dir = std::env::current_exe()
-            .map_err(|e| format!("Failed to get current exe path: {e}"))?
+        let exe =
+            std::env::current_exe().map_err(|e| format!("Failed to get current exe path: {e}"))?;
+        let dir = exe
             .parent()
-            .ok_or("Failed to get parent directory")?
-            .to_path_buf();
-        Ok(app_dir.join("data").join("config.json"))
+            .ok_or_else(|| "Failed to get executable parent directory".to_string())?;
+        Ok(dir.join("data").join("config.json"))
     }
 
     pub fn read_data_config() -> Result<serde_json::Value, String> {
         let path = Self::get_data_config_path()?;
-        if !path.exists() {
-            return Err("data/config.json does not exist".to_string());
-        }
-
         let content = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
         serde_json::from_str(&content).map_err(|e| e.to_string())
     }
@@ -51,46 +48,42 @@ impl MergedSettings {
         let config = Self::read_data_config()?;
         Ok(config
             .get("scheme")
-            .and_then(|scheme| scheme.get("http_port"))
-            .and_then(|port| port.as_u64())
-            .map(|port| port as u16))
+            .and_then(|s| s.get("http_port"))
+            .and_then(|p| p.as_u64())
+            .map(|p| p as u16))
     }
 
     pub fn save(&self) -> Result<(), String> {
         let path = app_config_file_path().map_err(|e| e.to_string())?;
-        std::fs::create_dir_all(path.parent().unwrap()).map_err(|e| e.to_string())?;
-        let json = serde_json::to_string_pretty(self).map_err(|e| e.to_string())?;
-        std::fs::write(&path, json).map_err(|e| e.to_string())?;
-        Ok(())
+        if let Some(dir) = path.parent() {
+            std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+        }
+        let file = std::fs::File::create(&path).map_err(|e| e.to_string())?;
+        serde_json::to_writer_pretty(file, &self).map_err(|e| e.to_string())
     }
 
     pub fn load() -> Result<Self, String> {
         let path = app_config_file_path().map_err(|e| e.to_string())?;
-        let mut merged_settings = if !path.exists() {
-            std::fs::create_dir_all(path.parent().unwrap()).map_err(|e| e.to_string())?;
-            let new_settings = Self::new();
-            std::fs::write(
-                &path,
-                serde_json::to_string_pretty(&new_settings).map_err(|e| e.to_string())?,
-            )
-            .map_err(|e| e.to_string())?;
-            new_settings
+
+        let mut settings = if path.exists() {
+            let data = std::fs::read_to_string(&path).map_err(|e| e.to_string())?;
+            serde_json::from_str(&data).map_err(|e| e.to_string())?
         } else {
-            let config = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
-            serde_json::from_str(&config).map_err(|e| e.to_string())?
+            let default = Self::new();
+            if let Some(dir) = path.parent() {
+                std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+            }
+            default.save()?;
+            default
         };
 
         if let Ok(Some(port)) = Self::get_port_from_data_config()
-            && merged_settings.openlist.port != port
+            && settings.openlist.port != port
         {
-            merged_settings.openlist.port = port;
-            merged_settings.save()?;
+            settings.openlist.port = port;
+            settings.save()?;
         }
 
-        Ok(merged_settings)
-    }
-
-    pub fn default() -> Self {
-        Self::new()
+        Ok(settings)
     }
 }
