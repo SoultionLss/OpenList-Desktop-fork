@@ -114,7 +114,7 @@ async fn is_rclone_running() -> bool {
 
     let response = client
         .get(format!("{RCLONE_API_BASE}/"))
-        .timeout(Duration::from_secs(1))
+        .timeout(Duration::from_secs(3))
         .send()
         .await;
 

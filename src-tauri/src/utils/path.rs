@@ -16,48 +16,31 @@ fn get_app_dir() -> Result<PathBuf, String> {
     Ok(app_dir)
 }
 
-pub fn get_openlist_binary_path() -> Result<PathBuf, String> {
-    let app_dir = get_app_dir()?;
-
-    let binary_name = if cfg!(target_os = "windows") {
-        "openlist.exe"
-    } else {
-        "openlist"
-    };
-    let binary_path = app_dir.join(binary_name);
-
-    if !binary_path.exists() {
-        return Err(format!(
-            "OpenList service binary not found at: {binary_path:?}"
-        ));
+fn get_binary_path(binary: &str, service_name: &str) -> Result<PathBuf, String> {
+    let mut name = binary.to_string();
+    if cfg!(target_os = "windows") {
+        name.push_str(".exe");
     }
 
-    Ok(binary_path)
+    let path = get_app_dir()?.join(&name);
+    if !path.exists() {
+        return Err(format!(
+            "{service_name} service binary not found at: {path:?}"
+        ));
+    }
+    Ok(path)
+}
+
+pub fn get_openlist_binary_path() -> Result<PathBuf, String> {
+    get_binary_path("openlist", "OpenList")
 }
 
 pub fn get_rclone_binary_path() -> Result<PathBuf, String> {
-    let app_dir = get_app_dir()?;
-
-    let binary_name = if cfg!(target_os = "windows") {
-        "rclone.exe"
-    } else {
-        "rclone"
-    };
-    let binary_path = app_dir.join(binary_name);
-
-    if !binary_path.exists() {
-        return Err(format!(
-            "Rclone service binary not found at: {binary_path:?}"
-        ));
-    }
-
-    Ok(binary_path)
+    get_binary_path("rclone", "Rclone")
 }
 
 pub fn get_app_config_dir() -> Result<PathBuf, String> {
-    let app_dir = get_app_dir()?;
-    fs::create_dir_all(&app_dir).map_err(|e| e.to_string())?;
-    Ok(app_dir)
+    get_app_dir()
 }
 
 pub fn app_config_file_path() -> Result<PathBuf, String> {
@@ -65,8 +48,7 @@ pub fn app_config_file_path() -> Result<PathBuf, String> {
 }
 
 pub fn get_app_logs_dir() -> Result<PathBuf, String> {
-    let app_dir = get_app_dir()?;
-    let logs_dir = app_dir.join("logs");
-    fs::create_dir_all(&logs_dir).map_err(|e| e.to_string())?;
-    Ok(logs_dir)
+    let logs = get_app_dir()?.join("logs");
+    fs::create_dir_all(&logs).map_err(|e| e.to_string())?;
+    Ok(logs)
 }

@@ -2,7 +2,8 @@ use std::fs;
 use std::path::Path;
 
 use reqwest::Client;
-use serde_json::json;
+use serde::de::DeserializeOwned;
+use serde_json::{Value, json};
 use tauri::State;
 
 use super::http_api::get_process_list;
@@ -15,102 +16,101 @@ use crate::utils::api::{CreateProcessResponse, ProcessConfig, get_api_key, get_s
 use crate::utils::args::split_args_vec;
 use crate::utils::path::{get_app_logs_dir, get_rclone_binary_path};
 
+struct RcloneApi {
+    client: Client,
+}
+
+impl RcloneApi {
+    fn new() -> Self {
+        Self {
+            client: Client::new(),
+        }
+    }
+
+    async fn post_json<T: DeserializeOwned>(
+        &self,
+        endpoint: &str,
+        body: Option<Value>,
+    ) -> Result<T, String> {
+        let url = format!("{RCLONE_API_BASE}/{endpoint}");
+        let mut req = self.client.post(&url).header("Authorization", RCLONE_AUTH);
+        if let Some(b) = body {
+            req = req.json(&b).header("Content-Type", "application/json");
+        }
+        let resp = req
+            .send()
+            .await
+            .map_err(|e| format!("Request failed: {e}"))?;
+        let status = resp.status();
+        if status.is_success() {
+            resp.json::<T>()
+                .await
+                .map_err(|e| format!("Failed to parse JSON: {e}"))
+        } else {
+            let txt = resp.text().await.unwrap_or_default();
+            Err(format!("API error {status}: {txt}"))
+        }
+    }
+
+    async fn post_text(&self, endpoint: &str) -> Result<String, String> {
+        let url = format!("{RCLONE_API_BASE}/{endpoint}");
+        let resp = self
+            .client
+            .post(&url)
+            .header("Authorization", RCLONE_AUTH)
+            .send()
+            .await
+            .map_err(|e| format!("Request failed: {e}"))?;
+        let status = resp.status();
+        if status.is_success() {
+            resp.text()
+                .await
+                .map_err(|e| format!("Failed to read text: {e}"))
+        } else {
+            let txt = resp.text().await.unwrap_or_default();
+            Err(format!("API error {status}: {txt}"))
+        }
+    }
+}
+
 #[tauri::command]
 pub async fn rclone_list_config(
     remote_type: String,
     _state: State<'_, AppState>,
-) -> Result<serde_json::Value, String> {
-    let client = Client::new();
-    let response = client
-        .post(format!("{RCLONE_API_BASE}/config/dump"))
-        .header("Authorization", RCLONE_AUTH)
-        .send()
-        .await
-        .map_err(|e| format!("Failed to send request: {e}"))?;
-    if response.status().is_success() {
-        let response_text = response
-            .text()
-            .await
-            .map_err(|e| format!("Failed to read response text: {e}"))?;
-        let json: serde_json::Value = serde_json::from_str(&response_text)
-            .map_err(|e| format!("Failed to parse JSON: {e}"))?;
-        let remotes = if remote_type.is_empty() {
-            json.clone()
-        } else if let Some(obj) = json.as_object() {
-            let mut filtered_map = serde_json::Map::new();
-            for (remote_name, remote_config) in obj {
-                if let Some(config_obj) = remote_config.as_object()
-                    && let Some(remote_type_value) = config_obj.get("type")
-                    && let Some(type_str) = remote_type_value.as_str()
-                    && type_str == remote_type
-                {
-                    filtered_map.insert(remote_name.clone(), remote_config.clone());
-                }
-            }
-            serde_json::Value::Object(filtered_map)
-        } else {
-            serde_json::Value::Object(serde_json::Map::new())
-        };
-
-        Ok(remotes)
-    } else {
-        Err(format!(
-            "Failed to list Rclone config: {}",
-            response.status()
-        ))
-    }
+) -> Result<Value, String> {
+    let api = RcloneApi::new();
+    let text = api.post_text("config/dump").await?;
+    let all: Value = serde_json::from_str(&text).map_err(|e| format!("Invalid JSON: {}", e))?;
+    let remotes = match (remote_type.as_str(), all.as_object()) {
+        ("", _) => all.clone(),
+        (t, Some(map)) => {
+            let filtered = map
+                .iter()
+                .filter_map(|(name, cfg)| {
+                    cfg.get("type")
+                        .and_then(Value::as_str)
+                        .filter(|&ty| ty == t)
+                        .map(|_| (name.clone(), cfg.clone()))
+                })
+                .collect();
+            Value::Object(filtered)
+        }
+        _ => Value::Object(Default::default()),
+    };
+    Ok(remotes)
 }
 
 #[tauri::command]
 pub async fn rclone_list_remotes() -> Result<Vec<String>, String> {
-    let client = Client::new();
-
-    let response = client
-        .post(format!("{RCLONE_API_BASE}/config/listremotes"))
-        .header("Authorization", RCLONE_AUTH)
-        .send()
-        .await
-        .map_err(|e| format!("Failed to list remotes: {e}"))?;
-
-    if response.status().is_success() {
-        let remote_list: RcloneRemoteListResponse = response
-            .json()
-            .await
-            .map_err(|e| format!("Failed to parse remote list response: {e}"))?;
-        Ok(remote_list.remotes)
-    } else {
-        let error_text = response
-            .text()
-            .await
-            .unwrap_or_else(|_| "Unknown error".to_string());
-        Err(format!("Failed to list remotes: {error_text}"))
-    }
+    let api = RcloneApi::new();
+    let resp: RcloneRemoteListResponse = api.post_json("config/listremotes", None).await?;
+    Ok(resp.remotes)
 }
 
 #[tauri::command]
 pub async fn rclone_list_mounts() -> Result<RcloneMountListResponse, String> {
-    let client = Client::new();
-
-    let response = client
-        .post(format!("{RCLONE_API_BASE}/mount/listmounts"))
-        .header("Authorization", RCLONE_AUTH)
-        .send()
-        .await
-        .map_err(|e| format!("Failed to list mounts: {e}"))?;
-
-    if response.status().is_success() {
-        let mount_list: RcloneMountListResponse = response
-            .json()
-            .await
-            .map_err(|e| format!("Failed to parse mount list response: {e}"))?;
-        Ok(mount_list)
-    } else {
-        let error_text = response
-            .text()
-            .await
-            .unwrap_or_else(|_| "Unknown error".to_string());
-        Err(format!("Failed to list mounts: {error_text}"))
-    }
+    let api = RcloneApi::new();
+    api.post_json("mount/listmounts", None).await
 }
 
 #[tauri::command]
@@ -120,37 +120,15 @@ pub async fn rclone_create_remote(
     config: RcloneWebdavConfig,
     _state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let client = Client::new();
-
-    let create_request = RcloneCreateRemoteRequest {
-        name: name.clone(),
-        r#type: r#type.clone(),
-        parameters: crate::conf::rclone::RcloneWebdavConfig {
-            url: config.url.clone(),
-            vendor: config.vendor.clone(),
-            user: config.user.clone(),
-            pass: config.pass.clone(),
-        },
+    let api = RcloneApi::new();
+    let req = RcloneCreateRemoteRequest {
+        name,
+        r#type,
+        parameters: config,
     };
-
-    let response = client
-        .post(format!("{RCLONE_API_BASE}/config/create"))
-        .header("Authorization", RCLONE_AUTH)
-        .header("Content-Type", "application/json")
-        .json(&create_request)
-        .send()
+    api.post_json::<Value>("config/create", Some(json!(req)))
         .await
-        .map_err(|e| format!("Failed to create remote config: {e}"))?;
-
-    if response.status().is_success() {
-        Ok(true)
-    } else {
-        let error_text = response
-            .text()
-            .await
-            .unwrap_or_else(|_| "Unknown error".to_string());
-        Err(format!("Failed to create remote config: {error_text}"))
-    }
+        .map(|_| true)
 }
 
 #[tauri::command]
@@ -160,26 +138,11 @@ pub async fn rclone_update_remote(
     config: RcloneWebdavConfig,
     _state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let client = Client::new();
-
-    let response = client
-        .post(format!("{RCLONE_API_BASE}/config/update"))
-        .header("Authorization", RCLONE_AUTH)
-        .header("Content-Type", "application/json")
-        .json(&json!({ "name": name, "type": r#type, "parameters": config }))
-        .send()
+    let api = RcloneApi::new();
+    let body = json!({ "name": name, "type": r#type, "parameters": config });
+    api.post_json::<Value>("config/update", Some(body))
         .await
-        .map_err(|e| format!("Failed to update remote config: {e}"))?;
-
-    if response.status().is_success() {
-        Ok(true)
-    } else {
-        let error_text = response
-            .text()
-            .await
-            .unwrap_or_else(|_| "Unknown error".to_string());
-        Err(format!("Failed to update remote config: {error_text}"))
-    }
+        .map(|_| true)
 }
 
 #[tauri::command]
@@ -187,26 +150,11 @@ pub async fn rclone_delete_remote(
     name: String,
     _state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let client = Client::new();
-
-    let response = client
-        .post(format!("{RCLONE_API_BASE}/config/delete"))
-        .header("Authorization", RCLONE_AUTH)
-        .header("Content-Type", "application/json")
-        .json(&json!({ "name": name }))
-        .send()
+    let api = RcloneApi::new();
+    let body = json!({ "name": name });
+    api.post_json::<Value>("config/delete", Some(body))
         .await
-        .map_err(|e| format!("Failed to delete remote config: {e}"))?;
-
-    if response.status().is_success() {
-        Ok(true)
-    } else {
-        let error_text = response
-            .text()
-            .await
-            .unwrap_or_else(|_| "Unknown error".to_string());
-        Err(format!("Failed to delete remote config: {error_text}"))
-    }
+        .map(|_| true)
 }
 
 #[tauri::command]
@@ -214,26 +162,10 @@ pub async fn rclone_mount_remote(
     mount_request: RcloneMountRequest,
     _state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let client = Client::new();
-
-    let response = client
-        .post(format!("{RCLONE_API_BASE}/mount/mount"))
-        .header("Authorization", RCLONE_AUTH)
-        .header("Content-Type", "application/json")
-        .json(&mount_request)
-        .send()
+    let api = RcloneApi::new();
+    api.post_json::<Value>("mount/mount", Some(json!(mount_request)))
         .await
-        .map_err(|e| format!("Failed to mount remote: {e}"))?;
-
-    if response.status().is_success() {
-        Ok(true)
-    } else {
-        let error_text = response
-            .text()
-            .await
-            .unwrap_or_else(|_| "Unknown error".to_string());
-        Err(format!("Failed to mount remote: {error_text}"))
-    }
+        .map(|_| true)
 }
 
 #[tauri::command]
@@ -241,26 +173,10 @@ pub async fn rclone_unmount_remote(
     mount_point: String,
     _state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let client = Client::new();
-
-    let response = client
-        .post(format!("{RCLONE_API_BASE}/mount/unmount"))
-        .header("Authorization", RCLONE_AUTH)
-        .header("Content-Type", "application/json")
-        .json(&json!({ "mountPoint": mount_point }))
-        .send()
+    let api = RcloneApi::new();
+    api.post_json::<Value>("mount/unmount", Some(json!({ "mountPoint": mount_point })))
         .await
-        .map_err(|e| format!("Failed to unmount remote: {e}"))?;
-
-    if response.status().is_success() {
-        Ok(true)
-    } else {
-        let error_text = response
-            .text()
-            .await
-            .unwrap_or_else(|_| "Unknown error".to_string());
-        Err(format!("Failed to unmount remote: {error_text}"))
-    }
+        .map(|_| true)
 }
 
 #[tauri::command]
