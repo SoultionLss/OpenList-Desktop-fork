@@ -643,18 +643,7 @@ jobs:
             --submit
           
           if ($LASTEXITCODE -ne 0) {
-            Write-Host "Update failed, attempting to create new package..."
-            ./wingetcreate.exe new `
-              --urls $x64InstallerUrl $arm64InstallerUrl `
-              --token $env:GITHUB_TOKEN `
-              --submit
-            
-            if ($LASTEXITCODE -eq 0) {
-              Write-Host "Successfully submitted new WinGet package"
-            } else {
-              Write-Error "Failed to create new WinGet package"
-              exit 1
-            }
+            Write-Host "First submit, will do manually..."
           } else {
             Write-Host "Successfully updated existing WinGet package"
           }
