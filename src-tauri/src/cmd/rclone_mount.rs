@@ -80,7 +80,7 @@ pub async fn rclone_list_config(
 ) -> Result<Value, String> {
     let api = RcloneApi::new();
     let text = api.post_text("config/dump").await?;
-    let all: Value = serde_json::from_str(&text).map_err(|e| format!("Invalid JSON: {}", e))?;
+    let all: Value = serde_json::from_str(&text).map_err(|e| format!("Invalid JSON: {e}"))?;
     let remotes = match (remote_type.as_str(), all.as_object()) {
         ("", _) => all.clone(),
         (t, Some(map)) => {
