@@ -138,10 +138,18 @@ yarn run tauri build
 
 #### Windows
 
+##### Installation via Installer
+
 1. Download the `.exe` installer
 2. Run the installer as Administrator
 3. Follow the installation wizard
 4. Launch from Start Menu or Desktop shortcut
+
+##### Winget
+
+```bash
+winget install OpenListTeam.OpenListDesktop
+```
 
 #### macOS
 
