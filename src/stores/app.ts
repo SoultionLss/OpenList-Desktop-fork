@@ -9,7 +9,7 @@ export const useAppStore = defineStore('app', () => {
   const settings = ref<MergedSettings>({
     openlist: { port: 5244, api_token: '', auto_launch: false, ssl_enabled: false },
     rclone: { config: {} },
-    app: { theme: 'light', monitor_interval: 5000, auto_update_enabled: true }
+    app: { theme: 'light', auto_update_enabled: true, gh_proxy: '', gh_proxy_api: false, open_links_in_browser: false }
   })
   const openlistCoreStatus = ref<OpenListCoreStatus>({ running: false })
   const remoteConfigs = ref<IRemoteConfig>({})

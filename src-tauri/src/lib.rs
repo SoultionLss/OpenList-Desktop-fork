@@ -65,7 +65,7 @@ async fn force_update_tray_menu(
 fn setup_background_update_checker(app_handle: &tauri::AppHandle) {
     let app_handle_initial = app_handle.clone();
     tauri::async_runtime::spawn(async move {
-        tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+        tokio::time::sleep(std::time::Duration::from_secs(300)).await;
 
         let app_state = app_handle_initial.state::<AppState>();
         match is_auto_check_enabled(app_state).await {

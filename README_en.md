@@ -277,7 +277,9 @@ Add custom Rclone flags for optimal performance:
   "app": {
     "theme": "auto",
     "auto_update_enabled": true,
-    "monitor_interval": 30000
+    "gh_proxy": "https://ghproxy.com/",
+    "gh_proxy_api": false,
+    "open_links_in_browser": true,
   }
 }
 ```

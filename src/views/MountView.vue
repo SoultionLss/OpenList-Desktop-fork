@@ -473,11 +473,11 @@ onMounted(async () => {
   await rcloneStore.checkRcloneBackendStatus()
   await appStore.loadRemoteConfigs()
   await appStore.loadMountInfos()
-  mountRefreshInterval = setInterval(appStore.loadMountInfos, (appStore.settings.app.monitor_interval || 5) * 1000)
+  mountRefreshInterval = setInterval(appStore.loadMountInfos, 30 * 1000)
   backendStatusCheckInterval = setInterval(() => {
     rcloneStore.checkRcloneBackendStatus()
-  }, (appStore.settings.app.monitor_interval || 5) * 1000)
-  await rcloneStore.init()
+  }, 30 * 1000)
+  rcloneStore.init()
 })
 
 onUnmounted(() => {

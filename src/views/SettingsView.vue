@@ -68,7 +68,6 @@ onMounted(async () => {
   rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
   if (!appSettings.theme) appSettings.theme = 'light'
 
-  if (!appSettings.monitor_interval) appSettings.monitor_interval = 5
   if (appSettings.auto_update_enabled === undefined) appSettings.auto_update_enabled = true
   if (!appSettings.gh_proxy) appSettings.gh_proxy = ''
   if (appSettings.gh_proxy_api === undefined) appSettings.gh_proxy_api = false
@@ -294,26 +293,6 @@ const handleReset = async () => {
                 <option value="auto">{{ t('settings.app.theme.auto') }}</option>
               </select>
               <small>{{ t('settings.app.theme.autoDesc') }}</small>
-            </div>
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <h2>{{ t('settings.app.monitor.title') }}</h2>
-          <p>{{ t('settings.app.monitor.subtitle') }}</p>
-
-          <div class="form-grid">
-            <div class="form-group">
-              <label>{{ t('settings.app.monitor.interval.label') }}</label>
-              <input
-                v-model.number="appSettings.monitor_interval"
-                type="number"
-                class="form-input"
-                :placeholder="t('settings.app.monitor.interval.placeholder')"
-                min="1"
-                max="60"
-              />
-              <small>{{ t('settings.app.monitor.interval.help') }}</small>
             </div>
           </div>
         </div>

@@ -104,9 +104,7 @@ import Card from '../ui/Card.vue'
 import ConfirmDialog from '../ui/ConfirmDialog.vue'
 import { TauriAPI } from '../../api/tauri'
 import { useRcloneStore } from '@/stores/rclone'
-import { useAppStore } from '../../stores/app'
 
-const appStore = useAppStore()
 const rcloneStore = useRcloneStore()
 
 const { t } = useTranslation()
@@ -267,7 +265,7 @@ const cancelUninstall = () => {
 
 onMounted(async () => {
   await checkServiceStatus()
-  statusCheckInterval = window.setInterval(checkServiceStatus, (appStore.settings.app.monitor_interval || 5) * 1000)
+  statusCheckInterval = window.setInterval(checkServiceStatus, 30 * 1000)
 })
 
 onUnmounted(() => {

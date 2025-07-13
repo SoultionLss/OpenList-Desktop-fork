@@ -293,10 +293,7 @@ const openLink = async (url: string) => {
 
 onMounted(async () => {
   await rcloneStore.checkRcloneBackendStatus()
-  statusCheckInterval = window.setInterval(
-    rcloneStore.checkRcloneBackendStatus,
-    (appStore.settings.app.monitor_interval || 5) * 1000
-  )
+  statusCheckInterval = window.setInterval(rcloneStore.checkRcloneBackendStatus, 30 * 1000)
 })
 
 onUnmounted(() => {

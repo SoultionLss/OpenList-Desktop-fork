@@ -371,7 +371,7 @@ onMounted(async () => {
         await scrollToBottom()
       }
     }
-  }, (appStore.settings.app.monitor_interval || 5) * 1000)
+  }, 30 * 1000)
 })
 
 onUnmounted(() => {

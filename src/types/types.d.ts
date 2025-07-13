@@ -45,7 +45,6 @@ interface RcloneMountInfo {
 
 interface AppConfig {
   theme?: 'light' | 'dark' | 'auto'
-  monitor_interval?: number
   auto_update_enabled?: boolean
   gh_proxy?: string
   gh_proxy_api?: boolean

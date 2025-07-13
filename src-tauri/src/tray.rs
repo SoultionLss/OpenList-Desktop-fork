@@ -6,7 +6,7 @@ use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent}
 use tauri::{AppHandle, Emitter, Manager};
 
 static LAST_MENU_UPDATE: Mutex<Option<Instant>> = Mutex::new(None);
-const MIN_UPDATE_INTERVAL: Duration = Duration::from_millis(5000);
+const MIN_UPDATE_INTERVAL: Duration = Duration::from_millis(30000);
 
 pub fn create_tray(app_handle: &AppHandle) -> tauri::Result<()> {
     let quit_i = MenuItem::with_id(app_handle, "quit", "退出", true, None::<&str>)?;
