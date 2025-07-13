@@ -1,5 +1,5 @@
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::Duration;
 
@@ -424,11 +424,11 @@ pub async fn install_update_and_restart(
         }
     }
 }
-async fn install_windows_update(installer_path: &PathBuf) -> Result<(), String> {
+async fn install_windows_update(installer_path: &Path) -> Result<(), String> {
     log::info!("Installing Windows update...");
 
     let mut cmd = Command::new("powershell");
-    cmd.args(&[
+    cmd.args([
         "-Command",
         &format!(
             "Start-Process -FilePath '{}' -Verb runAs",
@@ -445,7 +445,7 @@ async fn install_windows_update(installer_path: &PathBuf) -> Result<(), String> 
         let output = child
             .wait_with_output()
             .map_err(|e| format!("Failed to wait for installer: {e}"))?;
-        log::info!("Installer output: {:?}", output);
+        log::info!("Installer output: {output:?}");
         if output.status.success() {
             log::info!(
                 "Installer completed successfully. Output: {}",
