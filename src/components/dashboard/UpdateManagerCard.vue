@@ -177,7 +177,7 @@ let backgroundUpdateUnlisten: (() => void) | null = null
 let downloadProgressUnlisten: (() => void) | null = null
 let installStartedUnlisten: (() => void) | null = null
 let installErrorUnlisten: (() => void) | null = null
-let appRestartingUnlisten: (() => void) | null = null
+let appQuitEventUnsubscriber: (() => void) | null = null
 
 const checkForUpdates = async () => {
   if (checking.value || downloading.value || installing.value) return
@@ -358,13 +358,13 @@ onMounted(async () => {
     }
 
     try {
-      appRestartingUnlisten = await TauriAPI.updater.onAppRestarting(() => {
-        installationStatus.value = t('update.restartingApp')
+      appQuitEventUnsubscriber = await TauriAPI.updater.onAppQuit(() => {
+        installationStatus.value = t('update.quitApp')
         installationStatusType.value = 'success'
       })
     } catch (err) {
       console.warn('App restarting listener not available:', err)
-      appRestartingUnlisten = null
+      appQuitEventUnsubscriber = null
     }
     if (autoCheckEnabled.value) {
       await checkForUpdates()
@@ -400,7 +400,7 @@ onUnmounted(() => {
   }
 
   try {
-    appRestartingUnlisten?.()
+    appQuitEventUnsubscriber?.()
   } catch (err) {
     console.warn('Error unregistering app restarting listener:', err)
   }

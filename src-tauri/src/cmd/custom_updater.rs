@@ -398,6 +398,7 @@ pub async fn install_update_and_restart(
         "linux" => install_linux_update(&path).await,
         _ => Err("Unsupported platform for auto-update".to_string()),
     };
+    log::info!("Update installation result: {result:?}");
 
     match result {
         Ok(_) => {
@@ -407,8 +408,8 @@ pub async fn install_update_and_restart(
                 log::error!("Failed to emit install completed event: {e}");
             }
 
-            if let Err(e) = app.emit("app-restarting", ()) {
-                log::error!("Failed to emit app restarting event: {e}");
+            if let Err(e) = app.emit("quit-app", ()) {
+                log::error!("Failed to emit app quit event: {e}");
             }
 
             tokio::time::sleep(Duration::from_millis(1000)).await;
@@ -423,29 +424,47 @@ pub async fn install_update_and_restart(
         }
     }
 }
-
 async fn install_windows_update(installer_path: &PathBuf) -> Result<(), String> {
     log::info!("Installing Windows update...");
 
-    let mut cmd = Command::new(installer_path);
-    cmd.arg("/SILENT");
-
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
-    }
+    let mut cmd = Command::new("powershell");
+    cmd.args(&[
+        "-Command",
+        &format!(
+            "Start-Process -FilePath '{}' -Verb runAs",
+            installer_path.display()
+        ),
+    ]);
+    log::info!("Running command: {cmd:?}");
 
     let _ = tokio::task::spawn_blocking(move || {
-        cmd.spawn()
-            .map_err(|e| format!("Failed to start Windows installer: {e}"))
+        let child = cmd
+            .spawn()
+            .map_err(|e| format!("Failed to start Windows installer: {e}"))?;
+        log::info!("Started installer process with PID: {}", child.id());
+        let output = child
+            .wait_with_output()
+            .map_err(|e| format!("Failed to wait for installer: {e}"))?;
+        log::info!("Installer output: {:?}", output);
+        if output.status.success() {
+            log::info!(
+                "Installer completed successfully. Output: {}",
+                String::from_utf8_lossy(&output.stdout)
+            );
+            Ok(())
+        } else {
+            log::error!(
+                "Installer failed. Error: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            Err(format!("Installer exited with status: {:?}", output.status))
+        }
     })
     .await
     .map_err(|e| format!("Task error: {e}"))?;
 
     Ok(())
 }
-
 async fn install_macos_update(installer_path: &PathBuf) -> Result<(), String> {
     log::info!("Installing macOS update...");
 
@@ -453,8 +472,25 @@ async fn install_macos_update(installer_path: &PathBuf) -> Result<(), String> {
     cmd.arg(installer_path);
 
     let _ = tokio::task::spawn_blocking(move || {
-        cmd.spawn()
-            .map_err(|e| format!("Failed to start macOS installer: {e}"))
+        let child = cmd
+            .spawn()
+            .map_err(|e| format!("Failed to start macOS installer: {e}"))?;
+        let output = child
+            .wait_with_output()
+            .map_err(|e| format!("Failed to wait for installer: {e}"))?;
+        if output.status.success() {
+            log::info!(
+                "Installer completed successfully. Output: {}",
+                String::from_utf8_lossy(&output.stdout)
+            );
+            Ok(())
+        } else {
+            log::error!(
+                "Installer failed. Error: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            Err(format!("Installer exited with status: {:?}", output.status))
+        }
     })
     .await
     .map_err(|e| format!("Task error: {e}"))?;
@@ -489,8 +525,25 @@ async fn install_linux_update(installer_path: &PathBuf) -> Result<(), String> {
     };
 
     let _ = tokio::task::spawn_blocking(move || {
-        cmd.spawn()
-            .map_err(|e| format!("Failed to start Linux installer: {e}"))
+        let child = cmd
+            .spawn()
+            .map_err(|e| format!("Failed to start Linux installer: {e}"))?;
+        let output = child
+            .wait_with_output()
+            .map_err(|e| format!("Failed to wait for installer: {e}"))?;
+        if output.status.success() {
+            log::info!(
+                "Installer completed successfully. Output: {}",
+                String::from_utf8_lossy(&output.stdout)
+            );
+            Ok(())
+        } else {
+            log::error!(
+                "Installer failed. Error: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            Err(format!("Installer exited with status: {:?}", output.status))
+        }
     })
     .await
     .map_err(|e| format!("Task error: {e}"))?;
@@ -640,17 +693,4 @@ pub async fn perform_background_update_check(app: AppHandle) -> Result<(), Strin
             Ok(())
         }
     }
-}
-
-#[tauri::command]
-pub async fn restart_app(app: AppHandle) {
-    log::info!("Restarting application...");
-
-    if let Err(e) = app.emit("app-restarting", ()) {
-        log::error!("Failed to emit app-restarting event: {e}");
-    }
-
-    tokio::time::sleep(Duration::from_millis(500)).await;
-
-    app.restart();
 }

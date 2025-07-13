@@ -480,7 +480,7 @@
     "startingDownload": "开始下载...",
     "downloading": "下载中...",
     "installingUpdate": "安装更新中...",
-    "restartingApp": "重启应用中...",
+    "quitApp": "退出应用中...",
     "noUpdatesFound": "没有可用更新",
     "aboutUpdates": "关于更新",
     "autoCheckInfo": "自动更新检查让您的应用保持安全和最新状态",

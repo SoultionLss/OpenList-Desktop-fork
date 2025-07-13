@@ -11,7 +11,7 @@ use cmd::binary::get_binary_version;
 use cmd::config::{load_settings, reset_settings, save_settings, save_settings_with_update_port};
 use cmd::custom_updater::{
     check_for_updates, download_update, get_current_version, install_update_and_restart,
-    is_auto_check_enabled, restart_app, set_auto_check_enabled,
+    is_auto_check_enabled, set_auto_check_enabled,
 };
 use cmd::http_api::{
     delete_process, get_process_list, restart_process, start_process, stop_process, update_process,
@@ -164,8 +164,7 @@ pub fn run() {
             install_update_and_restart,
             get_current_version,
             set_auto_check_enabled,
-            is_auto_check_enabled,
-            restart_app,
+            is_auto_check_enabled
         ])
         .setup(|app| {
             let app_handle = app.app_handle();

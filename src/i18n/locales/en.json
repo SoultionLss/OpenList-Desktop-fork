@@ -480,7 +480,7 @@
     "startingDownload": "Starting download...",
     "downloading": "Downloading",
     "installingUpdate": "Installing update...",
-    "restartingApp": "Restarting application...",
+    "quitApp": "Quitting application...",
     "noUpdatesFound": "No updates available",
     "aboutUpdates": "About Updates",
     "autoCheckInfo": "Automatic update checks keep your app secure and up-to-date",

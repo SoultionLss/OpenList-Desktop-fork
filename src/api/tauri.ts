@@ -119,6 +119,6 @@ export class TauriAPI {
       listen('download-progress', e => cb(e.payload as DownloadProgress)),
     onInstallStarted: (cb: () => void) => listen('update-install-started', () => cb()),
     onInstallError: (cb: (err: string) => void) => listen('update-install-error', e => cb(e.payload as string)),
-    onAppRestarting: (cb: () => void) => listen('app-restarting', () => cb())
+    onAppQuit: (cb: () => void) => listen('quit-app', () => cb())
   }
 }
