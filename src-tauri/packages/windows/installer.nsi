@@ -467,6 +467,22 @@ FunctionEnd
       nsis_tauri_utils::KillProcess "openlist.exe"
     !endif
   ${EndIf}
+
+  ; Check if rclone.exe is running
+  !if "${INSTALLMODE}" == "currentUser"
+    nsis_tauri_utils::FindProcessCurrentUser "rclone.exe"
+  !else
+    nsis_tauri_utils::FindProcess "rclone.exe"
+  !endif
+  Pop $R0
+  ${If} $R0 = 0
+    DetailPrint "Kill rclone.exe..."
+    !if "${INSTALLMODE}" == "currentUser"
+      nsis_tauri_utils::KillProcessCurrentUser "rclone.exe"
+    !else
+      nsis_tauri_utils::KillProcess "rclone.exe"
+    !endif
+  ${EndIf}
 !macroend
 
 !macro StartOpenListDesktopService
@@ -967,6 +983,8 @@ Section Uninstall
     SetShellVarContext current
     RmDir /r "$APPDATA\${BUNDLEID}"
     RmDir /r "$LOCALAPPDATA\${BUNDLEID}"
+    RmDir /r "$INSTDIR"
+    RmDir /r "$PROGRAMDATA\openlist-service-config"
   ${EndIf}
 
   SetShellVarContext current
