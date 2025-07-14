@@ -70,10 +70,10 @@ fn get_current_platform() -> String {
     let os = env::consts::OS;
 
     match os {
-        "windows" => format!("pc-windows-msvc"),
-        "macos" => format!("apple-darwin"),
-        "linux" => format!("unknown-linux-gnu"),
-        _ => format!("{os}"),
+        "windows" => "pc-windows-msvc".to_string(),
+        "macos" => "apple-darwin".to_string(),
+        "linux" => "unknown-linux-gnu".to_string(),
+        _ => os.to_string(),
     }
 }
 
