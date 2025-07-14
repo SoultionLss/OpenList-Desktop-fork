@@ -68,13 +68,12 @@ pub struct DownloadProgress {
 
 fn get_current_platform() -> String {
     let os = env::consts::OS;
-    let arch = env::consts::ARCH;
 
     match os {
-        "windows" => format!("{arch}-pc-windows-msvc"),
-        "macos" => format!("{arch}-apple-darwin"),
-        "linux" => format!("{arch}-unknown-linux-gnu"),
-        _ => format!("{arch}-{os}"),
+        "windows" => format!("pc-windows-msvc"),
+        "macos" => format!("apple-darwin"),
+        "linux" => format!("unknown-linux-gnu"),
+        _ => format!("{os}"),
     }
 }
 
