@@ -983,8 +983,13 @@ Section Uninstall
     SetShellVarContext current
     RmDir /r "$APPDATA\${BUNDLEID}"
     RmDir /r "$LOCALAPPDATA\${BUNDLEID}"
-    RmDir /r "$INSTDIR"
-    RmDir /r "$PROGRAMDATA\openlist-service-config"
+    RmDir /r "$INSTDIR\data"
+    RmDir /r "$INSTDIR\logs"
+    Delete "$INSTDIR\settings.json"
+    Delete "$INSTDIR\openlist-desktop-service.log"
+    Delete "$INSTDIR\rclone.conf"
+    RMDir "$INSTDIR"
+    RMDir /r "C:\ProgramData\openlist-service-config"
   ${EndIf}
 
   SetShellVarContext current
