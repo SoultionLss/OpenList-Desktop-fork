@@ -32,7 +32,6 @@
       "stopRclone": "停止 RClone",
       "manageMounts": "管理挂载",
       "autoLaunch": "自动启动核心(非桌面app)",
-      "processing": "处理中...",
       "showAdminPassword": "显示/复制日志中的管理员密码"
     },
     "coreMonitor": {

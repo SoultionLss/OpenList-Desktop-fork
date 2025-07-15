@@ -32,7 +32,6 @@
       "stopRclone": "Stop RClone",
       "manageMounts": "Manage Mounts",
       "autoLaunch": "Auto Launch Core(not app)",
-      "processing": "Processing...",
       "showAdminPassword": "Show/Copy admin password from logs"
     },
     "coreMonitor": {
