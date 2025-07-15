@@ -189,7 +189,6 @@ const openLink = async (url: string) => {
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 500;
-  transition: all 0.2s ease-in-out;
 }
 
 :root.dark .nav-item,
@@ -237,7 +236,6 @@ const openLink = async (url: string) => {
   background: rgb(220 38 38);
   border-radius: 50%;
   border: 2px solid var(--color-background-secondary);
-  animation: pulse 2s infinite;
 }
 
 .nav-item.has-notification .nav-icon-container {
@@ -272,7 +270,6 @@ const openLink = async (url: string) => {
   color: rgb(75 85 99);
   text-decoration: none;
   border-radius: 0.5rem;
-  transition: all 0.2s ease-in-out;
 }
 
 :root.dark .github-link,
@@ -283,22 +280,11 @@ const openLink = async (url: string) => {
 .github-link:hover {
   background: rgb(243 244 246);
   color: rgb(17 24 39);
-  transform: scale(1.1);
 }
 
 :root.dark .github-link:hover,
 :root.auto.dark .github-link:hover {
   background: rgb(55 65 81);
   color: rgb(243 244 246);
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
 }
 </style>

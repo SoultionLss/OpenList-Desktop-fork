@@ -13,7 +13,7 @@
           <span class="version-tag">v{{ currentVersion }}</span>
         </div>
         <button @click="checkForUpdates" :disabled="checking || downloading || installing" class="check-update-btn">
-          <RefreshCw :class="{ 'animate-spin': checking }" :size="16" />
+          <RefreshCw :size="16" />
           {{ checking ? t('update.checking') : t('update.checkForUpdates') }}
         </button>
       </div>
@@ -456,7 +456,6 @@ onUnmounted(() => {
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s;
 }
 
 .check-update-btn:hover:not(:disabled) {
@@ -466,19 +465,6 @@ onUnmounted(() => {
 .check-update-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .settings-row {
@@ -673,7 +659,6 @@ onUnmounted(() => {
   border: 2px solid transparent;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
 .asset-item:hover {
@@ -773,7 +758,6 @@ onUnmounted(() => {
 .progress-fill {
   height: 100%;
   background: var(--color-success);
-  transition: width 0.3s ease;
 }
 
 .progress-details {
@@ -799,7 +783,6 @@ onUnmounted(() => {
   border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.2s;
 }
 
 .install-btn:hover:not(:disabled) {
@@ -902,7 +885,6 @@ onUnmounted(() => {
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.8rem;
-  transition: background-color 0.2s;
 }
 
 .show-update-btn:hover {

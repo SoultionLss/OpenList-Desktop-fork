@@ -37,29 +37,22 @@ withDefaults(defineProps<Props>(), {
 <style scoped>
 .card {
   background: var(--color-surface);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border-radius: 16px;
   border: 1px solid var(--color-border-secondary);
-  box-shadow: var(--shadow-md);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 }
 
 .card--elevated {
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .card--outlined {
   border: 2px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
 }
 
 .card--glass {
   background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -73,16 +66,15 @@ withDefaults(defineProps<Props>(), {
 /* Interactive states */
 .card--hover:hover,
 .card--interactive:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: var(--color-surface-elevated);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
 @media (prefers-color-scheme: dark) {
   .card--hover:hover,
   .card--interactive:hover {
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    background: var(--color-surface-elevated);
+    border-color: rgba(59, 130, 246, 0.2);
   }
 }
 
@@ -91,7 +83,7 @@ withDefaults(defineProps<Props>(), {
 }
 
 .card--interactive:active {
-  transform: translateY(-2px);
+  opacity: 0.9;
 }
 
 /* Card structure */

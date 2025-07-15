@@ -100,7 +100,6 @@ const goToSettings = () => {
   text-decoration: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
   font-size: 0.9rem;
 }
 
@@ -128,7 +127,6 @@ const goToSettings = () => {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  transition: all 0.2s ease;
 }
 
 .info-card:hover {

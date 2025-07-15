@@ -349,13 +349,10 @@ onUnmounted(() => {
   border: 1px solid var(--color-border-secondary);
   border-radius: 10px;
   background: var(--color-surface);
-  backdrop-filter: blur(10px);
   color: var(--color-text-primary);
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: var(--shadow-sm);
   flex: 1;
   min-width: 0;
   text-align: center;
@@ -369,78 +366,71 @@ onUnmounted(() => {
 }
 
 .action-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
   background: var(--color-surface-elevated);
   border-color: rgba(59, 130, 246, 0.3);
-  box-shadow: var(--shadow-md);
 }
 
 .action-btn:active {
-  transform: translateY(0);
+  opacity: 0.8;
 }
 
 .action-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-  transform: none;
 }
 
 .service-btn.running {
-  background: linear-gradient(135deg, rgb(239, 68, 68) 0%, rgb(220, 38, 38) 100%);
+  background: rgb(239, 68, 68);
   color: white;
   border-color: rgba(220, 38, 38, 0.3);
-  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .service-btn.running:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(185, 28, 28) 100%);
-  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: rgb(220, 38, 38);
 }
 
 .service-btn:not(.running) {
-  background: linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(5, 150, 105) 100%);
+  background: rgb(16, 185, 129);
   color: white;
   border-color: rgba(5, 150, 105, 0.3);
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .service-btn:not(.running):hover:not(:disabled) {
-  background: linear-gradient(135deg, rgb(5, 150, 105) 0%, rgb(4, 120, 87) 100%);
-  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: rgb(5, 150, 105);
 }
 
 .restart-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgb(251, 191, 36) 0%, rgb(245, 158, 11) 100%);
+  background: rgb(251, 191, 36);
   color: white;
   border-color: rgba(245, 158, 11, 0.3);
 }
 
 .web-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgb(59, 130, 246) 0%, rgb(37, 99, 235) 100%);
+  background: rgb(59, 130, 246);
   color: white;
   border-color: rgba(37, 99, 235, 0.3);
 }
 
 .config-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgb(139, 92, 246) 0%, rgb(124, 58, 237) 100%);
+  background: rgb(139, 92, 246);
   color: white;
   border-color: rgba(124, 58, 237, 0.3);
 }
 
 .test-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgb(6, 182, 212) 0%, rgb(8, 145, 178) 100%);
+  background: rgb(6, 182, 212);
   color: white;
   border-color: rgba(8, 145, 178, 0.3);
 }
 
 .mount-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgb(249, 115, 22) 0%, rgb(234, 88, 12) 100%);
+  background: rgb(249, 115, 22);
   color: white;
   border-color: rgba(234, 88, 12, 0.3);
 }
 
 .password-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgb(168, 85, 247) 0%, rgb(147, 51, 234) 100%);
+  background: rgb(168, 85, 247);
   color: white;
   border-color: rgba(147, 51, 234, 0.3);
 }
@@ -451,40 +441,36 @@ onUnmounted(() => {
 }
 
 .service-indicator-btn.active {
-  background: linear-gradient(135deg, rgb(239, 68, 68) 0%, rgb(220, 38, 38) 100%);
+  background: rgb(239, 68, 68);
   color: white;
-  border-color: rgba(5, 150, 105, 0.3);
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-color: rgba(220, 38, 38, 0.3);
 }
 
 .service-indicator-btn.active:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgb(220, 38, 38) 0%, rgb(185, 28, 28) 100%);
+  background: rgb(220, 38, 38);
   border-color: rgba(220, 38, 38, 0.3);
-  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .service-indicator-btn:not(.active):not(:disabled) {
-  background: linear-gradient(135deg, rgb(16, 185, 129) 0%, rgb(5, 150, 105) 100%);
+  background: rgb(16, 185, 129);
   color: white;
   border-color: rgba(5, 150, 105, 0.3);
-  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .service-indicator-btn:not(.active):hover:not(:disabled) {
-  background: linear-gradient(135deg, rgb(5, 150, 105) 0%, rgb(4, 120, 87) 100%);
+  background: rgb(5, 150, 105);
   color: white;
   border-color: rgba(5, 150, 105, 0.3);
-  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .settings-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgb(100, 116, 139) 0%, rgb(71, 85, 105) 100%);
+  background: rgb(100, 116, 139);
   color: white;
   border-color: rgba(71, 85, 105, 0.3);
 }
 
 .custom-services-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgb(139, 92, 246) 0%, rgb(124, 58, 237) 100%);
+  background: rgb(139, 92, 246);
   color: white;
   border-color: rgba(124, 58, 237, 0.3);
 }
@@ -507,7 +493,6 @@ onUnmounted(() => {
   cursor: pointer;
   padding: 0.375rem;
   border-radius: 8px;
-  transition: background-color 0.2s ease;
   flex: 1;
   white-space: nowrap;
 }

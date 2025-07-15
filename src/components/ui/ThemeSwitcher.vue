@@ -65,14 +65,12 @@ const toggleTheme = () => {
   color: var(--color-text-secondary);
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all var(--transition-fast);
   font-size: 0.875rem;
 }
 
 .theme-toggle-btn:hover {
   background: var(--color-surface-elevated);
   color: var(--color-text-primary);
-  transform: translateY(-1px);
 }
 
 .theme-label {

@@ -273,13 +273,10 @@ export const useAppStore = defineStore('app', () => {
 
   async function loadRemoteConfigs() {
     try {
-      loading.value = true
       remoteConfigs.value = await TauriAPI.rclone.remotes.listConfig('webdav')
     } catch (err: any) {
       error.value = 'Failed to load remote configurations'
       console.error('Failed to load remote configs:', err)
-    } finally {
-      loading.value = false
     }
   }
 

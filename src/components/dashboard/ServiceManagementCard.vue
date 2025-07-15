@@ -436,7 +436,6 @@ onUnmounted(() => {
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
-  transition: all 0.2s;
   flex: 1;
   justify-content: center;
   min-width: 7rem;
@@ -490,21 +489,6 @@ onUnmounted(() => {
 .action-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-/* Loading animation */
-.action-btn [data-lucide='loader-2'],
-.logs-refresh-btn [data-lucide='loader-2'] {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 /* Responsive design */

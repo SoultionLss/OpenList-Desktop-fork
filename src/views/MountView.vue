@@ -470,9 +470,9 @@ const shouldShowWebdavTip = computed(() => {
 
 onMounted(async () => {
   document.addEventListener('keydown', handleKeydown)
-  await rcloneStore.checkRcloneBackendStatus()
-  await appStore.loadRemoteConfigs()
-  await appStore.loadMountInfos()
+  rcloneStore.checkRcloneBackendStatus()
+  appStore.loadRemoteConfigs()
+  appStore.loadMountInfos()
   mountRefreshInterval = setInterval(appStore.loadMountInfos, 30 * 1000)
   backendStatusCheckInterval = setInterval(() => {
     rcloneStore.checkRcloneBackendStatus()

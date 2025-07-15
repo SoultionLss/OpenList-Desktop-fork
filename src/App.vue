@@ -57,16 +57,12 @@ onMounted(async () => {
         console.log('Global update listener: Update available', updateInfo)
         appStore.setUpdateAvailable(true, updateInfo)
       })
-      console.log('Global update listener set up successfully')
     } catch (err) {
       console.warn('Failed to set up global update listener:', err)
     }
-
     document.addEventListener('keydown', handleKeydown)
   } finally {
-    setTimeout(() => {
-      isLoading.value = false
-    }, 1000)
+    isLoading.value = false
   }
 })
 
@@ -371,7 +367,6 @@ body {
   inset: 0;
   background: radial-gradient(circle at 25% 25%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
     radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-  animation: float 20s ease-in-out infinite;
 }
 
 .loading-content {
@@ -399,7 +394,6 @@ body {
   z-index: 2;
   color: white;
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
-  animation: logoFloat 3s ease-in-out infinite;
 }
 
 .logo-shimmer {
@@ -407,7 +401,6 @@ body {
   inset: -20px;
   background: conic-gradient(from 0deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   border-radius: 50%;
-  animation: shimmer 2s linear infinite;
 }
 
 .loading-title {
@@ -459,57 +452,6 @@ body {
 .progress-fill {
   height: 100%;
   border-radius: 1px;
-  animation: progressFill 2s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-
-  33% {
-    transform: translateY(-10px) rotate(1deg);
-  }
-
-  66% {
-    transform: translateY(-5px) rotate(-1deg);
-  }
-}
-
-@keyframes logoFloat {
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes progressFill {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  50% {
-    transform: translateX(-50%);
-  }
-
-  100% {
-    transform: translateX(100%);
-  }
 }
 
 .app-container {
@@ -536,7 +478,6 @@ body {
   height: 80%;
   background: radial-gradient(circle, rgba(0, 122, 255, 0.05) 0%, transparent 70%);
   border-radius: 50%;
-  animation: gradientFloat 20s ease-in-out infinite;
 }
 
 .bg-gradient-secondary {
@@ -547,22 +488,6 @@ body {
   height: 60%;
   background: radial-gradient(circle, rgba(175, 82, 222, 0.03) 0%, transparent 70%);
   border-radius: 50%;
-  animation: gradientFloat 25s ease-in-out infinite reverse;
-}
-
-@keyframes gradientFloat {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-
-  33% {
-    transform: translate(-10px, -15px) scale(1.05);
-  }
-
-  66% {
-    transform: translate(10px, -10px) scale(0.95);
-  }
 }
 
 .main-content {
@@ -585,14 +510,6 @@ body {
   padding: 0.3 rem;
   max-width: none;
   margin: 0;
-}
-
-.page-enter-active {
-  transition: all var(--transition-medium);
-}
-
-.page-leave-active {
-  transition: all 0.15s cubic-bezier(0.4, 0, 1, 1);
 }
 
 .page-enter-from {

@@ -128,12 +128,11 @@ const openLink = async (url: string) => {
   border-radius: 0.75rem;
   padding: 1rem;
   background: rgb(249 250 251);
-  transition: all 0.2s;
 }
 
 .doc-section:hover {
   border-color: rgb(209 213 219);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: rgb(243 244 246);
 }
 
 :root.dark .doc-section,
@@ -145,7 +144,7 @@ const openLink = async (url: string) => {
 :root.dark .doc-section:hover,
 :root.auto.dark .doc-section:hover {
   border-color: rgb(75 85 99);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background: rgb(55 65 81);
 }
 
 .doc-header {
@@ -220,7 +219,6 @@ const openLink = async (url: string) => {
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
-  transition: all 0.2s;
   text-decoration: none;
   flex: 1;
   justify-content: center;
@@ -298,7 +296,6 @@ const openLink = async (url: string) => {
   border: 1px solid rgb(209 213 219);
   border-radius: 0.5rem;
   cursor: pointer;
-  transition: all 0.2s;
   text-align: center;
 }
 

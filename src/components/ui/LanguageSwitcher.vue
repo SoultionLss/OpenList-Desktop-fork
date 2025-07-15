@@ -37,7 +37,7 @@ onMounted(() => {
   <div ref="dropdownRef" class="language-switcher relative">
     <button @click="toggleDropdown" class="language-button">
       <span class="language-label">{{ currentLanguage?.name }}</span>
-      <ChevronDown :size="12" :class="{ 'rotate-180': isOpen }" class="transition-transform" />
+      <ChevronDown :size="12" :class="{ flipped: isOpen }" />
     </button>
 
     <div v-if="isOpen" class="language-dropdown">
@@ -72,7 +72,6 @@ onMounted(() => {
   color: var(--color-text-primary);
   font-size: 0.875rem;
   cursor: pointer;
-  transition: all 0.2s ease;
   min-width: 120px;
 }
 
@@ -84,6 +83,10 @@ onMounted(() => {
 .language-label {
   flex: 1;
   text-align: center;
+}
+
+.flipped {
+  opacity: 0.7;
 }
 
 .language-dropdown {
@@ -107,7 +110,6 @@ onMounted(() => {
   gap: 0.75rem;
   padding: 0.75rem;
   cursor: pointer;
-  transition: background-color 0.2s ease;
   font-size: 0.875rem;
 }
 

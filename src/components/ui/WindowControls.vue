@@ -1,23 +1,12 @@
 <template>
-  <div class="window-controls">    <button 
-      class="control-btn minimize"
-      @click="$emit('minimize')"
-      :title="t('common.minimize')"
-    >
+  <div class="window-controls">
+    <button class="control-btn minimize" @click="$emit('minimize')" :title="t('common.minimize')">
       <Minimize2 :size="12" />
     </button>
-    <button 
-      class="control-btn maximize"
-      @click="$emit('maximize')"
-      :title="t('common.maximize')"
-    >
+    <button class="control-btn maximize" @click="$emit('maximize')" :title="t('common.maximize')">
       <Maximize2 :size="12" />
     </button>
-    <button 
-      class="control-btn close"
-      @click="$emit('close')"
-      :title="t('common.close')"
-    >
+    <button class="control-btn close" @click="$emit('close')" :title="t('common.close')">
       <X :size="12" />
     </button>
   </div>
@@ -53,7 +42,6 @@ defineEmits<{
   color: rgb(107 114 128);
   border-radius: 0.25rem;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
 }
 
 .control-btn:hover {
@@ -65,7 +53,7 @@ defineEmits<{
   .control-btn {
     color: rgb(156 163 175);
   }
-  
+
   .control-btn:hover {
     background: rgb(55 65 81);
     color: rgb(209 213 219);

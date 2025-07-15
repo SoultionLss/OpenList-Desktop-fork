@@ -56,7 +56,6 @@ defineProps<Props>()
 
 .status-indicator.active .status-dot {
   background-color: rgb(34 197 94);
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .status-text {

@@ -184,7 +184,6 @@ onMounted(() => {
   border-radius: 0.75rem;
   padding: 0.875rem;
   background: var(--color-background-tertiary, rgb(249 250 251));
-  transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -192,7 +191,7 @@ onMounted(() => {
 
 .version-item:hover {
   border-color: var(--color-border, rgb(209 213 219));
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: var(--color-background-secondary, rgb(243 244 246));
 }
 
 :root.dark .version-item,
@@ -204,7 +203,7 @@ onMounted(() => {
 :root.dark .version-item:hover,
 :root.auto.dark .version-item:hover {
   border-color: var(--color-border, rgb(75 85 99));
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: var(--color-background-primary, rgb(55 65 81));
 }
 
 .version-header {
@@ -234,7 +233,6 @@ onMounted(() => {
   border: 1px solid var(--color-border-secondary, rgb(209 213 219));
   border-radius: 0.5rem;
   cursor: pointer;
-  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
@@ -308,7 +306,6 @@ onMounted(() => {
   font-size: 0.875rem;
   color: var(--color-text-primary, rgb(17 24 39));
   width: 100%;
-  transition: border-color 0.2s ease;
 }
 
 :root.dark .version-select,
@@ -337,7 +334,6 @@ onMounted(() => {
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
   white-space: nowrap;
   width: 100%;
 }
@@ -363,20 +359,6 @@ onMounted(() => {
 
   .version-item {
     padding: 0.75rem;
-  }
-}
-
-.refresh-icon-btn [data-lucide='loader-2'],
-.update-btn [data-lucide='loader-2'] {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
   }
 }
 </style>

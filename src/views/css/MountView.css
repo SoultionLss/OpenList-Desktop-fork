@@ -38,7 +38,6 @@
   z-index: 1;
   padding: 24px 28px 20px;
   background: var(--color-surface-elevated);
-  backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -146,7 +145,6 @@
   height: 8px;
   border-radius: 50%;
   background: var(--color-danger);
-  transition: background-color var(--transition-fast);
 }
 
 .service-indicator.active .indicator-dot {
@@ -170,7 +168,6 @@
   background: var(--color-background-secondary);
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
 .service-toggle:hover {
@@ -200,7 +197,6 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
   box-shadow: var(--shadow-sm);
 }
 
@@ -219,7 +215,6 @@
   z-index: 1;
   padding: 20px 28px;
   background: var(--color-surface);
-  backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
@@ -255,7 +250,6 @@
   background: var(--color-background-primary);
   font-size: 14px;
   color: var(--color-text-primary);
-  transition: all var(--transition-medium);
 }
 
 .search-input:focus {
@@ -282,7 +276,6 @@
   color: var(--color-text-primary);
   font-size: 13px;
   cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
 .status-filter:focus {
@@ -301,7 +294,6 @@
   background: var(--color-background-primary);
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
 .refresh-btn:hover:not(:disabled) {
@@ -318,20 +310,6 @@
 .refresh-icon {
   width: 16px;
   height: 16px;
-  transition: transform var(--transition-medium);
-}
-
-.refresh-icon.spinning {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 .error-alert {
@@ -369,7 +347,6 @@
   background: transparent;
   color: inherit;
   cursor: pointer;
-  transition: background-color var(--transition-fast);
 }
 
 .alert-close:hover {
@@ -438,7 +415,6 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
   box-shadow: var(--shadow-sm);
 }
 
@@ -459,10 +435,8 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   padding: 24px;
-  transition: all var(--transition-medium);
   position: relative;
   overflow: hidden;
-  backdrop-filter: blur(20px) saturate(180%);
 }
 
 .config-card:hover {
@@ -562,10 +536,6 @@
   color: var(--color-danger);
 }
 
-.status-icon.spinning {
-  animation: spin 1s linear infinite;
-}
-
 .card-meta {
   margin-bottom: 20px;
 }
@@ -596,7 +566,6 @@
 
 .meta-tag.clickable-mount-point {
   cursor: pointer;
-  transition: all 0.2s ease;
   background: var(--color-primary-50);
   color: var(--color-primary-600);
   border: 1px solid var(--color-primary-200);
@@ -655,7 +624,6 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
   width: 100%;
   justify-content: center;
 }
@@ -701,7 +669,6 @@
   background: var(--color-background-primary);
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
 .secondary-btn:hover:not(:disabled) {
@@ -734,7 +701,6 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -752,7 +718,6 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  backdrop-filter: blur(20px) saturate(180%);
 }
 
 .modal-header {
@@ -793,7 +758,6 @@
   background: var(--color-background-secondary);
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
 .modal-close:hover {
@@ -854,7 +818,6 @@
   background: var(--color-background-primary);
   color: var(--color-text-primary);
   font-size: 14px;
-  transition: all var(--transition-fast);
 }
 
 .field-input:focus,
@@ -908,7 +871,6 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
 .cancel-btn:hover {
@@ -928,7 +890,6 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
 .save-btn:hover:not(:disabled) {
@@ -960,7 +921,6 @@
   background: var(--color-background-primary);
   color: var(--color-text-primary);
   font-size: 13px;
-  transition: all var(--transition-fast);
 }
 
 .flag-input:focus {
@@ -984,7 +944,6 @@
   background: var(--color-background-primary);
   color: var(--color-text-tertiary);
   cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
 .remove-flag-btn:hover {
@@ -1010,7 +969,6 @@
   color: var(--color-text-secondary);
   font-size: 13px;
   cursor: pointer;
-  transition: all var(--transition-fast);
   margin-top: 4px;
 }
 
@@ -1045,7 +1003,6 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .quick-flags-btn:hover {
@@ -1068,7 +1025,6 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -1087,18 +1043,6 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  animation: flagSelectorFadeIn 0.3s ease-out;
-}
-
-@keyframes flagSelectorFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
 }
 
 .flag-selector-header {
@@ -1129,13 +1073,11 @@
   background: var(--color-background-primary);
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .close-selector-btn:hover {
   background: var(--color-background-tertiary);
   color: var(--color-text-primary);
-  transform: scale(1.05);
 }
 
 .close-selector-btn .btn-icon {
@@ -1218,7 +1160,6 @@
   overflow: hidden;
   background: var(--color-background-primary);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
 }
 
 .flag-category:hover {
@@ -1260,7 +1201,6 @@
   color: var(--color-text-primary);
   text-align: left;
   cursor: pointer;
-  transition: all 0.2s ease;
   border-left: 3px solid transparent;
   border-bottom: 1px solid var(--color-border);
   position: relative;
@@ -1304,19 +1244,16 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
   position: relative;
 }
 
 .custom-checkbox:hover {
   border-color: #22c55e;
-  transform: scale(1.05);
 }
 
 .custom-checkbox.checked {
   background: #22c55e;
   border-color: #22c55e;
-  transform: scale(1.05);
 }
 
 .check-icon {
@@ -1525,7 +1462,6 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .winfsp-tip .tip-close {
@@ -1534,7 +1470,6 @@
 
 .tip-close:hover {
   background: rgba(249, 204, 51, 0.2);
-  transform: scale(1.05);
 }
 
 .winfsp-tip .tip-close:hover {
@@ -1788,30 +1723,6 @@
 :root.auto.dark .error-alert {
   background: rgba(255, 59, 48, 0.2);
   border-bottom-color: rgba(255, 59, 48, 0.3);
-}
-
-/* Animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.config-card {
-  animation: fadeIn 0.5s ease-out;
-}
-
-.config-card:nth-child(even) {
-  animation-delay: 0.1s;
-}
-
-.config-card:nth-child(3n) {
-  animation-delay: 0.2s;
 }
 
 /* Accessibility */

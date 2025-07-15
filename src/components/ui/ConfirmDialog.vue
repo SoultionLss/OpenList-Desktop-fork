@@ -74,7 +74,6 @@ export default {
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(4px);
 }
 
 .dialog-container {
@@ -138,7 +137,6 @@ export default {
   font-weight: 500;
   border: none;
   cursor: pointer;
-  transition: all 0.2s;
   min-width: 4rem;
 }
 

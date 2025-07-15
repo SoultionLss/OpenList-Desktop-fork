@@ -256,9 +256,8 @@ watch(isCoreRunning, (newValue: boolean, oldValue: boolean) => {
   padding: 0.5rem 0.875rem;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
   border: 1px solid rgba(226, 232, 240, 0.6);
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -285,20 +284,6 @@ watch(isCoreRunning, (newValue: boolean, oldValue: boolean) => {
   height: 10px;
   border-radius: 50%;
   background: currentColor;
-}
-
-.status-indicator.online .pulse-dot {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
 }
 
 .heartbeat-section {
@@ -348,9 +333,7 @@ watch(isCoreRunning, (newValue: boolean, oldValue: boolean) => {
   padding: 0.5rem 0.875rem;
   border-radius: 20px;
   font-weight: 600;
-  backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.2s ease;
 }
 
 .metric:hover {
@@ -422,7 +405,6 @@ watch(isCoreRunning, (newValue: boolean, oldValue: boolean) => {
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(226, 232, 240, 0.6);
-  backdrop-filter: blur(10px);
 }
 
 @media (prefers-color-scheme: dark) {

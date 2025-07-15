@@ -133,7 +133,6 @@ const getIcon = () => {
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.85rem;
-  transition: background-color 0.2s;
 }
 
 .action-btn:hover {
@@ -147,7 +146,6 @@ const getIcon = () => {
   padding: 0.25rem;
   border-radius: 4px;
   color: var(--color-text-secondary);
-  transition: color 0.2s, background-color 0.2s;
 }
 
 .dismiss-btn:hover {
@@ -155,19 +153,11 @@ const getIcon = () => {
   background: var(--color-surface);
 }
 
-/* Transitions */
-.notification-enter-active,
-.notification-leave-active {
-  transition: all 0.3s ease;
-}
-
 .notification-enter-from {
   opacity: 0;
-  transform: translateX(100%) scale(0.95);
 }
 
 .notification-leave-to {
   opacity: 0;
-  transform: translateX(100%) scale(0.95);
 }
 </style>

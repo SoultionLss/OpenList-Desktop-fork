@@ -347,13 +347,16 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 onMounted(async () => {
-  await appStore.loadLogs(
-    (filterSource.value !== 'all' && filterSource.value !== 'gin' ? filterSource.value : 'openlist') as
-      | 'openlist'
-      | 'rclone'
-      | 'app'
-  )
-  await scrollToBottom()
+  appStore
+    .loadLogs(
+      (filterSource.value !== 'all' && filterSource.value !== 'gin' ? filterSource.value : 'openlist') as
+        | 'openlist'
+        | 'rclone'
+        | 'app'
+    )
+    .then(() => {
+      scrollToBottom()
+    })
 
   document.addEventListener('keydown', handleKeydown)
 
