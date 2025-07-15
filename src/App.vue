@@ -8,7 +8,6 @@ import { useTray } from './composables/useTray'
 import { TauriAPI } from './api/tauri'
 import Navigation from './components/Navigation.vue'
 import TitleBar from './components/ui/TitleBar.vue'
-import TutorialOverlay from './components/ui/TutorialOverlay.vue'
 
 const appStore = useAppStore()
 const { t } = useTranslation()
@@ -147,8 +146,6 @@ onUnmounted(() => {
         </router-view>
       </div>
     </main>
-
-    <TutorialOverlay />
   </div>
 </template>
 

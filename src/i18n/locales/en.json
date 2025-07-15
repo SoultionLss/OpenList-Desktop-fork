@@ -163,15 +163,6 @@
         "auto": "Auto",
         "autoDesc": "Follow system"
       },
-      "monitor": {
-        "title": "Monitoring",
-        "subtitle": "System monitoring and refresh settings",
-        "interval": {
-          "label": "Monitor Interval (seconds)",
-          "placeholder": "5",
-          "help": "How often to refresh system metrics and status"
-        }
-      },
       "ghProxy": {
         "title": "GitHub Proxy",
         "subtitle": "Accelerate GitHub with proxy service",
@@ -190,12 +181,6 @@
           "title": "Open links in external browser",
           "description": "Use system default browser instead of built-in window"
         }
-      },
-      "tutorial": {
-        "title": "Tutorial",
-        "subtitle": "Learn how to use OpenList Desktop",
-        "restart": "Start Tutorial",
-        "help": "Restart the tutorial to learn about app features and navigation"
       },
       "updates": {
         "title": "Updates",
@@ -428,36 +413,6 @@
   "app": {
     "title": "OpenList",
     "loading": "Initializing OpenList Desktop..."
-  },
-  "tutorial": {
-    "welcome": {
-      "title": "Welcome to OpenList Desktop",
-      "content": "Welcome to OpenList Desktop! This tutorial will guide you through the key features and help you get started quickly."
-    },
-    "navigation": {
-      "title": "Navigation Panel",
-      "content": "Use the navigation panel to access different sections: Dashboard for monitoring, Mount for storage management, Logs for troubleshooting, and Settings for configuration."
-    },
-    "service": {
-      "title": "Install & Start Service",
-      "content": "First, you need to install and start the OpenList service. This is the core component that manages your cloud storage connections."
-    },
-    "openlist": {
-      "title": "OpenList Core Access",
-      "content": "Once the service is running, you can access the OpenList web interface to manage your files and configurations."
-    },
-    "documentation": {
-      "title": "Read Documentation",
-      "content": "For detailed information and advanced configurations, check out the documentation section. You'll find guides, API docs, and troubleshooting tips."
-    },
-    "settings": {
-      "title": "Settings & Configuration",
-      "content": "Customize your OpenList experience in the Settings section. Configure themes, service options, and storage preferences."
-    },
-    "skip": "Skip Tutorial",
-    "next": "Next",
-    "previous": "Previous",
-    "complete": "Complete Tutorial"
   },
   "update": {
     "title": "App Updates",

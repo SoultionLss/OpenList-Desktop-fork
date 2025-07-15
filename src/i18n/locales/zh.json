@@ -163,15 +163,6 @@
         "auto": "自动",
         "autoDesc": "跟随系统"
       },
-      "monitor": {
-        "title": "监控",
-        "subtitle": "系统监控和刷新设置",
-        "interval": {
-          "label": "监控间隔（秒）",
-          "placeholder": "5",
-          "help": "刷新系统指标和状态的频率"
-        }
-      },
       "ghProxy": {
         "title": "GitHub 代理",
         "subtitle": "使用代理服务加速 GitHub",
@@ -190,12 +181,6 @@
           "title": "在外部浏览器中打开链接",
           "description": "使用系统默认浏览器而不是内置窗口"
         }
-      },
-      "tutorial": {
-        "title": "教程",
-        "subtitle": "学习如何使用 OpenList 桌面版",
-        "restart": "开始教程",
-        "help": "重新启动教程以了解应用功能和导航"
       },
       "updates": {
         "title": "更新",
@@ -428,36 +413,6 @@
   "app": {
     "title": "OpenList",
     "loading": "正在初始化"
-  },
-  "tutorial": {
-    "welcome": {
-      "title": "欢迎使用 OpenList 桌面版",
-      "content": "欢迎使用 OpenList 桌面版！本教程将引导您了解主要功能，帮助您快速上手。"
-    },
-    "navigation": {
-      "title": "导航面板",
-      "content": "使用导航面板访问不同部分：仪表板用于监控，挂载用于存储管理，日志用于故障排除，设置用于配置。"
-    },
-    "service": {
-      "title": "安装并启动服务",
-      "content": "首先，您需要安装并启动 OpenList 服务。这是管理云存储连接的核心组件。"
-    },
-    "openlist": {
-      "title": "OpenList 核心访问",
-      "content": "服务运行后，您可以访问 OpenList 网页界面来管理文件和配置。"
-    },
-    "documentation": {
-      "title": "阅读文档",
-      "content": "有关详细信息和高级配置，请查看文档部分。您会找到指南、API 文档和故障排除提示。"
-    },
-    "settings": {
-      "title": "设置和配置",
-      "content": "在设置部分自定义您的 OpenList 体验。配置主题、服务选项和存储首选项。"
-    },
-    "skip": "跳过教程",
-    "next": "下一步",
-    "previous": "上一步",
-    "complete": "完成教程"
   },
   "update": {
     "title": "应用更新",

@@ -178,7 +178,6 @@ winget install OpenListTeam.OpenListDesktop
 1. **Initial Setup**: On first launch, the application will guide you through initial configuration
 2. **Service Installation**: Install the OpenList service when prompted
 3. **Storage Configuration**: Configure your first cloud storage connection
-4. **Tutorial**: Complete the interactive tutorial to learn key features
 
 ### Basic Operations
 

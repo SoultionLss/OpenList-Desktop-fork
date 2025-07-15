@@ -375,10 +375,6 @@ export const useAppStore = defineStore('app', () => {
 
   const openlistProcessId = ref<string | undefined>(undefined)
 
-  const showTutorial = ref(false)
-  const tutorialStep = ref(0)
-  const tutorialSkipped = ref(false)
-
   async function getRcloneMountProcessId(name: string): Promise<string | undefined> {
     try {
       const processList = await TauriAPI.process.list()
@@ -683,7 +679,6 @@ export const useAppStore = defineStore('app', () => {
 
   async function init() {
     try {
-      initTutorial()
       await loadSettings()
       await refreshOpenListCoreStatus()
       await TauriAPI.tray.updateDelayed(openlistCoreStatus.value.running)
@@ -697,43 +692,6 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  function initTutorial() {
-    const hasSeenTutorial = localStorage.getItem('openlist-tutorial-completed')
-    const tutorialDisabled = localStorage.getItem('openlist-tutorial-disabled')
-
-    if (!hasSeenTutorial && tutorialDisabled !== 'true') {
-      showTutorial.value = true
-      tutorialStep.value = 0
-    }
-  }
-
-  function startTutorial() {
-    showTutorial.value = true
-    tutorialStep.value = 0
-    localStorage.removeItem('openlist-tutorial-disabled')
-  }
-
-  function nextTutorialStep() {
-    tutorialStep.value++
-  }
-
-  function prevTutorialStep() {
-    if (tutorialStep.value > 0) {
-      tutorialStep.value--
-    }
-  }
-
-  function skipTutorial() {
-    showTutorial.value = false
-    tutorialSkipped.value = true
-    localStorage.setItem('openlist-tutorial-disabled', 'true')
-  }
-
-  function completeTutorial() {
-    showTutorial.value = false
-    localStorage.setItem('openlist-tutorial-completed', 'true')
-  }
-
   async function getAdminPassword(): Promise<string | null> {
     try {
       return await TauriAPI.logs.adminPassword()
@@ -741,10 +699,6 @@ export const useAppStore = defineStore('app', () => {
       console.error('Failed to get admin password:', err)
       return null
     }
-  }
-
-  function closeTutorial() {
-    showTutorial.value = false
   }
 
   // Update management functions
@@ -783,10 +737,6 @@ export const useAppStore = defineStore('app', () => {
     updateAvailable,
     updateCheck,
 
-    showTutorial,
-    tutorialStep,
-    tutorialSkipped,
-
     isCoreRunning,
     openListCoreUrl,
 
@@ -814,13 +764,6 @@ export const useAppStore = defineStore('app', () => {
     toggleTheme,
     applyTheme,
 
-    initTutorial,
-    startTutorial,
-    nextTutorialStep,
-    prevTutorialStep,
-    skipTutorial,
-    completeTutorial,
-    closeTutorial,
     setUpdateAvailable,
     clearUpdateStatus
   }

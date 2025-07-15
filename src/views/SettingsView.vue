@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useTranslation } from '../composables/useI18n'
-import { Settings, Server, HardDrive, Save, RotateCcw, AlertCircle, CheckCircle, Play } from 'lucide-vue-next'
+import { Settings, Server, HardDrive, Save, RotateCcw, AlertCircle, CheckCircle } from 'lucide-vue-next'
 import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart'
 
 const appStore = useAppStore()
 const route = useRoute()
-const router = useRouter()
 const { t } = useTranslation()
 const isSaving = ref(false)
 const message = ref('')
@@ -127,11 +126,6 @@ const handleSave = async () => {
       message.value = ''
     }, 3000)
   }
-}
-
-async function startTutorial() {
-  router.push({ name: 'Dashboard' })
-  appStore.startTutorial()
 }
 
 const handleReset = async () => {
@@ -371,21 +365,6 @@ const handleReset = async () => {
                 <span class="switch-description">{{ t('settings.app.links.openInBrowser.description') }}</span>
               </div>
             </label>
-          </div>
-        </div>
-
-        <div class="settings-section">
-          <h2>{{ t('settings.app.tutorial.title') }}</h2>
-          <p>{{ t('settings.app.tutorial.subtitle') }}</p>
-
-          <div class="form-grid">
-            <div class="form-group">
-              <button @click="startTutorial" class="tutorial-btn" type="button">
-                <Play :size="16" />
-                {{ t('settings.app.tutorial.restart') }}
-              </button>
-              <small>{{ t('settings.app.tutorial.help') }}</small>
-            </div>
           </div>
         </div>
       </div>

@@ -6,16 +6,12 @@
           <h4>{{ t('dashboard.quickActions.openlistService') }}</h4>
         </div>
         <div class="action-buttons">
-          <button
-            @click="toggleCore"
-            :class="['action-btn', 'service-btn', { running: isCoreRunning }]"
-            :disabled="loading"
-          >
+          <button @click="toggleCore" :class="['action-btn', 'service-btn', { running: isCoreRunning }]">
             <component :is="serviceButtonIcon" :size="20" />
             <span>{{ serviceButtonText }}</span>
           </button>
 
-          <button @click="restartCore" :disabled="!isCoreRunning || loading" class="action-btn restart-btn">
+          <button @click="restartCore" :disabled="!isCoreRunning" class="action-btn restart-btn">
             <RotateCcw :size="18" />
             <span>{{ t('dashboard.quickActions.restart') }}</span>
           </button>
@@ -47,7 +43,6 @@
         <div class="action-buttons">
           <button
             @click="rcloneStore.serviceRunning ? stopBackend() : startBackend()"
-            :disabled="loading || rcloneStore.loading"
             :class="['action-btn', 'service-indicator-btn', { active: rcloneStore.serviceRunning }]"
           >
             <component :is="rcloneStore.serviceRunning ? Square : Play" :size="18" />
@@ -93,7 +88,7 @@ import { useAppStore } from '../../stores/app'
 import { useRcloneStore } from '../../stores/rclone'
 import { useTranslation } from '../../composables/useI18n'
 import Card from '../ui/Card.vue'
-import { Play, Square, RotateCcw, ExternalLink, Settings, HardDrive, Loader, Key } from 'lucide-vue-next'
+import { Play, Square, RotateCcw, ExternalLink, Settings, HardDrive, Key } from 'lucide-vue-next'
 import { TauriAPI } from '@/api/tauri'
 
 const { t } = useTranslation()
@@ -102,17 +97,14 @@ const appStore = useAppStore()
 const rcloneStore = useRcloneStore()
 
 const isCoreRunning = computed(() => appStore.isCoreRunning)
-const loading = computed(() => appStore.loading)
 const settings = computed(() => appStore.settings)
 let statusCheckInterval: number | null = null
 
 const serviceButtonIcon = computed(() => {
-  if (loading.value) return Loader
   return isCoreRunning.value ? Square : Play
 })
 
 const serviceButtonText = computed(() => {
-  if (loading.value) return t('dashboard.quickActions.processing')
   return isCoreRunning.value
     ? t('dashboard.quickActions.stopOpenListCore')
     : t('dashboard.quickActions.startOpenListCore')
