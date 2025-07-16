@@ -276,11 +276,14 @@ const stopBackend = async () => {
 
 const openLink = async (url: string) => {
   try {
-    await (appStore.settings.app.open_links_in_browser ? TauriAPI.files.urlInBrowser : TauriAPI.files.url)(url)
+    if (appStore.settings.app.open_links_in_browser) {
+      await TauriAPI.files.urlInBrowser(url)
+      return
+    }
   } catch (error) {
     console.error('Failed to open link:', error)
-    window.open(url, '_blank')
   }
+  window.open(url, '_blank')
 }
 
 onMounted(async () => {
