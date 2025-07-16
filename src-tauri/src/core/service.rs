@@ -732,28 +732,27 @@ pub async fn start_service() -> Result<bool, Box<dyn std::error::Error>> {
 
                 if let Some(pid_value) = extract_plist_value(&output_str, "PID") {
                     log::info!("Extracted PID value: {pid_value}");
-                    if let Ok(pid) = pid_value.parse::<i32>() {
-                        if pid > 0 {
-                            log::info!("Service is running with PID: {pid}");
-                            return Ok(true);
-                        }
+                    if let Ok(pid) = pid_value.parse::<i32>()
+                        && pid > 0
+                    {
+                        log::info!("Service is running with PID: {pid}");
+                        return Ok(true);
                     }
                 }
 
-                if let Some(exit_status) = extract_plist_value(&output_str, "LastExitStatus") {
-                    if let Ok(status) = exit_status.parse::<i32>() {
-                        if status == 0 {
-                            log::info!(
-                                "Service is loaded but not running (clean exit), attempting to \
-                                 start"
-                            );
-                            return start_macos_service(SERVICE_IDENTIFIER).await;
-                        } else {
-                            log::warn!(
-                                "Service has non-zero exit status: {status}, attempting to restart"
-                            );
-                            return start_macos_service(SERVICE_IDENTIFIER).await;
-                        }
+                if let Some(exit_status) = extract_plist_value(&output_str, "LastExitStatus")
+                    && let Ok(status) = exit_status.parse::<i32>()
+                {
+                    if status == 0 {
+                        log::info!(
+                            "Service is loaded but not running (clean exit), attempting to start"
+                        );
+                        return start_macos_service(SERVICE_IDENTIFIER).await;
+                    } else {
+                        log::warn!(
+                            "Service has non-zero exit status: {status}, attempting to restart"
+                        );
+                        return start_macos_service(SERVICE_IDENTIFIER).await;
                     }
                 }
 
@@ -795,11 +794,11 @@ pub async fn check_service_status() -> Result<String, Box<dyn std::error::Error>
 
                 if let Some(pid_value) = extract_plist_value(&output_str, "PID") {
                     log::info!("Extracted PID value: {pid_value}");
-                    if let Ok(pid) = pid_value.parse::<i32>() {
-                        if pid > 0 {
-                            log::info!("Service is running with PID: {pid}");
-                            return Ok("running".to_string());
-                        }
+                    if let Ok(pid) = pid_value.parse::<i32>()
+                        && pid > 0
+                    {
+                        log::info!("Service is running with PID: {pid}");
+                        return Ok("running".to_string());
                     }
                 }
 
@@ -855,15 +854,15 @@ async fn start_macos_service(service_identifier: &str) -> Result<bool, Box<dyn s
             let output_str = String::from_utf8_lossy(&verify_output.stdout);
             log::info!("Verification output: {output_str}");
 
-            if let Some(pid_value) = extract_plist_value(&output_str, "PID") {
-                if let Ok(pid) = pid_value.parse::<i32>() {
-                    if pid > 0 {
-                        log::info!("Service verified as running with PID: {pid}");
-                        return Ok(true);
-                    } else {
-                        log::warn!("Service has invalid PID: {pid}");
-                        return Ok(false);
-                    }
+            if let Some(pid_value) = extract_plist_value(&output_str, "PID")
+                && let Ok(pid) = pid_value.parse::<i32>()
+            {
+                if pid > 0 {
+                    log::info!("Service verified as running with PID: {pid}");
+                    return Ok(true);
+                } else {
+                    log::warn!("Service has invalid PID: {pid}");
+                    return Ok(false);
                 }
             }
 
@@ -887,19 +886,19 @@ fn extract_plist_value(plist_output: &str, key: &str) -> Option<String> {
 
     for line in plist_output.lines() {
         let trimmed = line.trim();
-        if trimmed.starts_with(&pattern) {
-            if let Some(equals_pos) = trimmed.find('=') {
-                let value_part = &trimmed[equals_pos + 1..];
-                let value_trimmed = value_part.trim();
+        if trimmed.starts_with(&pattern)
+            && let Some(equals_pos) = trimmed.find('=')
+        {
+            let value_part = &trimmed[equals_pos + 1..];
+            let value_trimmed = value_part.trim();
 
-                let value_clean = if let Some(stripped) = value_trimmed.strip_suffix(';') {
-                    stripped
-                } else {
-                    value_trimmed
-                };
+            let value_clean = if let Some(stripped) = value_trimmed.strip_suffix(';') {
+                stripped
+            } else {
+                value_trimmed
+            };
 
-                return Some(value_clean.trim().to_string());
-            }
+            return Some(value_clean.trim().to_string());
         }
     }
 
