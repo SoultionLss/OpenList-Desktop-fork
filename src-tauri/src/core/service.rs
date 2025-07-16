@@ -802,15 +802,15 @@ pub async fn check_service_status() -> Result<String, Box<dyn std::error::Error>
                     }
                 }
 
-                if let Some(exit_status) = extract_plist_value(&output_str, "LastExitStatus") {
-                    if let Ok(status) = exit_status.parse::<i32>() {
-                        if status == 0 {
-                            log::info!("Service is loaded but not running (clean exit)");
-                            return Ok("stopped".to_string());
-                        } else {
-                            log::warn!("Service has non-zero exit status: {status}");
-                            return Ok("stopped".to_string());
-                        }
+                if let Some(exit_status) = extract_plist_value(&output_str, "LastExitStatus")
+                    && let Ok(status) = exit_status.parse::<i32>()
+                {
+                    if status == 0 {
+                        log::info!("Service is loaded but not running (clean exit)");
+                        return Ok("stopped".to_string());
+                    } else {
+                        log::warn!("Service has non-zero exit status: {status}");
+                        return Ok("stopped".to_string());
                     }
                 }
 
