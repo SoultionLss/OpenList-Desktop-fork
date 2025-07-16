@@ -317,8 +317,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
-      - name: Install Rust Stable
-        uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
 
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
@@ -451,8 +451,8 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install Rust Stable
-        uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
 
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
