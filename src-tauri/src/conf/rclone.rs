@@ -23,14 +23,6 @@ pub struct RcloneCreateRemoteRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct RcloneRemoteParameters {
-    pub url: String,
-    pub vendor: Option<String>,
-    pub user: String,
-    pub pass: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RcloneMountRequest {
     pub fs: String,
     pub mount_point: String,
@@ -47,13 +39,6 @@ pub struct RcloneMountOptions {
     pub extra_options: Option<Vec<String>>,
     #[serde(rename = "VolumeName")]
     pub volume_name: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RcloneApiResponse<T> {
-    pub success: bool,
-    pub data: Option<T>,
-    pub error: Option<String>,
 }
 
 impl RcloneConfig {

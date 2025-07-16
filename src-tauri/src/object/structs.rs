@@ -31,13 +31,6 @@ pub struct RcloneMountInfo {
     pub status: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct TransferStats {
-    pub read: u64,
-    pub write: u64,
-    pub errors: u32,
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RcloneRemoteListResponse {
     pub remotes: Vec<String>,
