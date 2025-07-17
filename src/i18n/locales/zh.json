@@ -158,7 +158,6 @@
         "currentPassword": "管理员密码",
         "passwordPlaceholder": "输入管理员密码或点击重置生成",
         "resetTitle": "重置管理员密码为新的随机值",
-        "confirmReset": "您确定要重置管理员密码吗？这将生成一个新密码并更新 OpenList 核心配置。",
         "resetSuccess": "管理员密码重置成功！已生成新密码并保存。",
         "resetFailed": "重置管理员密码失败。请查看日志了解详细信息。",
         "passwordUpdated": "管理员密码更新成功！",

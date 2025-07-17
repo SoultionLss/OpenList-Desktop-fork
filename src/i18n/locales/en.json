@@ -158,7 +158,6 @@
         "currentPassword": "Admin Password",
         "passwordPlaceholder": "Enter admin password or click reset to generate",
         "resetTitle": "Reset admin password to a new random value",
-        "confirmReset": "Are you sure you want to reset the admin password? This will generate a new password and update the OpenList Core configuration.",
         "resetSuccess": "Admin password reset successfully! New password has been generated and saved.",
         "resetFailed": "Failed to reset admin password. Please check the logs for more details.",
         "passwordUpdated": "Admin password updated successfully!",
