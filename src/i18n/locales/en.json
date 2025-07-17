@@ -133,10 +133,12 @@
           "placeholder": "5244",
           "help": "Port number for the web interface (1-65535)"
         },
-        "apiToken": {
-          "label": "API Token",
-          "placeholder": "Optional. Secure API access with authentication",
-          "help": "Optional. Secure API access with authentication"
+        "dataDir": {
+          "label": "Data Directory",
+          "placeholder": "Optional. Custom data directory path",
+          "help": "Optional. Specify a custom directory for OpenList data storage",
+          "selectTitle": "Select Data Directory",
+          "selectError": "Failed to select directory. Please try again or enter path manually."
         },
         "ssl": {
           "title": "Enable SSL/HTTPS",

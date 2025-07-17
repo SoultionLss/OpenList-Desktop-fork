@@ -6,7 +6,7 @@ interface IRemoteConfig {
 
 interface OpenListCoreConfig {
   port: number
-  api_token: string
+  data_dir: string
   auto_launch: boolean
   ssl_enabled: boolean
 }

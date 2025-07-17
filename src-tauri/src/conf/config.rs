@@ -29,23 +29,27 @@ impl MergedSettings {
         }
     }
 
-    pub fn get_data_config_path() -> Result<PathBuf, String> {
-        let exe =
-            std::env::current_exe().map_err(|e| format!("Failed to get current exe path: {e}"))?;
-        let dir = exe
-            .parent()
-            .ok_or_else(|| "Failed to get executable parent directory".to_string())?;
-        Ok(dir.join("data").join("config.json"))
+    pub fn get_data_config_path_for_dir(data_dir: Option<&str>) -> Result<PathBuf, String> {
+        if let Some(dir) = data_dir.filter(|d| !d.is_empty()) {
+            Ok(PathBuf::from(dir).join("config.json"))
+        } else {
+            let exe = std::env::current_exe()
+                .map_err(|e| format!("Failed to get current exe path: {e}"))?;
+            let dir = exe
+                .parent()
+                .ok_or_else(|| "Failed to get executable parent directory".to_string())?;
+            Ok(dir.join("data").join("config.json"))
+        }
     }
 
-    pub fn read_data_config() -> Result<serde_json::Value, String> {
-        let path = Self::get_data_config_path()?;
+    pub fn read_data_config_for_dir(data_dir: Option<&str>) -> Result<serde_json::Value, String> {
+        let path = Self::get_data_config_path_for_dir(data_dir)?;
         let content = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
         serde_json::from_str(&content).map_err(|e| e.to_string())
     }
 
-    fn get_port_from_data_config() -> Result<Option<u16>, String> {
-        let config = Self::read_data_config()?;
+    fn get_port_from_data_config_for_dir(data_dir: Option<&str>) -> Result<Option<u16>, String> {
+        let config = Self::read_data_config_for_dir(data_dir)?;
         Ok(config
             .get("scheme")
             .and_then(|s| s.get("http_port"))
@@ -77,7 +81,13 @@ impl MergedSettings {
             default
         };
 
-        if let Ok(Some(port)) = Self::get_port_from_data_config()
+        let data_dir = if settings.openlist.data_dir.is_empty() {
+            None
+        } else {
+            Some(settings.openlist.data_dir.as_str())
+        };
+
+        if let Ok(Some(port)) = Self::get_port_from_data_config_for_dir(data_dir)
             && settings.openlist.port != port
         {
             settings.openlist.port = port;

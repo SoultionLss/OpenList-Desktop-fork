@@ -7,7 +7,7 @@ type ActionFn<T = any> = () => Promise<T>
 
 export const useAppStore = defineStore('app', () => {
   const settings = ref<MergedSettings>({
-    openlist: { port: 5244, api_token: '', auto_launch: false, ssl_enabled: false },
+    openlist: { port: 5244, data_dir: '', auto_launch: false, ssl_enabled: false },
     rclone: { config: {} },
     app: { theme: 'light', auto_update_enabled: true, gh_proxy: '', gh_proxy_api: false, open_links_in_browser: false }
   })
@@ -97,7 +97,7 @@ export const useAppStore = defineStore('app', () => {
 
   const saveSettings = () => withLoading(() => TauriAPI.settings.save(settings.value), 'Failed to save settings')
 
-  async function saveSettingsWithUpdatePort(): Promise<boolean> {
+  async function saveSettingsWithCoreUpdate(): Promise<boolean> {
     try {
       await TauriAPI.settings.saveWithUpdatePort(settings.value)
       return true
@@ -739,7 +739,7 @@ export const useAppStore = defineStore('app', () => {
 
     loadSettings,
     saveSettings,
-    saveSettingsWithUpdatePort,
+    saveSettingsWithCoreUpdate,
     resetSettings,
 
     startOpenListCore,

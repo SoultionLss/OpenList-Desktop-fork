@@ -223,12 +223,13 @@ const updateChartSize = () => {
 onMounted(async () => {
   await nextTick()
   updateChartSize()
+  await appStore.refreshOpenListCoreStatus()
 
   if (isCoreRunning.value) {
     startTime.value = Date.now()
   }
 
-  monitoringInterval.value = window.setInterval(checkCoreHealth, 30 * 1000)
+  monitoringInterval.value = window.setInterval(checkCoreHealth, 15 * 1000)
   window.addEventListener('resize', updateChartSize)
 })
 

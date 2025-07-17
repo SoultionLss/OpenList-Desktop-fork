@@ -133,10 +133,12 @@
           "placeholder": "5244",
           "help": "Web 界面的端口号 (1-65535)"
         },
-        "apiToken": {
-          "label": "API 令牌",
-          "placeholder": "可选。用于 API 访问的身份验证",
-          "help": "可选。用于 API 访问的身份验证"
+        "dataDir": {
+          "label": "数据目录",
+          "placeholder": "可选。自定义数据目录路径",
+          "help": "可选。为 OpenList 数据存储指定自定义目录",
+          "selectTitle": "选择数据目录",
+          "selectError": "选择目录失败。请重试或手动输入路径。"
         },
         "ssl": {
           "title": "启用 SSL/HTTPS",

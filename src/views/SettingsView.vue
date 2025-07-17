@@ -3,8 +3,9 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useTranslation } from '../composables/useI18n'
-import { Settings, Server, HardDrive, Save, RotateCcw, AlertCircle, CheckCircle } from 'lucide-vue-next'
+import { Settings, Server, HardDrive, Save, RotateCcw, AlertCircle, CheckCircle, FolderOpen } from 'lucide-vue-next'
 import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart'
+import { open } from '@tauri-apps/plugin-dialog'
 
 const appStore = useAppStore()
 const route = useRoute()
@@ -20,6 +21,7 @@ const openlistCoreSettings = reactive({ ...appStore.settings.openlist })
 const rcloneSettings = reactive({ ...appStore.settings.rclone })
 const appSettings = reactive({ ...appStore.settings.app })
 let originalOpenlistPort = openlistCoreSettings.port || 5244
+let originalDataDir = openlistCoreSettings.data_dir
 
 watch(autoStartApp, async newValue => {
   if (newValue) {
@@ -58,7 +60,7 @@ onMounted(async () => {
   }
 
   if (!openlistCoreSettings.port) openlistCoreSettings.port = 5244
-  if (!openlistCoreSettings.api_token) openlistCoreSettings.api_token = ''
+  if (!openlistCoreSettings.data_dir) openlistCoreSettings.data_dir = ''
   if (openlistCoreSettings.auto_launch === undefined) openlistCoreSettings.auto_launch = false
   if (openlistCoreSettings.ssl_enabled === undefined) openlistCoreSettings.ssl_enabled = false
 
@@ -72,6 +74,7 @@ onMounted(async () => {
   if (appSettings.gh_proxy_api === undefined) appSettings.gh_proxy_api = false
   if (appSettings.open_links_in_browser === undefined) appSettings.open_links_in_browser = false
   originalOpenlistPort = openlistCoreSettings.port || 5244
+  originalDataDir = openlistCoreSettings.data_dir
 })
 
 const hasUnsavedChanges = computed(() => {
@@ -108,11 +111,15 @@ const handleSave = async () => {
     appStore.settings.openlist = { ...openlistCoreSettings }
     appStore.settings.rclone = { ...rcloneSettings }
     appStore.settings.app = { ...appSettings }
-    if (originalOpenlistPort !== openlistCoreSettings.port) {
-      await appStore.saveSettingsWithUpdatePort()
+    if (originalOpenlistPort !== openlistCoreSettings.port || originalDataDir !== openlistCoreSettings.data_dir) {
+      await appStore.saveSettingsWithCoreUpdate()
     } else {
       await appStore.saveSettings()
     }
+
+    originalOpenlistPort = openlistCoreSettings.port || 5244
+    originalDataDir = openlistCoreSettings.data_dir
+
     message.value = t('settings.saved')
     messageType.value = 'success'
   } catch (error) {
@@ -146,6 +153,28 @@ const handleReset = async () => {
   } catch (error) {
     message.value = t('settings.resetFailed')
     messageType.value = 'error'
+  }
+}
+
+const handleSelectDataDir = async () => {
+  try {
+    const selected = await open({
+      directory: true,
+      multiple: false,
+      title: t('settings.service.network.dataDir.selectTitle'),
+      defaultPath: openlistCoreSettings.data_dir || undefined
+    })
+
+    if (selected && typeof selected === 'string') {
+      openlistCoreSettings.data_dir = selected
+    }
+  } catch (error) {
+    console.error('Failed to select directory:', error)
+    message.value = t('settings.service.network.dataDir.selectError')
+    messageType.value = 'error'
+    setTimeout(() => {
+      message.value = ''
+    }, 3000)
   }
 }
 </script>
@@ -211,14 +240,24 @@ const handleReset = async () => {
               <small>{{ t('settings.service.network.port.help') }}</small>
             </div>
             <div class="form-group">
-              <label>{{ t('settings.service.network.apiToken.label') }}</label>
-              <input
-                v-model="openlistCoreSettings.api_token"
-                type="password"
-                class="form-input"
-                :placeholder="t('settings.service.network.apiToken.placeholder')"
-              />
-              <small>{{ t('settings.service.network.apiToken.help') }}</small>
+              <label>{{ t('settings.service.network.dataDir.label') }}</label>
+              <div class="input-group">
+                <input
+                  v-model="openlistCoreSettings.data_dir"
+                  type="text"
+                  class="form-input"
+                  :placeholder="t('settings.service.network.dataDir.placeholder')"
+                />
+                <button
+                  type="button"
+                  @click="handleSelectDataDir"
+                  class="input-addon-btn"
+                  :title="t('settings.service.network.dataDir.selectTitle')"
+                >
+                  <FolderOpen :size="16" />
+                </button>
+              </div>
+              <small>{{ t('settings.service.network.dataDir.help') }}</small>
             </div>
 
             <div class="form-group">

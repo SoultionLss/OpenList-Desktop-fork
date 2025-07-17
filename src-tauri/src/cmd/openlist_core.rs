@@ -9,8 +9,15 @@ use crate::utils::path::{get_app_logs_dir, get_openlist_binary_path};
 #[tauri::command]
 pub async fn create_openlist_core_process(
     auto_start: bool,
-    _state: State<'_, AppState>,
+    state: State<'_, AppState>,
 ) -> Result<ProcessConfig, String> {
+    let data_dir = state
+        .app_settings
+        .read()
+        .clone()
+        .ok_or("Failed to read app settings")?
+        .openlist
+        .data_dir;
     let binary_path = get_openlist_binary_path()
         .map_err(|e| format!("Failed to get OpenList binary path: {e}"))?;
     let log_file_path =
@@ -19,12 +26,16 @@ pub async fn create_openlist_core_process(
 
     let api_key = get_api_key();
     let port = get_server_port();
-
+    let mut args = vec!["server".into()];
+    if !data_dir.is_empty() {
+        args.push("--data".into());
+        args.push(data_dir);
+    }
     let config = ProcessConfig {
         id: "openlist_core".into(),
         name: "single_openlist_core_process".into(),
         bin_path: binary_path.to_string_lossy().into_owned(),
-        args: vec!["server".into()],
+        args,
         log_file: log_file_path.to_string_lossy().into_owned(),
         working_dir: binary_path
             .parent()

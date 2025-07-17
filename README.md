@@ -242,7 +242,7 @@ winget install OpenListTeam.OpenListDesktop
 {
   "openlist": {
     "port": 5244,
-    "api_token": "your-secure-token",
+    "data_dir": "",
     "auto_launch": true,
     "ssl_enabled": false
   }
@@ -282,13 +282,6 @@ winget install OpenListTeam.OpenListDesktop
   }
 }
 ```
-
-### 环境变量
-
-- `OPENLIST_API_TOKEN`：覆盖默认 API 令牌
-- `OPENLIST_PORT`：覆盖默认端口（5244）
-- `RCLONE_CONFIG_DIR`：自定义 Rclone 配置目录
-- `LOG_LEVEL`：设置日志级别（debug、info、warn、error）
 
 ## 🔧 开发
 

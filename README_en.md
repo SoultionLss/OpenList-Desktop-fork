@@ -242,7 +242,7 @@ Add custom Rclone flags for optimal performance:
 {
   "openlist": {
     "port": 5244,
-    "api_token": "your-secure-token",
+    "data_dir": "",
     "auto_launch": true,
     "ssl_enabled": false
   }
@@ -282,13 +282,6 @@ Add custom Rclone flags for optimal performance:
   }
 }
 ```
-
-### Environment Variables
-
-- `OPENLIST_API_TOKEN`: Override default API token
-- `OPENLIST_PORT`: Override default port (5244)
-- `RCLONE_CONFIG_DIR`: Custom Rclone configuration directory
-- `LOG_LEVEL`: Set logging level (debug, info, warn, error)
 
 ## 🔧 Development
 

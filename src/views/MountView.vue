@@ -475,10 +475,10 @@ onMounted(async () => {
   rcloneStore.checkRcloneBackendStatus()
   appStore.loadRemoteConfigs()
   appStore.loadMountInfos()
-  mountRefreshInterval = setInterval(appStore.loadMountInfos, 30 * 1000)
+  mountRefreshInterval = setInterval(appStore.loadMountInfos, 15 * 1000)
   backendStatusCheckInterval = setInterval(() => {
     rcloneStore.checkRcloneBackendStatus()
-  }, 30 * 1000)
+  }, 15 * 1000)
   rcloneStore.init()
 })
 
