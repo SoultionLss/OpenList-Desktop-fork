@@ -32,7 +32,15 @@
       "stopRclone": "Stop RClone",
       "manageMounts": "Manage Mounts",
       "autoLaunch": "Auto Launch Core(not app)",
-      "showAdminPassword": "Show/Copy admin password from logs"
+      "showAdminPassword": "Show/Copy admin password from logs",
+      "firewall": {
+        "enable": "Allow Port",
+        "disable": "Remove Port Allow",
+        "added": "Port allowed successfully",
+        "removed": "Port removed successfully",
+        "failedToAdd": "Failed to allow port",
+        "failedToRemove": "Failed to remove port allow"
+      }
     },
     "coreMonitor": {
       "title": "Core Monitor",

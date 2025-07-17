@@ -75,6 +75,28 @@
             <input type="checkbox" v-model="settings.openlist.auto_launch" @change="handleAutoLaunchToggle" />
             <span class="toggle-text">{{ t('dashboard.quickActions.autoLaunch') }}</span>
           </label>
+
+          <!-- Windows Firewall Management-->
+          <button
+            v-if="isWindows"
+            @click="toggleFirewallRule"
+            :class="['firewall-toggle-btn', { active: firewallEnabled }]"
+            :disabled="firewallLoading"
+            :title="
+              firewallEnabled
+                ? t('dashboard.quickActions.firewall.disable')
+                : t('dashboard.quickActions.firewall.enable')
+            "
+          >
+            <Shield :size="18" />
+            <span>
+              {{
+                firewallEnabled
+                  ? t('dashboard.quickActions.firewall.disable')
+                  : t('dashboard.quickActions.firewall.enable')
+              }}
+            </span>
+          </button>
         </div>
       </div>
     </div>
@@ -82,13 +104,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../../stores/app'
 import { useRcloneStore } from '../../stores/rclone'
 import { useTranslation } from '../../composables/useI18n'
 import Card from '../ui/Card.vue'
-import { Play, Square, RotateCcw, ExternalLink, Settings, HardDrive, Key } from 'lucide-vue-next'
+import { Play, Square, RotateCcw, ExternalLink, Settings, HardDrive, Key, Shield } from 'lucide-vue-next'
 import { TauriAPI } from '@/api/tauri'
 
 const { t } = useTranslation()
@@ -99,6 +121,12 @@ const rcloneStore = useRcloneStore()
 const isCoreRunning = computed(() => appStore.isCoreRunning)
 const settings = computed(() => appStore.settings)
 let statusCheckInterval: number | null = null
+
+const firewallEnabled = ref(false)
+const firewallLoading = ref(false)
+const isWindows = computed(() => {
+  return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'win32'
+})
 
 const serviceButtonIcon = computed(() => {
   return isCoreRunning.value ? Square : Play
@@ -274,6 +302,80 @@ const stopBackend = async () => {
   }
 }
 
+const checkFirewallStatus = async () => {
+  if (!isWindows.value) return
+
+  try {
+    firewallEnabled.value = await TauriAPI.firewall.check()
+  } catch (error) {
+    console.error('Failed to check firewall status:', error)
+  }
+}
+
+const toggleFirewallRule = async () => {
+  if (!isWindows.value) return
+
+  try {
+    firewallLoading.value = true
+
+    if (firewallEnabled.value) {
+      await TauriAPI.firewall.remove()
+      firewallEnabled.value = false
+      showNotification('success', t('dashboard.quickActions.firewall.removed'))
+    } else {
+      await TauriAPI.firewall.add()
+      firewallEnabled.value = true
+      showNotification('success', t('dashboard.quickActions.firewall.added'))
+    }
+  } catch (error: any) {
+    console.error('Failed to toggle firewall rule:', error)
+    const message = firewallEnabled.value
+      ? t('dashboard.quickActions.firewall.failedToRemove')
+      : t('dashboard.quickActions.firewall.failedToAdd')
+    showNotification('error', message + ': ' + (error.message || error))
+  } finally {
+    firewallLoading.value = false
+  }
+}
+
+const showNotification = (type: 'success' | 'error', message: string) => {
+  const notification = document.createElement('div')
+  const bgColor =
+    type === 'success'
+      ? 'linear-gradient(135deg, rgb(16, 185, 129), rgb(5, 150, 105))'
+      : 'linear-gradient(135deg, rgb(239, 68, 68), rgb(220, 38, 38))'
+  const icon = type === 'success' ? '✓' : '⚠'
+
+  notification.innerHTML = `
+    <div style="
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${bgColor};
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 10000;
+      font-weight: 500;
+      max-width: 300px;
+      word-break: break-word;
+    ">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="font-size: 18px;">${icon}</div>
+        <div style="font-size: 14px;">${message}</div>
+      </div>
+    </div>
+  `
+  document.body.appendChild(notification)
+
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.parentNode.removeChild(notification)
+    }
+  }, 4000)
+}
+
 const openLink = async (url: string) => {
   try {
     if (appStore.settings.app.open_links_in_browser) {
@@ -289,6 +391,8 @@ const openLink = async (url: string) => {
 onMounted(async () => {
   await rcloneStore.checkRcloneBackendStatus()
   statusCheckInterval = window.setInterval(rcloneStore.checkRcloneBackendStatus, 30 * 1000)
+
+  await checkFirewallStatus()
 })
 
 onUnmounted(() => {
@@ -517,6 +621,41 @@ onUnmounted(() => {
   color: var(--color-text-secondary);
   font-weight: 500;
   user-select: none;
+}
+
+.firewall-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.firewall-toggle-btn:hover:not(:disabled) {
+  background: var(--color-surface-elevated);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.firewall-toggle-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.firewall-toggle-btn.active {
+  background: rgb(16, 185, 129);
+  color: white;
+  border-color: rgba(5, 150, 105, 0.3);
+}
+
+.firewall-toggle-btn.active:hover:not(:disabled) {
+  background: rgb(5, 150, 105);
 }
 
 @media (max-width: 768px) {

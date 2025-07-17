@@ -41,7 +41,7 @@
     "check:all": "yarn check:frontend && yarn check:rust:all",
     "fix:rust": "cd src-tauri && cargo fmt --all && cargo clippy --all-targets --all-features --fix --allow-dirty",
     "fix:frontend": "yarn lint:fix",
-    "fix:all": "yarn fix:frontend && yarn fix:rust"
+    "fix:all": "yarn fix:frontend && yarn fix:rust && yarn i18n:check"
   },
   "config": {
     "commitizen": {

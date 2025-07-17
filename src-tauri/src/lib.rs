@@ -13,6 +13,7 @@ use cmd::custom_updater::{
     check_for_updates, download_update, get_current_version, install_update_and_restart,
     is_auto_check_enabled, set_auto_check_enabled,
 };
+use cmd::firewall::{add_firewall_rule, check_firewall_rule, remove_firewall_rule};
 use cmd::http_api::{
     delete_process, get_process_list, restart_process, start_process, stop_process, update_process,
 };
@@ -159,6 +160,9 @@ pub fn run() {
             check_service_status,
             stop_service,
             start_service,
+            check_firewall_rule,
+            add_firewall_rule,
+            remove_firewall_rule,
             check_for_updates,
             download_update,
             install_update_and_restart,

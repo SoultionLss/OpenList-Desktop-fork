@@ -1,6 +1,7 @@
 pub mod binary;
 pub mod config;
 pub mod custom_updater;
+pub mod firewall;
 pub mod http_api;
 pub mod logs;
 pub mod openlist_core;

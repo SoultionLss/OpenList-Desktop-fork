@@ -453,7 +453,9 @@ const dismissWebdavTip = () => {
   localStorage.setItem('webdav_tip_dismissed', 'true')
 }
 
-const isWindows = /win/i.test(navigator.platform) || /win/i.test(navigator.userAgent)
+const isWindows = computed(() => {
+  return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'win32'
+})
 const showWinfspTip = ref(isWindows && !localStorage.getItem('winfsp_tip_dismissed'))
 
 const dismissWinfspTip = () => {

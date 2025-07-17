@@ -104,6 +104,13 @@ export class TauriAPI {
     listen: (cb: (action: string) => void) => listen('tray-core-action', e => cb(e.payload as string))
   }
 
+  // --- Firewall management ---
+  static firewall = {
+    check: (): Promise<boolean> => call('check_firewall_rule'),
+    add: (): Promise<boolean> => call('add_firewall_rule'),
+    remove: (): Promise<boolean> => call('remove_firewall_rule')
+  }
+
   // --- Update management ---
   static updater = {
     check: (): Promise<UpdateCheck> => call('check_for_updates'),

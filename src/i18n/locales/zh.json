@@ -32,7 +32,15 @@
       "stopRclone": "停止 RClone",
       "manageMounts": "管理挂载",
       "autoLaunch": "自动启动核心(非桌面app)",
-      "showAdminPassword": "显示/复制日志中的管理员密码"
+      "showAdminPassword": "显示/复制日志中的管理员密码",
+      "firewall": {
+        "enable": "放行端口",
+        "disable": "移除端口放行",
+        "added": "端口放行成功",
+        "removed": "端口移除成功",
+        "failedToAdd": "添加端口放行失败",
+        "failedToRemove": "移除端口放行失败"
+      }
     },
     "coreMonitor": {
       "title": "核心监控",
