@@ -79,7 +79,9 @@ export class TauriAPI {
       call('get_logs', { source: src }),
     clear: (src?: 'openlist' | 'rclone' | 'app' | 'openlist_core'): Promise<boolean> =>
       call('clear_logs', { source: src }),
-    adminPassword: (): Promise<string> => call('get_admin_password')
+    adminPassword: (): Promise<string> => call('get_admin_password'),
+    resetAdminPassword: (): Promise<string> => call('reset_admin_password'),
+    setAdminPassword: (password: string): Promise<string> => call('set_admin_password', { password })
   }
 
   // --- Binary management ---

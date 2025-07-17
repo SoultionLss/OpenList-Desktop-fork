@@ -32,7 +32,8 @@
       "stopRclone": "Stop RClone",
       "manageMounts": "Manage Mounts",
       "autoLaunch": "Auto Launch Core(not app)",
-      "showAdminPassword": "Show/Copy admin password from logs",
+      "copyAdminPassword": "Copy admin password",
+      "resetAdminPassword": "Reset admin password",
       "firewall": {
         "enable": "Allow Port",
         "disable": "Remove Port Allow",
@@ -150,6 +151,19 @@
           "title": "Auto-launch on startup",
           "description": "Automatically start OpenList service when the application launches"
         }
+      },
+      "admin": {
+        "title": "Admin Password",
+        "subtitle": "Manage the admin password for OpenList Core web interface",
+        "currentPassword": "Admin Password",
+        "passwordPlaceholder": "Enter admin password or click reset to generate",
+        "resetTitle": "Reset admin password to a new random value",
+        "confirmReset": "Are you sure you want to reset the admin password? This will generate a new password and update the OpenList Core configuration.",
+        "resetSuccess": "Admin password reset successfully! New password has been generated and saved.",
+        "resetFailed": "Failed to reset admin password. Please check the logs for more details.",
+        "passwordUpdated": "Admin password updated successfully!",
+        "passwordUpdateFailed": "Failed to update admin password. Please check the logs for more details.",
+        "help": "Enter a custom admin password or click the reset button to generate a new random password. Click 'Save Changes' to apply the password to OpenList Core."
       }
     },
     "rclone": {

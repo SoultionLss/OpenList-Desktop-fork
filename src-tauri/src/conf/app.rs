@@ -7,6 +7,7 @@ pub struct AppConfig {
     pub gh_proxy: Option<String>,
     pub gh_proxy_api: Option<bool>,
     pub open_links_in_browser: Option<bool>,
+    pub admin_password: Option<String>,
 }
 
 impl AppConfig {
@@ -17,6 +18,7 @@ impl AppConfig {
             gh_proxy: None,
             gh_proxy_api: Some(false),
             open_links_in_browser: Some(false),
+            admin_password: None,
         }
     }
 }

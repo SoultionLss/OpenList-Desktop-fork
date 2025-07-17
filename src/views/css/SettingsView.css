@@ -384,6 +384,22 @@
   color: var(--color-text-primary);
 }
 
+.input-addon-btn.reset-password-btn {
+  background: var(--color-error-background, #fef2f2);
+  color: var(--color-error, #dc2626);
+  border-color: var(--color-error-border, #fecaca);
+}
+
+.input-addon-btn.reset-password-btn:hover:not(:disabled) {
+  background: var(--color-error, #dc2626);
+  color: white;
+}
+
+.input-addon-btn.reset-password-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Switch */
 .switch-label {
   display: flex;

@@ -32,7 +32,8 @@
       "stopRclone": "停止 RClone",
       "manageMounts": "管理挂载",
       "autoLaunch": "自动启动核心(非桌面app)",
-      "showAdminPassword": "显示/复制日志中的管理员密码",
+      "copyAdminPassword": "复制管理员密码",
+      "resetAdminPassword": "重置管理员密码",
       "firewall": {
         "enable": "放行端口",
         "disable": "移除端口放行",
@@ -150,6 +151,19 @@
           "title": "开机自启",
           "description": "应用程序启动时自动启动 OpenList 服务"
         }
+      },
+      "admin": {
+        "title": "管理员密码",
+        "subtitle": "管理 OpenList 核心网页界面的管理员密码",
+        "currentPassword": "管理员密码",
+        "passwordPlaceholder": "输入管理员密码或点击重置生成",
+        "resetTitle": "重置管理员密码为新的随机值",
+        "confirmReset": "您确定要重置管理员密码吗？这将生成一个新密码并更新 OpenList 核心配置。",
+        "resetSuccess": "管理员密码重置成功！已生成新密码并保存。",
+        "resetFailed": "重置管理员密码失败。请查看日志了解详细信息。",
+        "passwordUpdated": "管理员密码更新成功！",
+        "passwordUpdateFailed": "更新管理员密码失败。请查看日志了解详细信息。",
+        "help": "输入自定义管理员密码或点击重置按钮生成新的随机密码。点击'保存更改'将密码应用到 OpenList 核心。"
       }
     },
     "rclone": {

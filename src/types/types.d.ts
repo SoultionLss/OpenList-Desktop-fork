@@ -49,6 +49,7 @@ interface AppConfig {
   gh_proxy?: string
   gh_proxy_api?: boolean
   open_links_in_browser?: boolean
+  admin_password?: string
 }
 
 interface MergedSettings {

@@ -9,7 +9,14 @@ export const useAppStore = defineStore('app', () => {
   const settings = ref<MergedSettings>({
     openlist: { port: 5244, data_dir: '', auto_launch: false, ssl_enabled: false },
     rclone: { config: {} },
-    app: { theme: 'light', auto_update_enabled: true, gh_proxy: '', gh_proxy_api: false, open_links_in_browser: false }
+    app: {
+      theme: 'light',
+      auto_update_enabled: true,
+      gh_proxy: '',
+      gh_proxy_api: false,
+      open_links_in_browser: false,
+      admin_password: undefined
+    }
   })
   const openlistCoreStatus = ref<OpenListCoreStatus>({ running: false })
   const remoteConfigs = ref<IRemoteConfig>({})
@@ -698,6 +705,36 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  async function resetAdminPassword(): Promise<string | null> {
+    try {
+      const newPassword = await TauriAPI.logs.resetAdminPassword()
+
+      if (newPassword) {
+        settings.value.app.admin_password = newPassword
+        await saveSettings()
+      }
+
+      return newPassword
+    } catch (err) {
+      console.error('Failed to reset admin password:', err)
+      return null
+    }
+  }
+
+  async function setAdminPassword(password: string): Promise<boolean> {
+    try {
+      await TauriAPI.logs.setAdminPassword(password)
+
+      settings.value.app.admin_password = password
+      await saveSettings()
+
+      return true
+    } catch (err) {
+      console.error('Failed to set admin password:', err)
+      return false
+    }
+  }
+
   // Update management functions
   function setUpdateAvailable(available: boolean, updateInfo?: UpdateCheck) {
     updateAvailable.value = available
@@ -756,6 +793,8 @@ export const useAppStore = defineStore('app', () => {
     clearError,
     init,
     getAdminPassword,
+    resetAdminPassword,
+    setAdminPassword,
 
     setTheme,
     toggleTheme,

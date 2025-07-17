@@ -27,11 +27,19 @@
           </button>
 
           <button
-            @click="showAdminPassword"
+            @click="copyAdminPassword"
             class="action-btn password-btn icon-only-btn"
-            :title="t('dashboard.quickActions.showAdminPassword')"
+            :title="t('dashboard.quickActions.copyAdminPassword')"
           >
             <Key :size="16" />
+          </button>
+
+          <button
+            @click="resetAdminPassword"
+            class="action-btn reset-password-btn icon-only-btn"
+            :title="t('dashboard.quickActions.resetAdminPassword')"
+          >
+            <RotateCcw :size="16" />
           </button>
         </div>
       </div>
@@ -164,7 +172,7 @@ const viewMounts = () => {
   router.push({ name: 'Mount' })
 }
 
-const showAdminPassword = async () => {
+const copyAdminPassword = async () => {
   try {
     const password = await appStore.getAdminPassword()
     if (password) {
@@ -237,38 +245,54 @@ const showAdminPassword = async () => {
     }
   } catch (error) {
     console.error('Failed to get admin password:', error)
+    showNotification('error', 'Failed to get admin password. Please check the logs.')
+  }
+}
 
-    const notification = document.createElement('div')
-    notification.innerHTML = `
-      <div style="
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: linear-gradient(135deg, rgb(239, 68, 68), rgb(220, 38, 38));
-        color: white;
-        padding: 12px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        z-index: 10000;
-        font-weight: 500;
-        max-width: 300px;
-      ">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="font-size: 18px;">✗</div>
-          <div>
-            <div style="font-size: 14px; margin-bottom: 4px;">Failed to get admin password</div>
-            <div style="font-size: 12px; opacity: 0.9;">Please check the logs.</div>
+const resetAdminPassword = async () => {
+  try {
+    const newPassword = await appStore.resetAdminPassword()
+    if (newPassword) {
+      await navigator.clipboard.writeText(newPassword)
+
+      const notification = document.createElement('div')
+      notification.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(135deg, rgb(16, 185, 129), rgb(5, 150, 105));
+          color: white;
+          padding: 12px 20px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          z-index: 10000;
+          font-weight: 500;
+          max-width: 300px;
+          word-break: break-all;
+        ">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="font-size: 18px;">✓</div>
+            <div>
+              <div style="font-size: 14px; margin-bottom: 4px;">Admin password reset and copied!</div>
+              <div style="font-size: 12px; opacity: 0.9; font-family: monospace;">${newPassword}</div>
+            </div>
           </div>
         </div>
-      </div>
-    `
-    document.body.appendChild(notification)
+      `
+      document.body.appendChild(notification)
 
-    setTimeout(() => {
-      if (notification.parentNode) {
-        notification.parentNode.removeChild(notification)
-      }
-    }, 4000)
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification)
+        }
+      }, 4000)
+    } else {
+      showNotification('error', 'Failed to reset admin password. Please check the logs.')
+    }
+  } catch (error) {
+    console.error('Failed to reset admin password:', error)
+    showNotification('error', 'Failed to reset admin password. Please check the logs.')
   }
 }
 
@@ -540,6 +564,12 @@ onUnmounted(() => {
   background: rgb(168, 85, 247);
   color: white;
   border-color: rgba(147, 51, 234, 0.3);
+}
+
+.reset-password-btn:hover:not(:disabled) {
+  background: rgb(239, 68, 68);
+  color: white;
+  border-color: rgba(220, 38, 38, 0.3);
 }
 
 .service-indicator-btn {

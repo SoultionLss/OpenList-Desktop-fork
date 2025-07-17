@@ -17,7 +17,9 @@ use cmd::firewall::{add_firewall_rule, check_firewall_rule, remove_firewall_rule
 use cmd::http_api::{
     delete_process, get_process_list, restart_process, start_process, stop_process, update_process,
 };
-use cmd::logs::{clear_logs, get_admin_password, get_logs};
+use cmd::logs::{
+    clear_logs, get_admin_password, get_logs, reset_admin_password, set_admin_password,
+};
 use cmd::openlist_core::{create_openlist_core_process, get_openlist_core_status};
 use cmd::os_operate::{
     get_available_versions, list_files, open_file, open_folder, open_url, open_url_in_browser,
@@ -148,6 +150,8 @@ pub fn run() {
             get_logs,
             clear_logs,
             get_admin_password,
+            reset_admin_password,
+            set_admin_password,
             get_binary_version,
             select_directory,
             get_available_versions,

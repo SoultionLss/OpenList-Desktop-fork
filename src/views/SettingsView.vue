@@ -16,6 +16,7 @@ const messageType = ref<'success' | 'error' | 'info'>('info')
 const activeTab = ref('openlist')
 const rcloneConfigJson = ref('')
 const autoStartApp = ref(false)
+const isResettingPassword = ref(false)
 
 const openlistCoreSettings = reactive({ ...appStore.settings.openlist })
 const rcloneSettings = reactive({ ...appStore.settings.rclone })
@@ -73,8 +74,12 @@ onMounted(async () => {
   if (!appSettings.gh_proxy) appSettings.gh_proxy = ''
   if (appSettings.gh_proxy_api === undefined) appSettings.gh_proxy_api = false
   if (appSettings.open_links_in_browser === undefined) appSettings.open_links_in_browser = false
+  if (!appSettings.admin_password) appSettings.admin_password = ''
   originalOpenlistPort = openlistCoreSettings.port || 5244
   originalDataDir = openlistCoreSettings.data_dir
+
+  // Load current admin password
+  await loadCurrentAdminPassword()
 })
 
 const hasUnsavedChanges = computed(() => {
@@ -111,17 +116,33 @@ const handleSave = async () => {
     appStore.settings.openlist = { ...openlistCoreSettings }
     appStore.settings.rclone = { ...rcloneSettings }
     appStore.settings.app = { ...appSettings }
+
+    const originalAdminPassword = appStore.settings.app.admin_password
+    const needsPasswordUpdate = originalAdminPassword !== appSettings.admin_password && appSettings.admin_password
+
     if (originalOpenlistPort !== openlistCoreSettings.port || originalDataDir !== openlistCoreSettings.data_dir) {
       await appStore.saveSettingsWithCoreUpdate()
     } else {
       await appStore.saveSettings()
     }
 
+    if (needsPasswordUpdate) {
+      try {
+        await appStore.setAdminPassword(appSettings.admin_password!)
+        message.value = t('settings.service.admin.passwordUpdated')
+        messageType.value = 'success'
+      } catch (error) {
+        console.error('Failed to update admin password:', error)
+        message.value = t('settings.service.admin.passwordUpdateFailed')
+        messageType.value = 'error'
+      }
+    } else {
+      message.value = t('settings.saved')
+      messageType.value = 'success'
+    }
+
     originalOpenlistPort = openlistCoreSettings.port || 5244
     originalDataDir = openlistCoreSettings.data_dir
-
-    message.value = t('settings.saved')
-    messageType.value = 'success'
   } catch (error) {
     message.value = t('settings.saveFailed')
     messageType.value = 'error'
@@ -175,6 +196,42 @@ const handleSelectDataDir = async () => {
     setTimeout(() => {
       message.value = ''
     }, 3000)
+  }
+}
+
+const handleResetAdminPassword = async () => {
+  isResettingPassword.value = true
+  try {
+    const newPassword = await appStore.resetAdminPassword()
+    if (newPassword) {
+      appSettings.admin_password = newPassword
+      message.value = t('settings.service.admin.resetSuccess')
+      messageType.value = 'success'
+      await navigator.clipboard.writeText(newPassword)
+    } else {
+      message.value = t('settings.service.admin.resetFailed')
+      messageType.value = 'error'
+    }
+  } catch (error) {
+    console.error('Failed to reset admin password:', error)
+    message.value = t('settings.service.admin.resetFailed')
+    messageType.value = 'error'
+  } finally {
+    isResettingPassword.value = false
+    setTimeout(() => {
+      message.value = ''
+    }, 3000)
+  }
+}
+
+const loadCurrentAdminPassword = async () => {
+  try {
+    const password = await appStore.getAdminPassword()
+    if (password) {
+      appSettings.admin_password = password
+    }
+  } catch (error) {
+    console.error('Failed to load admin password:', error)
   }
 }
 </script>
@@ -286,6 +343,33 @@ const handleSelectDataDir = async () => {
                 <span class="switch-description">{{ t('settings.service.startup.autoLaunch.description') }}</span>
               </div>
             </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h2>{{ t('settings.service.admin.title') }}</h2>
+          <p>{{ t('settings.service.admin.subtitle') }}</p>
+
+          <div class="form-group">
+            <label>{{ t('settings.service.admin.currentPassword') }}</label>
+            <div class="input-group">
+              <input
+                v-model="appSettings.admin_password"
+                type="text"
+                class="form-input"
+                :placeholder="t('settings.service.admin.passwordPlaceholder')"
+              />
+              <button
+                type="button"
+                @click="handleResetAdminPassword"
+                :disabled="isResettingPassword"
+                class="input-addon-btn reset-password-btn"
+                :title="t('settings.service.admin.resetTitle')"
+              >
+                <RotateCcw :size="16" />
+              </button>
+            </div>
+            <small>{{ t('settings.service.admin.help') }}</small>
           </div>
         </div>
       </div>
