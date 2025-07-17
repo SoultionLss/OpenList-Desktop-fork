@@ -149,7 +149,7 @@
         "subtitle": "配置 rclone 远程存储访问",
         "label": "Rclone 配置 (JSON)",
         "invalidJson": "无效的 JSON 配置。请检查您的语法。",
-        "tips": "输入你的JSON配置"
+        "tips": "查看你的JSON配置"
       }
     },
     "app": {

@@ -148,7 +148,7 @@
         "title": "Remote Storage",
         "subtitle": "Configure rclone for remote storage access",
         "label": "Rclone Configuration (JSON)",
-        "tips": "Enter your rclone configuration as JSON. This will be used to configure rclone remotes.",
+        "tips": "View your rclone configuration as JSON. This will be used to configure rclone remotes.",
         "invalidJson": "Invalid JSON configuration. Please check your syntax."
       }
     },

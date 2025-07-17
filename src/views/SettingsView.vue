@@ -263,6 +263,7 @@ const handleReset = async () => {
               class="form-textarea"
               placeholder='{ "remote1": { "type": "s3", "provider": "AWS" } }'
               rows="10"
+              readonly
             ></textarea>
             <small>{{ t('settings.rclone.config.tips') }}</small>
           </div>
