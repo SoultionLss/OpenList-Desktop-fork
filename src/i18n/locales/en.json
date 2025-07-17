@@ -314,7 +314,7 @@
       "authentication": "Authentication",
       "mountSettings": "Mount Settings",
       "name": "Name",
-      "namePlaceholder": "e.g., my-webdav-remote",
+      "namePlaceholder": "e.g.mount1",
       "type": "Type",
       "url": "URL",
       "urlPlaceholder": "e.g., http://localhost:5264/dav/189",

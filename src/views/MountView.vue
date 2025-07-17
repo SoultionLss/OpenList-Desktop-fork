@@ -722,7 +722,7 @@ onUnmounted(() => {
       </div>
     </div>
     <!-- Configuration Modal -->
-    <div v-if="showAddForm" class="modal-backdrop" @click="cancelForm">
+    <div v-if="showAddForm" class="modal-backdrop">
       <div class="config-modal" @click.stop>
         <div class="modal-header">
           <div class="modal-title-section">
