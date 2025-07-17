@@ -240,12 +240,7 @@ async function main() {
   await retryTask('rclone', async () => {
     await getLatestRcloneVersion()
     await resolveSidecar(
-      createBinaryInfo(
-        'rclone',
-        getRcloneArchMap(rcloneVersion),
-        'https://github.com/rclone/rclone/releases/download',
-        rcloneVersion
-      )
+      createBinaryInfo('rclone', getRcloneArchMap(rcloneVersion), `https://downloads.rclone.org`, rcloneVersion)
     )
   })
   if (isWin) {
