@@ -348,7 +348,7 @@
       "password": "密码",
       "passwordPlaceholder": "密码",
       "mountPoint": "挂载点",
-      "mountPointPlaceholder": "例如：T: (Windows) 或 /mnt/remote (Linux)",
+      "mountPointPlaceholder": "例如：T: 或 /mnt/remote",
       "volumeName": "远程路径",
       "volumeNamePlaceholder": "例如：/",
       "autoMount": "开机自动挂载",

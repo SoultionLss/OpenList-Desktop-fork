@@ -348,7 +348,7 @@
       "password": "Password",
       "passwordPlaceholder": "Password",
       "mountPoint": "Mount Path",
-      "mountPointPlaceholder": "e.g., T: (Windows) or /mnt/remote (Linux)",
+      "mountPointPlaceholder": "e.g., T: or /mnt/remote",
       "volumeName": "Remote Path",
       "volumeNamePlaceholder": "e.g., /",
       "autoMount": "Auto-mount on startup",
