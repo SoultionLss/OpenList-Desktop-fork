@@ -26,6 +26,7 @@ env:
   APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
   APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+  PERSONAL_GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
 concurrency:
   group: "${{ github.workflow }} - ${{ github.head_ref || github.ref }}"
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -624,7 +625,7 @@ jobs:
 
       - name: Update WinGet package manifest
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
         run: |
           $version = "${{ steps.version.outputs.version }}"
           # URLs for both x64 and arm64 installers
