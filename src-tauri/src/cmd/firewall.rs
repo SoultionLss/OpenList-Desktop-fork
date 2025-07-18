@@ -66,6 +66,7 @@ fn rule_stdout() -> Result<Option<String>, String> {
             "rule",
             &format!("name={RULE}"),
         ])
+        .creation_flags(0x08000000)
         .output()
         .map_err(|e| format!("netsh: {e}"))?;
     if out.status.success() {
