@@ -244,7 +244,8 @@ Add custom Rclone flags for optimal performance:
     "port": 5244,
     "data_dir": "",
     "auto_launch": true,
-    "ssl_enabled": false
+    "ssl_enabled": false,
+    "admin_password": ""
   }
 }
 ```
@@ -290,7 +291,7 @@ Add custom Rclone flags for optimal performance:
 #### Prerequisites
 
 - **Node.js**: v22+ with yarn
-- **Rust**: Latest stable version
+- **Rust**: Latest nightly version
 - **Git**: Version control
 
 #### Setup Steps
@@ -303,35 +304,11 @@ cd openlist-desktop
 # Install Node.js dependencies
 yarn install
 
-# Install Rust dependencies
-cd src-tauri
-cargo fetch
-
 # Prepare development environment
-cd ..
 yarn run prebuild:dev
 
 # Start development server
-yarn run dev
-```
-
-#### Development Commands
-
-```bash
-# Start development server with hot reload
-yarn run dev
-
-# Start development without file watching
-yarn run nowatch
-
-# Run linting
-yarn run lint
-
-# Fix linting issues
-yarn run lint:fix
-
-# Type checking
-yarn run build --dry-run
+yarn tauri dev
 ```
 
 ## 🤝 Contributing

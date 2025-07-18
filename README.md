@@ -244,7 +244,8 @@ winget install OpenListTeam.OpenListDesktop
     "port": 5244,
     "data_dir": "",
     "auto_launch": true,
-    "ssl_enabled": false
+    "ssl_enabled": false,
+    "admin_password": ""
   }
 }
 ```
@@ -290,7 +291,7 @@ winget install OpenListTeam.OpenListDesktop
 #### 先决条件
 
 - **Node.js**：v22+ 和 yarn
-- **Rust**：最新稳定版本
+- **Rust**：最新nightly版本
 - **Git**：版本控制
 
 #### 设置步骤
@@ -303,35 +304,11 @@ cd openlist-desktop
 # 安装 Node.js 依赖
 yarn install
 
-# 安装 Rust 依赖
-cd src-tauri
-cargo fetch
-
 # 准备开发环境
-cd ..
 yarn run prebuild:dev
 
 # 启动开发服务器
-yarn run dev
-```
-
-#### 开发命令
-
-```bash
-# 启动带热重载的开发服务器
-yarn run dev
-
-# 启动不带文件监视的开发
-yarn run nowatch
-
-# 运行代码检查
-yarn run lint
-
-# 修复代码检查问题
-yarn run lint:fix
-
-# 类型检查
-yarn run build --dry-run
+yarn tauri dev
 ```
 
 #### 提交PR
