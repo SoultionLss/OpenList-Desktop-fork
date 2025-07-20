@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process'
+import crypto from 'node:crypto'
 import fsp from 'node:fs/promises'
 import path from 'node:path'
 
@@ -112,6 +113,16 @@ const resolveSimpleServicePlugin = async pluginDir => {
   }
 }
 
+const calculateSha256 = async filePath => {
+  const hash = crypto.createHash('sha256')
+  const fileStream = fs.createReadStream(filePath)
+  fileStream.on('data', chunk => hash.update(chunk))
+  fileStream.on('end', () => {
+    const digest = hash.digest('hex')
+    console.log(`SHA-256 hash of ${filePath}: ${digest}`)
+  })
+}
+
 const resolveAccessControlPlugin = async pluginDir => {
   const url = 'https://nsis.sourceforge.io/mediawiki/images/4/4a/AccessControl.zip'
   const TEMP_DIR = path.join(cwd, 'temp')
@@ -184,6 +195,7 @@ async function resolveSidecar(binInfo) {
     }
     await fs.remove(zipPath)
     await fs.chmod(binaryPath, 0o755)
+    await calculateSha256(binaryPath)
   } catch (err) {
     console.error(`Error preparing "${name}":`, err.message)
     await fs.rm(binaryPath, { recursive: true, force: true })
