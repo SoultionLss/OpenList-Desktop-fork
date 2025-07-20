@@ -381,7 +381,7 @@
         "checkers": "并行运行的检查器数量（默认 8）",
         "vfs-cache-max-age": "缓存的最大生命周期（默认 24h）",
         "vfs-cache-max-size": "缓存文件的最大大小（默认 10G）",
-        "vfs-dir-cache-time": "缓存目录列表的时间（默认 5m）",
+        "dir-cache-time": "缓存目录列表的时间（默认 5m）",
         "bwlimit-10M": "带宽限制（例如 10M）",
         "bwlimit-10M:100M": "分别设置上传和下载宽带限制",
         "bwlimit-schedule": "基于时间的带宽限制",

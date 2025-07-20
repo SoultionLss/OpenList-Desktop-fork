@@ -381,7 +381,7 @@
         "checkers": "Number of checkers to run in parallel (default 8)",
         "vfs-cache-max-age": "Max age of objects in cache (default 24h)",
         "vfs-cache-max-size": "Max total size of cache (default 10G)",
-        "vfs-dir-cache-time": "How long to cache directory listings (default 5m)",
+        "dir-cache-time": "How long to cache directory listings (default 5m)",
         "bwlimit-10M": "Bandwidth limit (e.g. 10M)",
         "bwlimit-10M:100M": "Set separate upload and download bandwidth limits",
         "bwlimit-schedule": "Time-based bandwidth limits",

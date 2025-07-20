@@ -67,7 +67,7 @@ const commonFlags = ref([
       { flag: '--vfs-cache-mode', value: 'minimal', descriptionKey: 'vfs-cache-mode-minimal' },
       { flag: '--vfs-cache-max-age', value: '24h', descriptionKey: 'vfs-cache-max-age' },
       { flag: '--vfs-cache-max-size', value: '10G', descriptionKey: 'vfs-cache-max-size' },
-      { flag: '--vfs-dir-cache-time', value: '5m', descriptionKey: 'vfs-dir-cache-time' }
+      { flag: 'dir-cache-time', value: '5m', descriptionKey: 'dir-cache-time' }
     ]
   },
   {
