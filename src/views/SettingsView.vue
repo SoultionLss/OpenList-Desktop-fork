@@ -23,6 +23,7 @@ const rcloneSettings = reactive({ ...appStore.settings.rclone })
 const appSettings = reactive({ ...appStore.settings.app })
 let originalOpenlistPort = openlistCoreSettings.port || 5244
 let originalDataDir = openlistCoreSettings.data_dir
+let originalAdminPassword = appStore.settings.app.admin_password || ''
 
 watch(autoStartApp, async newValue => {
   if (newValue) {
@@ -117,7 +118,6 @@ const handleSave = async () => {
     appStore.settings.rclone = { ...rcloneSettings }
     appStore.settings.app = { ...appSettings }
 
-    const originalAdminPassword = appStore.settings.app.admin_password
     const needsPasswordUpdate = originalAdminPassword !== appSettings.admin_password && appSettings.admin_password
 
     if (originalOpenlistPort !== openlistCoreSettings.port || originalDataDir !== openlistCoreSettings.data_dir) {
@@ -229,6 +229,7 @@ const loadCurrentAdminPassword = async () => {
     const password = await appStore.getAdminPassword()
     if (password) {
       appSettings.admin_password = password
+      originalAdminPassword = password
     }
   } catch (error) {
     console.error('Failed to load admin password:', error)

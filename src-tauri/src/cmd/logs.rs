@@ -73,6 +73,7 @@ async fn execute_openlist_admin_set(
 
     let mut cmd = Command::new(&openlist_exe);
     cmd.args(["admin", "set", password]);
+    cmd.current_dir(app_dir);
 
     if let Some(settings) = state.get_settings()
         && !settings.openlist.data_dir.is_empty()
