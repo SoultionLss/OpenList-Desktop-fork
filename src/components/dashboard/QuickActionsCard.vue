@@ -4,21 +4,34 @@
       <div class="action-section">
         <div class="section-header">
           <h4>{{ t('dashboard.quickActions.openlistService') }}</h4>
+          <div v-if="isCoreLoading" class="section-loading-indicator">
+            <Loader :size="12" class="loading-icon" />
+          </div>
         </div>
         <div class="action-buttons">
-          <button @click="toggleCore" :class="['action-btn', 'service-btn', { running: isCoreRunning }]">
-            <component :is="serviceButtonIcon" :size="20" />
-            <span>{{ serviceButtonText }}</span>
+          <button
+            @click="toggleCore"
+            :disabled="isCoreLoading"
+            :class="['action-btn', 'service-btn', { running: isCoreRunning, loading: isCoreLoading }]"
+          >
+            <component v-if="!isCoreLoading" :is="serviceButtonIcon" :size="20" />
+            <Loader v-else :size="20" class="loading-icon" />
+            <span>{{ isCoreLoading ? t('dashboard.quickActions.processing') : serviceButtonText }}</span>
           </button>
 
-          <button @click="restartCore" :disabled="!isCoreRunning" class="action-btn restart-btn">
-            <RotateCcw :size="18" />
+          <button
+            @click="restartCore"
+            :disabled="!isCoreRunning || isCoreLoading"
+            :class="['action-btn', 'restart-btn', { loading: isCoreLoading }]"
+          >
+            <RotateCcw v-if="!isCoreLoading" :size="18" />
+            <Loader v-else :size="18" class="loading-icon" />
             <span>{{ t('dashboard.quickActions.restart') }}</span>
           </button>
 
           <button
             @click="openWebUI"
-            :disabled="!isCoreRunning"
+            :disabled="!isCoreRunning || isCoreLoading"
             class="action-btn web-btn"
             :title="appStore.openListCoreUrl"
           >
@@ -47,15 +60,26 @@
       <div class="action-section">
         <div class="section-header">
           <h4>{{ t('dashboard.quickActions.rclone') }}</h4>
+          <div v-if="isRcloneLoading" class="section-loading-indicator">
+            <Loader :size="12" class="loading-icon" />
+          </div>
         </div>
         <div class="action-buttons">
           <button
             @click="rcloneStore.serviceRunning ? stopBackend() : startBackend()"
-            :class="['action-btn', 'service-indicator-btn', { active: rcloneStore.serviceRunning }]"
+            :disabled="isRcloneLoading"
+            :class="[
+              'action-btn',
+              'service-indicator-btn',
+              { active: rcloneStore.serviceRunning, loading: isRcloneLoading }
+            ]"
           >
-            <component :is="rcloneStore.serviceRunning ? Square : Play" :size="18" />
+            <component v-if="!isRcloneLoading" :is="rcloneStore.serviceRunning ? Square : Play" :size="18" />
+            <Loader v-else :size="18" class="loading-icon" />
             <span>{{
-              rcloneStore.serviceRunning
+              isRcloneLoading
+                ? t('dashboard.quickActions.processing')
+                : rcloneStore.serviceRunning
                 ? t('dashboard.quickActions.stopRclone')
                 : t('dashboard.quickActions.startRclone')
             }}</span>
@@ -118,7 +142,7 @@ import { useAppStore } from '../../stores/app'
 import { useRcloneStore } from '../../stores/rclone'
 import { useTranslation } from '../../composables/useI18n'
 import Card from '../ui/Card.vue'
-import { Play, Square, RotateCcw, ExternalLink, Settings, HardDrive, Key, Shield } from 'lucide-vue-next'
+import { Play, Square, RotateCcw, ExternalLink, Settings, HardDrive, Key, Shield, Loader } from 'lucide-vue-next'
 import { TauriAPI } from '@/api/tauri'
 
 const { t } = useTranslation()
@@ -127,6 +151,8 @@ const appStore = useAppStore()
 const rcloneStore = useRcloneStore()
 
 const isCoreRunning = computed(() => appStore.isCoreRunning)
+const isCoreLoading = computed(() => appStore.loading)
+const isRcloneLoading = computed(() => rcloneStore.loading)
 const settings = computed(() => appStore.settings)
 let statusCheckInterval: number | null = null
 
@@ -452,6 +478,16 @@ onUnmounted(() => {
   letter-spacing: -0.025em;
 }
 
+.section-loading-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.loading-icon {
+  opacity: 0.7;
+  color: var(--color-text-secondary);
+}
+
 .icon-only-btn {
   flex: 0 0 auto;
   min-width: auto;
@@ -508,6 +544,15 @@ onUnmounted(() => {
 .action-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+.action-btn.loading {
+  opacity: 0.8;
+  cursor: wait !important;
+  pointer-events: none;
+}
+
+.action-btn.loading .loading-icon {
+  opacity: 1;
 }
 
 .service-btn.running {
