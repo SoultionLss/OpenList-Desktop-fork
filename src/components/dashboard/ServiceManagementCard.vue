@@ -225,7 +225,17 @@ const stopService = async () => {
     if (!result) {
       throw new Error('Service stop failed')
     }
-    await checkServiceStatus()
+    let attempts = 0
+    const maxAttempts = 5
+    for (let i = 0; i < maxAttempts; i++) {
+      const status = await checkServiceStatus()
+      if (status === 'stopped' || status === 'not-installed' || status === 'error') {
+        serviceStatus.value = status
+        break
+      }
+      attempts++
+      await new Promise(resolve => setTimeout(resolve, 3000))
+    }
   } catch (error) {
     console.error('Failed to stop service:', error)
     serviceStatus.value = 'error'
@@ -265,7 +275,6 @@ const cancelUninstall = () => {
 
 onMounted(async () => {
   await checkServiceStatus()
-  statusCheckInterval = window.setInterval(checkServiceStatus, 30 * 1000)
 })
 
 onUnmounted(() => {
