@@ -43,13 +43,13 @@ const showNotification = ref(false)
 const notificationMessage = ref('')
 const notificationType = ref<'success' | 'info' | 'warning' | 'error'>('success')
 
-watch(
-  filterSource,
-  newValue => {
-    localStorage.setItem('logFilterSource', newValue)
-  },
-  { immediate: true }
-)
+watch(filterSource, async newValue => {
+  localStorage.setItem('logFilterSource', newValue)
+  await appStore.loadLogs(
+    (newValue !== 'all' && newValue !== 'gin' ? newValue : 'openlist') as 'openlist' | 'rclone' | 'app'
+  )
+  await scrollToBottom()
+})
 
 let logRefreshInterval: NodeJS.Timeout | null = null
 
@@ -273,7 +273,12 @@ const togglePause = () => {
 }
 
 const refreshLogs = async () => {
-  await appStore.loadLogs()
+  await appStore.loadLogs(
+    (filterSource.value !== 'all' && filterSource.value !== 'gin' ? filterSource.value : 'openlist') as
+      | 'openlist'
+      | 'rclone'
+      | 'app'
+  )
   await scrollToBottom()
   if (isPaused.value) {
     isPaused.value = false
