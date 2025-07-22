@@ -9,7 +9,11 @@
               <span class="current-version">{{ currentVersions.openlist }}</span>
             </div>
             <button @click="refreshVersions" :disabled="refreshing" class="refresh-icon-btn">
-              <component :is="refreshing ? LoaderIcon : RefreshCw" :size="16" />
+              <component
+                :is="refreshing ? Loader : RefreshCw"
+                :size="16"
+                :class="{ 'rotate-animation': refreshing && !loading.openlist }"
+              />
             </button>
           </div>
           <div class="version-controls">
@@ -26,8 +30,10 @@
               "
               class="update-btn"
             >
-              <component :is="loading.openlist ? LoaderIcon : Download" :size="14" />
-              <span>{{ loading.openlist ? t('common.loading') : t('dashboard.versionManager.update') }}</span>
+              <component :is="loading.openlist ? Loader : Download" :size="14" />
+              <span>{{
+                loading.openlist ? t('dashboard.versionManager.updating') : t('dashboard.versionManager.update')
+              }}</span>
             </button>
           </div>
         </div>
@@ -38,7 +44,11 @@
               <span class="current-version">{{ currentVersions.rclone }}</span>
             </div>
             <button @click="refreshVersions" :disabled="refreshing" class="refresh-icon-btn">
-              <component :is="refreshing ? LoaderIcon : RefreshCw" :size="16" />
+              <component
+                :is="refreshing ? Loader : RefreshCw"
+                :size="16"
+                :class="{ 'rotate-animation': refreshing && !loading.rclone }"
+              />
             </button>
           </div>
           <div class="version-controls">
@@ -55,8 +65,10 @@
               "
               class="update-btn"
             >
-              <component :is="loading.rclone ? LoaderIcon : Download" :size="14" />
-              <span>{{ loading.rclone ? t('common.loading') : t('dashboard.versionManager.update') }}</span>
+              <component :is="loading.rclone ? Loader : Download" :size="14" />
+              <span>{{
+                loading.rclone ? t('dashboard.versionManager.updating') : t('dashboard.versionManager.update')
+              }}</span>
             </button>
           </div>
         </div>
@@ -68,7 +80,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useTranslation } from '../../composables/useI18n'
-import { Download, RefreshCw, Loader2 as LoaderIcon } from 'lucide-vue-next'
+import { Download, RefreshCw, Loader } from 'lucide-vue-next'
 import Card from '../ui/Card.vue'
 import { TauriAPI } from '../../api/tauri'
 
@@ -144,18 +156,93 @@ const refreshVersions = async () => {
 
 const updateVersion = async (type: 'openlist' | 'rclone') => {
   loading.value[type] = true
+
   try {
     const result = await TauriAPI.bin.updateVersion(type, selectedVersions.value[type])
 
     currentVersions.value[type] = selectedVersions.value[type]
     selectedVersions.value[type] = ''
 
+    showNotification(
+      'success',
+      t('dashboard.versionManager.updateSuccess', { type: type.charAt(0).toUpperCase() + type.slice(1) })
+    )
+
     console.log(`Updated ${type}:`, result)
   } catch (error) {
     console.error(`Failed to update ${type}:`, error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    showNotification(
+      'error',
+      t('dashboard.versionManager.updateError', {
+        type: type.charAt(0).toUpperCase() + type.slice(1),
+        error: errorMessage
+      })
+    )
   } finally {
     loading.value[type] = false
   }
+}
+
+const showNotification = (type: 'success' | 'error', message: string) => {
+  const notification = document.createElement('div')
+  const bgColor =
+    type === 'success'
+      ? 'linear-gradient(135deg, rgb(16, 185, 129), rgb(5, 150, 105))'
+      : 'linear-gradient(135deg, rgb(239, 68, 68), rgb(220, 38, 38))'
+  const icon = type === 'success' ? '✓' : '⚠'
+
+  notification.innerHTML = `
+    <div style="
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: ${bgColor};
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 10000;
+      font-weight: 500;
+      max-width: 350px;
+      word-break: break-word;
+      animation: slideInRight 0.3s ease-out;
+    ">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="font-size: 18px;">${icon}</div>
+        <div style="font-size: 14px;">${message}</div>
+      </div>
+    </div>
+  `
+
+  if (!document.querySelector('#notification-styles')) {
+    const style = document.createElement('style')
+    style.id = 'notification-styles'
+    style.innerHTML = `
+      @keyframes slideInRight {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+    `
+    document.head.appendChild(style)
+  }
+
+  document.body.appendChild(notification)
+
+  setTimeout(() => {
+    if (notification.parentNode) {
+      notification.style.animation = 'slideInRight 0.3s ease-in reverse'
+      setTimeout(() => {
+        notification.parentNode?.removeChild(notification)
+      }, 300)
+    }
+  }, 4000)
 }
 
 onMounted(() => {

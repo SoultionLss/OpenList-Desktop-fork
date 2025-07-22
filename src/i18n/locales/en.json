@@ -57,7 +57,10 @@
       "openlist": "OpenList",
       "rclone": "Rclone",
       "selectVersion": "Select Version",
-      "update": "Update"
+      "update": "Update",
+      "updating": "Updating...",
+      "updateSuccess": "{type} updated successfully!",
+      "updateError": "Failed to update {type}: {error}"
     },
     "documentation": {
       "title": "Documentation",

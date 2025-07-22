@@ -57,7 +57,10 @@
       "openlist": "OpenList",
       "rclone": "Rclone",
       "selectVersion": "选择版本",
-      "update": "更新"
+      "update": "更新",
+      "updating": "更新中...",
+      "updateSuccess": "{type} 更新成功！",
+      "updateError": "更新 {type} 失败：{error}"
     },
     "documentation": {
       "title": "文档",
