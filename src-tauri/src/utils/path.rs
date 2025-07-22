@@ -115,6 +115,8 @@ pub fn get_service_log_path() -> Result<PathBuf, String> {
             .join("Library")
             .join("Application Support")
             .join("io.github.openlistteam.openlist.service.bundle")
+            .join("Contents")
+            .join("MacOS")
             .join("openlist-desktop-service.log");
         Ok(logs)
     }
