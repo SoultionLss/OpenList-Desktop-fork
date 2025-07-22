@@ -22,6 +22,9 @@ import {
   FolderOpen
 } from 'lucide-vue-next'
 import * as chrono from 'chrono-node'
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
+
+type filterSourceType = 'openlist' | 'rclone' | 'app' | 'service' | 'all'
 
 const appStore = useAppStore()
 const { t } = useTranslation()
@@ -30,10 +33,10 @@ const searchInputRef = ref<HTMLInputElement>()
 const autoScroll = ref(true)
 const isPaused = ref(false)
 const filterLevel = ref<string>('all')
-const filterSource = ref<string>(localStorage.getItem('logFilterSource') || 'all')
+const filterSource = ref<string>(localStorage.getItem('logFilterSource') || 'openlist')
 const searchQuery = ref('')
 const selectedEntries = ref<Set<number>>(new Set())
-const showFilters = ref(false)
+const showFilters = ref(true)
 const showSettings = ref(false)
 const fontSize = ref(13)
 const maxLines = ref(1000)
@@ -43,12 +46,17 @@ const stripAnsiColors = ref(true)
 const showNotification = ref(false)
 const notificationMessage = ref('')
 const notificationType = ref<'success' | 'info' | 'warning' | 'error'>('success')
+const showConfirmDialog = ref(false)
+const confirmDialogConfig = ref({
+  title: '',
+  message: '',
+  onConfirm: () => {},
+  onCancel: () => {}
+})
 
 watch(filterSource, async newValue => {
   localStorage.setItem('logFilterSource', newValue)
-  await appStore.loadLogs(
-    (newValue !== 'all' && newValue !== 'gin' ? newValue : 'openlist') as 'openlist' | 'rclone' | 'app'
-  )
+  await appStore.loadLogs((newValue !== 'gin' ? newValue : 'openlist') as filterSourceType)
   await scrollToBottom()
 })
 
@@ -115,11 +123,8 @@ const parseLogEntry = (logText: string) => {
         }
       }
     }
-  } else if (cleanText.includes('openlist_desktop') || cleanText.includes('tao::')) {
-    source = 'app'
-    level = 'info'
-  } else if (cleanText.toLowerCase().includes('rclone')) {
-    source = 'rclone'
+  } else {
+    source = filterSource.value
   }
 
   message = message
@@ -198,21 +203,30 @@ const scrollToTop = () => {
 }
 
 const clearLogs = async () => {
-  if (confirm(t('logs.messages.confirmClear'))) {
-    try {
-      await appStore.clearLogs(
-        (filterSource.value !== 'all' && filterSource.value !== 'gin' ? filterSource.value : 'openlist') as
-          | 'openlist'
-          | 'rclone'
-          | 'app'
-      )
-      selectedEntries.value.clear()
-      showNotificationMessage(t('logs.notifications.clearSuccess'), 'success')
-    } catch (error) {
-      console.error('Failed to clear logs:', error)
-      showNotificationMessage(t('logs.notifications.clearFailed'), 'error')
+  confirmDialogConfig.value = {
+    title: t('logs.messages.confirmTitle') || t('common.confirm'),
+    message: t('logs.messages.confirmClear'),
+    onConfirm: async () => {
+      showConfirmDialog.value = false
+      try {
+        await appStore.clearLogs(
+          (filterSource.value !== 'all' && filterSource.value !== 'gin'
+            ? filterSource.value
+            : 'openlist') as filterSourceType
+        )
+        selectedEntries.value.clear()
+        showNotificationMessage(t('logs.notifications.clearSuccess'), 'success')
+      } catch (error) {
+        console.error('Failed to clear logs:', error)
+        showNotificationMessage(t('logs.notifications.clearFailed'), 'error')
+      }
+    },
+    onCancel: () => {
+      showConfirmDialog.value = false
     }
   }
+
+  showConfirmDialog.value = true
 }
 
 const copyLogsToClipboard = async () => {
@@ -285,10 +299,7 @@ const togglePause = () => {
 
 const refreshLogs = async () => {
   await appStore.loadLogs(
-    (filterSource.value !== 'all' && filterSource.value !== 'gin' ? filterSource.value : 'openlist') as
-      | 'openlist'
-      | 'rclone'
-      | 'app'
+    (filterSource.value !== 'all' && filterSource.value !== 'gin' ? filterSource.value : 'openlist') as filterSourceType
   )
   await scrollToBottom()
   if (isPaused.value) {
@@ -363,28 +374,16 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 onMounted(async () => {
-  appStore
-    .loadLogs(
-      (filterSource.value !== 'all' && filterSource.value !== 'gin' ? filterSource.value : 'openlist') as
-        | 'openlist'
-        | 'rclone'
-        | 'app'
-    )
-    .then(() => {
-      scrollToBottom()
-    })
+  appStore.loadLogs((filterSource.value !== 'gin' ? filterSource.value : 'openlist') as filterSourceType).then(() => {
+    scrollToBottom()
+  })
 
   document.addEventListener('keydown', handleKeydown)
 
   logRefreshInterval = setInterval(async () => {
     if (!isPaused.value) {
       const oldLength = appStore.logs.length
-      await appStore.loadLogs(
-        (filterSource.value !== 'all' && filterSource.value !== 'gin' ? filterSource.value : 'openlist') as
-          | 'openlist'
-          | 'rclone'
-          | 'app'
-      )
+      await appStore.loadLogs((filterSource.value !== 'gin' ? filterSource.value : 'openlist') as filterSourceType)
 
       if (appStore.logs.length > oldLength) {
         await scrollToBottom()
@@ -532,6 +531,7 @@ onUnmounted(() => {
           <option value="openlist">{{ t('logs.filters.sources.openlist') }}</option>
           <option value="gin">GIN Server</option>
           <option value="rclone">{{ t('logs.filters.sources.rclone') }}</option>
+          <option value="service">{{ t('logs.filters.sources.service') }}</option>
           <option value="app">{{ t('logs.filters.app') }}</option>
         </select>
       </div>
@@ -659,6 +659,17 @@ onUnmounted(() => {
         </div>
       </div>
     </Transition>
+
+    <ConfirmDialog
+      :is-open="showConfirmDialog"
+      :title="confirmDialogConfig.title"
+      :message="confirmDialogConfig.message"
+      :confirm-text="t('common.confirm')"
+      :cancel-text="t('common.cancel')"
+      variant="danger"
+      @confirm="confirmDialogConfig.onConfirm"
+      @cancel="confirmDialogConfig.onCancel"
+    />
   </div>
 </template>
 

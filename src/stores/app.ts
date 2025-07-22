@@ -553,7 +553,7 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function loadLogs(source?: 'openlist' | 'rclone' | 'app') {
+  async function loadLogs(source?: 'openlist' | 'rclone' | 'app' | 'service' | 'all') {
     try {
       source = source || 'openlist'
       const logEntries = await TauriAPI.logs.get(source)
@@ -563,9 +563,10 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function clearLogs(source?: 'openlist' | 'rclone' | 'app') {
+  async function clearLogs(source?: 'openlist' | 'rclone' | 'app' | 'service' | 'all') {
     try {
       loading.value = true
+      source = source || 'openlist'
       const result = await TauriAPI.logs.clear(source)
       if (result) {
         logs.value = []

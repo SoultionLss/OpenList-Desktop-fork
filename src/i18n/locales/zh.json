@@ -2,6 +2,7 @@
   "common": {
     "save": "保存",
     "cancel": "取消",
+    "confirm": "确认",
     "reset": "重置",
     "close": "关闭",
     "minimize": "最小化",
@@ -102,7 +103,10 @@
     "subtitle": "配置您的 OpenList 桌面应用程序",
     "saveChanges": "保存更改",
     "resetToDefaults": "重置为默认值",
-    "confirmReset": "您确定要将所有设置重置为默认值吗？此操作无法撤消。",
+    "confirmReset": {
+      "title": "重置设置",
+      "message": "您确定要将所有设置重置为默认值吗？此操作无法撤消。"
+    },
     "saved": "设置保存成功！",
     "saveFailed": "保存设置失败，请重试。",
     "resetSuccess": "设置已重置为默认值！",
@@ -283,7 +287,8 @@
       "sources": {
         "all": "所有来源",
         "rclone": "Rclone",
-        "openlist": "OpenList"
+        "openlist": "OpenList",
+        "service": "服务"
       },
       "actions": {
         "selectAll": "全选 (Ctrl+A)",
@@ -303,7 +308,8 @@
       "stripAnsiColors": "去除 ANSI 颜色"
     },
     "messages": {
-      "confirmClear": "您确定要清除所有日志吗？"
+      "confirmClear": "您确定要清除所有日志吗？",
+      "confirmTitle": "清除日志"
     },
     "headers": {
       "timestamp": "时间",

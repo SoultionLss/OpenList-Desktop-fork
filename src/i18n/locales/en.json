@@ -2,6 +2,7 @@
   "common": {
     "save": "Save",
     "cancel": "Cancel",
+    "confirm": "Confirm",
     "reset": "Reset",
     "close": "Close",
     "minimize": "Minimize",
@@ -102,7 +103,10 @@
     "subtitle": "Configure your OpenList Desktop application",
     "saveChanges": "Save Changes",
     "resetToDefaults": "Reset to defaults",
-    "confirmReset": "Are you sure you want to reset all settings to defaults? This action cannot be undone.",
+    "confirmReset": {
+      "title": "Reset Settings",
+      "message": "Are you sure you want to reset all settings to defaults? This action cannot be undone."
+    },
     "saved": "Settings saved successfully!",
     "saveFailed": "Failed to save settings. Please try again.",
     "resetSuccess": "Settings reset to defaults successfully!",
@@ -283,7 +287,8 @@
       "sources": {
         "all": "All Sources",
         "rclone": "Rclone",
-        "openlist": "OpenList"
+        "openlist": "OpenList",
+        "service": "Service"
       },
       "actions": {
         "selectAll": "Select All (Ctrl+A)",
@@ -303,7 +308,8 @@
       "stripAnsiColors": "Strip ANSI Colors"
     },
     "messages": {
-      "confirmClear": "Are you sure you want to clear all logs?"
+      "confirmClear": "Are you sure you want to clear all logs?",
+      "confirmTitle": "Clear Logs"
     },
     "headers": {
       "timestamp": "Timestamp",

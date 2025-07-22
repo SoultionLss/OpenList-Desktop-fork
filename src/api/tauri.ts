@@ -79,9 +79,9 @@ export class TauriAPI {
 
   // --- Logs management ---
   static logs = {
-    get: (src?: 'openlist' | 'rclone' | 'app' | 'openlist_core'): Promise<string[]> =>
+    get: (src?: 'openlist' | 'rclone' | 'app' | 'openlist_core' | 'service' | 'all'): Promise<string[]> =>
       call('get_logs', { source: src }),
-    clear: (src?: 'openlist' | 'rclone' | 'app' | 'openlist_core'): Promise<boolean> =>
+    clear: (src?: 'openlist' | 'rclone' | 'app' | 'openlist_core' | 'service' | 'all'): Promise<boolean> =>
       call('clear_logs', { source: src }),
     adminPassword: (): Promise<string> => call('get_admin_password'),
     resetAdminPassword: (): Promise<string> => call('reset_admin_password'),

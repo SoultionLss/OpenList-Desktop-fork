@@ -16,6 +16,7 @@ import {
 } from 'lucide-vue-next'
 import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart'
 import { open } from '@tauri-apps/plugin-dialog'
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
 
 const appStore = useAppStore()
 const route = useRoute()
@@ -27,6 +28,13 @@ const activeTab = ref('openlist')
 const rcloneConfigJson = ref('')
 const autoStartApp = ref(false)
 const isResettingPassword = ref(false)
+const showConfirmDialog = ref(false)
+const confirmDialogConfig = ref({
+  title: '',
+  message: '',
+  onConfirm: () => {},
+  onCancel: () => {}
+})
 
 const openlistCoreSettings = reactive({ ...appStore.settings.openlist })
 const rcloneSettings = reactive({ ...appStore.settings.rclone })
@@ -167,24 +175,33 @@ const handleSave = async () => {
 }
 
 const handleReset = async () => {
-  if (!confirm(t('settings.confirmReset'))) {
-    return
+  confirmDialogConfig.value = {
+    title: t('settings.confirmReset.title'),
+    message: t('settings.confirmReset.message'),
+    onConfirm: async () => {
+      showConfirmDialog.value = false
+
+      try {
+        await appStore.resetSettings()
+        Object.assign(openlistCoreSettings, appStore.settings.openlist)
+        Object.assign(rcloneSettings, appStore.settings.rclone)
+        Object.assign(appSettings, appStore.settings.app)
+
+        rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
+
+        message.value = t('settings.resetSuccess')
+        messageType.value = 'info'
+      } catch (error) {
+        message.value = t('settings.resetFailed')
+        messageType.value = 'error'
+      }
+    },
+    onCancel: () => {
+      showConfirmDialog.value = false
+    }
   }
 
-  try {
-    await appStore.resetSettings()
-    Object.assign(openlistCoreSettings, appStore.settings.openlist)
-    Object.assign(rcloneSettings, appStore.settings.rclone)
-    Object.assign(appSettings, appStore.settings.app)
-
-    rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
-
-    message.value = t('settings.resetSuccess')
-    messageType.value = 'info'
-  } catch (error) {
-    message.value = t('settings.resetFailed')
-    messageType.value = 'error'
-  }
+  showConfirmDialog.value = true
 }
 
 const handleSelectDataDir = async () => {
@@ -594,6 +611,17 @@ const loadCurrentAdminPassword = async () => {
         </div>
       </div>
     </div>
+
+    <ConfirmDialog
+      :is-open="showConfirmDialog"
+      :title="confirmDialogConfig.title"
+      :message="confirmDialogConfig.message"
+      :confirm-text="t('common.confirm')"
+      :cancel-text="t('common.cancel')"
+      variant="danger"
+      @confirm="confirmDialogConfig.onConfirm"
+      @cancel="confirmDialogConfig.onCancel"
+    />
   </div>
 </template>
 

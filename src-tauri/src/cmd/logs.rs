@@ -5,7 +5,7 @@ use std::process::Command;
 use tauri::State;
 
 use crate::object::structs::AppState;
-use crate::utils::path::{get_app_logs_dir, get_default_openlist_data_dir};
+use crate::utils::path::{get_app_logs_dir, get_default_openlist_data_dir, get_service_log_path};
 
 fn generate_random_password() -> String {
     use std::collections::hash_map::DefaultHasher;
@@ -110,6 +110,7 @@ async fn execute_openlist_admin_set(
 
 fn resolve_log_paths(source: Option<&str>, data_dir: Option<&str>) -> Result<Vec<PathBuf>, String> {
     let logs_dir = get_app_logs_dir()?;
+    let service_path = get_service_log_path()?;
 
     let openlist_log_base = if let Some(dir) = data_dir.filter(|d| !d.is_empty()) {
         PathBuf::from(dir)
@@ -124,11 +125,13 @@ fn resolve_log_paths(source: Option<&str>, data_dir: Option<&str>) -> Result<Vec
         Some("app") => paths.push(logs_dir.join("app.log")),
         Some("rclone") => paths.push(logs_dir.join("process_rclone.log")),
         Some("openlist_core") => paths.push(logs_dir.join("process_openlist_core.log")),
-        None => {
+        Some("service") => paths.push(service_path),
+        Some("all") => {
             paths.push(openlist_log_base.join("log/log.log"));
             paths.push(logs_dir.join("app.log"));
             paths.push(logs_dir.join("process_rclone.log"));
             paths.push(logs_dir.join("process_openlist_core.log"));
+            paths.push(service_path);
         }
         _ => return Err("Invalid log source".into()),
     }
@@ -225,9 +228,13 @@ pub async fn get_logs(
     let mut logs = Vec::new();
 
     for path in paths {
-        let content =
-            std::fs::read_to_string(&path).map_err(|e| format!("Failed to read {path:?}: {e}"))?;
-        logs.extend(content.lines().map(str::to_string));
+        if path.exists() {
+            let content = std::fs::read_to_string(&path)
+                .map_err(|e| format!("Failed to read {path:?}: {e}"))?;
+            logs.extend(content.lines().map(str::to_string));
+        } else {
+            log::info!("Log file does not exist: {path:?}");
+        }
     }
     Ok(logs)
 }
