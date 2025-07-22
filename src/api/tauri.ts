@@ -61,7 +61,11 @@ export class TauriAPI {
     open: (path: string): Promise<boolean> => call('open_file', { path }),
     folder: (path: string): Promise<boolean> => call('open_folder', { path }),
     url: (url: string): Promise<boolean> => call('open_url', { url }),
-    urlInBrowser: (url: string): Promise<boolean> => call('open_url_in_browser', { url })
+    urlInBrowser: (url: string): Promise<boolean> => call('open_url_in_browser', { url }),
+    openOpenListDataDir: (): Promise<boolean> => call('open_openlist_data_dir'),
+    openLogsDirectory: (): Promise<boolean> => call('open_logs_directory'),
+    openRcloneConfigFile: (): Promise<boolean> => call('open_rclone_config_file'),
+    openSettingsFile: (): Promise<boolean> => call('open_settings_file')
   }
 
   // --- Settings management ---

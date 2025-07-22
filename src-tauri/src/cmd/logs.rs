@@ -5,6 +5,7 @@ use std::process::Command;
 use tauri::State;
 
 use crate::object::structs::AppState;
+use crate::utils::path::{get_app_logs_dir, get_default_openlist_data_dir};
 
 fn generate_random_password() -> String {
     use std::collections::hash_map::DefaultHasher;
@@ -75,13 +76,20 @@ async fn execute_openlist_admin_set(
     cmd.args(["admin", "set", password]);
     cmd.current_dir(app_dir);
 
-    if let Some(settings) = state.get_settings()
+    let effective_data_dir = if let Some(settings) = state.get_settings()
         && !settings.openlist.data_dir.is_empty()
     {
-        cmd.arg("--data");
-        cmd.arg(&settings.openlist.data_dir);
-        log::info!("Using data directory: {}", settings.openlist.data_dir);
-    }
+        settings.openlist.data_dir
+    } else {
+        get_default_openlist_data_dir()
+            .map_err(|e| format!("Failed to get default data directory: {e}"))?
+            .to_string_lossy()
+            .to_string()
+    };
+
+    cmd.arg("--data");
+    cmd.arg(&effective_data_dir);
+    log::info!("Using data directory: {effective_data_dir}");
     log::info!("Executing command: {cmd:?}");
     let output = cmd
         .output()
@@ -101,30 +109,26 @@ async fn execute_openlist_admin_set(
 }
 
 fn resolve_log_paths(source: Option<&str>, data_dir: Option<&str>) -> Result<Vec<PathBuf>, String> {
-    let exe_path =
-        env::current_exe().map_err(|e| format!("Failed to determine executable path: {e}"))?;
-    let app_dir = exe_path
-        .parent()
-        .ok_or("Executable has no parent directory")?
-        .to_path_buf();
+    let logs_dir = get_app_logs_dir()?;
 
     let openlist_log_base = if let Some(dir) = data_dir.filter(|d| !d.is_empty()) {
         PathBuf::from(dir)
     } else {
-        app_dir.join("data")
+        get_default_openlist_data_dir()
+            .map_err(|e| format!("Failed to get default data directory: {e}"))?
     };
 
     let mut paths = Vec::new();
     match source {
         Some("openlist") => paths.push(openlist_log_base.join("log/log.log")),
-        Some("app") => paths.push(app_dir.join("logs/app.log")),
-        Some("rclone") => paths.push(app_dir.join("logs/process_rclone.log")),
-        Some("openlist_core") => paths.push(app_dir.join("logs/process_openlist_core.log")),
+        Some("app") => paths.push(logs_dir.join("app.log")),
+        Some("rclone") => paths.push(logs_dir.join("process_rclone.log")),
+        Some("openlist_core") => paths.push(logs_dir.join("process_openlist_core.log")),
         None => {
             paths.push(openlist_log_base.join("log/log.log"));
-            paths.push(app_dir.join("logs/app.log"));
-            paths.push(app_dir.join("logs/process_rclone.log"));
-            paths.push(app_dir.join("logs/process_openlist_core.log"));
+            paths.push(logs_dir.join("app.log"));
+            paths.push(logs_dir.join("process_rclone.log"));
+            paths.push(logs_dir.join("process_openlist_core.log"));
         }
         _ => return Err("Invalid log source".into()),
     }

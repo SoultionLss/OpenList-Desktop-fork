@@ -3,7 +3,17 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAppStore } from '../stores/app'
 import { useTranslation } from '../composables/useI18n'
-import { Settings, Server, HardDrive, Save, RotateCcw, AlertCircle, CheckCircle, FolderOpen } from 'lucide-vue-next'
+import {
+  Settings,
+  Server,
+  HardDrive,
+  Save,
+  RotateCcw,
+  AlertCircle,
+  CheckCircle,
+  FolderOpen,
+  ExternalLink
+} from 'lucide-vue-next'
 import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart'
 import { open } from '@tauri-apps/plugin-dialog'
 
@@ -199,6 +209,26 @@ const handleSelectDataDir = async () => {
   }
 }
 
+const handleOpenDataDir = async () => {
+  try {
+    if (openlistCoreSettings.data_dir) {
+      await appStore.openFolder(openlistCoreSettings.data_dir)
+    } else {
+      await appStore.openOpenListDataDir()
+    }
+    message.value = t('settings.service.network.dataDir.openSuccess')
+    messageType.value = 'success'
+  } catch (error) {
+    console.error('Failed to open data directory:', error)
+    message.value = t('settings.service.network.dataDir.openError')
+    messageType.value = 'error'
+  } finally {
+    setTimeout(() => {
+      message.value = ''
+    }, 3000)
+  }
+}
+
 const handleResetAdminPassword = async () => {
   isResettingPassword.value = true
   try {
@@ -218,6 +248,38 @@ const handleResetAdminPassword = async () => {
     messageType.value = 'error'
   } finally {
     isResettingPassword.value = false
+    setTimeout(() => {
+      message.value = ''
+    }, 3000)
+  }
+}
+
+const handleOpenRcloneConfig = async () => {
+  try {
+    await appStore.openRcloneConfigFile()
+    message.value = t('settings.rclone.config.openSuccess')
+    messageType.value = 'success'
+  } catch (error) {
+    console.error('Failed to open rclone config file:', error)
+    message.value = t('settings.rclone.config.openError')
+    messageType.value = 'error'
+  } finally {
+    setTimeout(() => {
+      message.value = ''
+    }, 3000)
+  }
+}
+
+const handleOpenSettingsFile = async () => {
+  try {
+    await appStore.openSettingsFile()
+    message.value = t('settings.app.config.openSuccess')
+    messageType.value = 'success'
+  } catch (error) {
+    console.error('Failed to open settings file:', error)
+    message.value = t('settings.app.config.openError')
+    messageType.value = 'error'
+  } finally {
     setTimeout(() => {
       message.value = ''
     }, 3000)
@@ -314,6 +376,14 @@ const loadCurrentAdminPassword = async () => {
                 >
                   <FolderOpen :size="16" />
                 </button>
+                <button
+                  type="button"
+                  @click="handleOpenDataDir"
+                  class="input-addon-btn"
+                  :title="t('settings.service.network.dataDir.openTitle')"
+                >
+                  <ExternalLink :size="16" />
+                </button>
               </div>
               <small>{{ t('settings.service.network.dataDir.help') }}</small>
             </div>
@@ -382,6 +452,17 @@ const loadCurrentAdminPassword = async () => {
 
           <div class="form-group">
             <label>{{ t('settings.rclone.config.label') }}</label>
+            <div class="settings-section-actions">
+              <button
+                type="button"
+                @click="handleOpenRcloneConfig"
+                class="btn btn-secondary"
+                :title="t('settings.rclone.config.openFile')"
+              >
+                <ExternalLink :size="16" />
+                {{ t('settings.rclone.config.openFile') }}
+              </button>
+            </div>
             <textarea
               v-model="rcloneConfigJson"
               class="form-textarea"
@@ -412,6 +493,25 @@ const loadCurrentAdminPassword = async () => {
                 <option value="auto">{{ t('settings.app.theme.auto') }}</option>
               </select>
               <small>{{ t('settings.app.theme.autoDesc') }}</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h2>{{ t('settings.app.config.title') }}</h2>
+          <p>{{ t('settings.app.config.subtitle') }}</p>
+
+          <div class="form-group">
+            <div class="settings-section-actions">
+              <button
+                type="button"
+                @click="handleOpenSettingsFile"
+                class="btn btn-secondary"
+                :title="t('settings.app.config.openFile')"
+              >
+                <ExternalLink :size="16" />
+                {{ t('settings.app.config.openFile') }}
+              </button>
             </div>
           </div>
         </div>

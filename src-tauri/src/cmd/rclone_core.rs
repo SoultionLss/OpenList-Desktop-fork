@@ -6,7 +6,7 @@ use tauri::State;
 use crate::cmd::http_api::{get_process_list, start_process};
 use crate::object::structs::AppState;
 use crate::utils::api::{CreateProcessResponse, ProcessConfig, get_api_key, get_server_port};
-use crate::utils::path::{get_app_logs_dir, get_rclone_binary_path};
+use crate::utils::path::{get_app_logs_dir, get_rclone_binary_path, get_rclone_config_path};
 
 // use 45572 due to the reserved port on Windows
 pub const RCLONE_API_BASE: &str = "http://127.0.0.1:45572";
@@ -40,10 +40,8 @@ pub async fn create_rclone_backend_process(
         get_rclone_binary_path().map_err(|e| format!("Failed to get rclone binary path: {e}"))?;
     let log_file_path =
         get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {e}"))?;
-    let rclone_conf_path = binary_path
-        .parent()
-        .map(|p| p.join("rclone.conf"))
-        .ok_or_else(|| "Failed to determine rclone.conf path".to_string())?;
+    let rclone_conf_path =
+        get_rclone_config_path().map_err(|e| format!("Failed to get rclone config path: {e}"))?;
     let log_file_path = log_file_path.join("process_rclone.log");
     let api_key = get_api_key();
     let port = get_server_port();

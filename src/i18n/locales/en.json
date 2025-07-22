@@ -143,7 +143,10 @@
           "placeholder": "Optional. Custom data directory path",
           "help": "Optional. Specify a custom directory for OpenList data storage",
           "selectTitle": "Select Data Directory",
-          "selectError": "Failed to select directory. Please try again or enter path manually."
+          "selectError": "Failed to select directory. Please try again or enter path manually.",
+          "openTitle": "Open Data Directory",
+          "openSuccess": "Data directory opened successfully",
+          "openError": "Failed to open data directory"
         },
         "ssl": {
           "title": "Enable SSL/HTTPS",
@@ -176,7 +179,10 @@
         "subtitle": "Configure rclone for remote storage access",
         "label": "Rclone Configuration (JSON)",
         "tips": "View your rclone configuration as JSON. This will be used to configure rclone remotes.",
-        "invalidJson": "Invalid JSON configuration. Please check your syntax."
+        "invalidJson": "Invalid JSON configuration. Please check your syntax.",
+        "openFile": "Open rclone.conf",
+        "openSuccess": "Rclone config file opened successfully",
+        "openError": "Failed to open rclone config file"
       }
     },
     "app": {
@@ -188,6 +194,13 @@
         "dark": "Dark",
         "auto": "Auto",
         "autoDesc": "Follow system"
+      },
+      "config": {
+        "title": "Configuration Files",
+        "subtitle": "Access application configuration files",
+        "openFile": "Open settings.json",
+        "openSuccess": "Settings file opened successfully",
+        "openError": "Failed to open settings file"
       },
       "ghProxy": {
         "title": "GitHub Proxy",
@@ -232,7 +245,9 @@
       "copyFailed": "Failed to copy logs to clipboard",
       "exportSuccess": "Successfully exported {count} logs entries to file",
       "clearSuccess": "Logs cleared successfully",
-      "clearFailed": "Failed to clear logs"
+      "clearFailed": "Failed to clear logs",
+      "openDirectorySuccess": "Logs directory opened successfully",
+      "openDirectoryFailed": "Failed to open logs directory"
     },
     "toolbar": {
       "pause": "Pause (Space)",
@@ -243,6 +258,7 @@
       "copyToClipboard": "Copy to Clipboard (Ctrl+C)",
       "exportLogs": "Export Logs",
       "clearLogs": "Clear Logs (Ctrl+Delete)",
+      "openLogsDirectory": "Open Logs Directory",
       "toggleFullscreen": "Toggle Fullscreen (F11)",
       "scrollToTop": "Scroll to Top (Home)",
       "scrollToBottom": "Scroll to Bottom (End)"

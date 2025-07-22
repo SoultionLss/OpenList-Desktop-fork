@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use super::app::AppConfig;
 use crate::conf::core::OpenListCoreConfig;
 use crate::conf::rclone::RcloneConfig;
-use crate::utils::path::app_config_file_path;
+use crate::utils::path::{app_config_file_path, get_default_openlist_data_dir};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MergedSettings {
@@ -33,12 +33,7 @@ impl MergedSettings {
         if let Some(dir) = data_dir.filter(|d| !d.is_empty()) {
             Ok(PathBuf::from(dir).join("config.json"))
         } else {
-            let exe = std::env::current_exe()
-                .map_err(|e| format!("Failed to get current exe path: {e}"))?;
-            let dir = exe
-                .parent()
-                .ok_or_else(|| "Failed to get executable parent directory".to_string())?;
-            Ok(dir.join("data").join("config.json"))
+            Ok(get_default_openlist_data_dir()?.join("config.json"))
         }
     }
 

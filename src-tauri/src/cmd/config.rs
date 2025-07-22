@@ -8,7 +8,7 @@ use crate::cmd::http_api::{delete_process, get_process_list, start_process, stop
 use crate::cmd::openlist_core::create_openlist_core_process;
 use crate::conf::config::MergedSettings;
 use crate::object::structs::AppState;
-use crate::utils::path::app_config_file_path;
+use crate::utils::path::{app_config_file_path, get_default_openlist_data_dir};
 
 fn write_json_to_file<T: serde::Serialize>(path: PathBuf, value: &T) -> Result<(), String> {
     let json = serde_json::to_string_pretty(value).map_err(|e| e.to_string())?;
@@ -21,16 +21,10 @@ fn persist_app_settings(settings: &MergedSettings) -> Result<(), String> {
 }
 
 fn update_data_config(port: u16, data_dir: Option<&str>) -> Result<(), String> {
-    let exe_dir = std::env::current_exe()
-        .map_err(|e| e.to_string())?
-        .parent()
-        .ok_or("Failed to get exe parent dir")?
-        .to_path_buf();
-
     let data_config_path = if let Some(dir) = data_dir.filter(|d| !d.is_empty()) {
         PathBuf::from(dir).join("config.json")
     } else {
-        exe_dir.join("data").join("config.json")
+        get_default_openlist_data_dir()?.join("config.json")
     };
 
     if let Some(parent) = data_config_path.parent() {

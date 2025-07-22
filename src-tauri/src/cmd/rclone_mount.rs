@@ -14,7 +14,7 @@ use crate::object::structs::{
 };
 use crate::utils::api::{CreateProcessResponse, ProcessConfig, get_api_key, get_server_port};
 use crate::utils::args::split_args_vec;
-use crate::utils::path::{get_app_logs_dir, get_rclone_binary_path};
+use crate::utils::path::{get_app_logs_dir, get_rclone_binary_path, get_rclone_config_path};
 
 struct RcloneApi {
     client: Client,
@@ -189,10 +189,8 @@ pub async fn create_rclone_mount_remote_process(
     let log_file_path =
         get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {e}"))?;
     let log_file_path = log_file_path.join("process_rclone.log");
-    let rclone_conf_path = binary_path
-        .parent()
-        .map(|p| p.join("rclone.conf"))
-        .ok_or_else(|| "Failed to determine rclone.conf path".to_string())?;
+    let rclone_conf_path =
+        get_rclone_config_path().map_err(|e| format!("Failed to get rclone config path: {e}"))?;
 
     let api_key = get_api_key();
     let port = get_server_port();

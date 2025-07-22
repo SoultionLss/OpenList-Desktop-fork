@@ -6,7 +6,10 @@ use tauri::{AppHandle, State};
 use crate::cmd::http_api::{get_process_list, start_process, stop_process};
 use crate::object::structs::{AppState, FileItem};
 use crate::utils::github_proxy::apply_github_proxy;
-use crate::utils::path::{get_openlist_binary_path, get_rclone_binary_path};
+use crate::utils::path::{
+    app_config_file_path, get_app_logs_dir, get_default_openlist_data_dir,
+    get_openlist_binary_path, get_rclone_binary_path, get_rclone_config_path,
+};
 
 fn normalize_path(path: &str) -> String {
     #[cfg(target_os = "windows")]
@@ -614,4 +617,46 @@ fn extract_tar_gz(
 
     executable_path
         .ok_or_else(|| format!("Executable '{executable_name}' not found in tar.gz archive"))
+}
+
+#[tauri::command]
+pub async fn open_logs_directory() -> Result<bool, String> {
+    let logs_dir = get_app_logs_dir()?;
+    if !logs_dir.exists() {
+        fs::create_dir_all(&logs_dir)
+            .map_err(|e| format!("Failed to create logs directory: {e}"))?;
+    }
+    open::that(logs_dir.as_os_str()).map_err(|e| e.to_string())?;
+    Ok(true)
+}
+
+#[tauri::command]
+pub async fn open_openlist_data_dir() -> Result<bool, String> {
+    let config_path = get_default_openlist_data_dir()?;
+    if !config_path.exists() {
+        fs::create_dir_all(&config_path)
+            .map_err(|e| format!("Failed to create config directory: {e}"))?;
+    }
+    open::that(config_path.as_os_str()).map_err(|e| e.to_string())?;
+    Ok(true)
+}
+
+#[tauri::command]
+pub async fn open_rclone_config_file() -> Result<bool, String> {
+    let config_path = get_rclone_config_path()?;
+    if !config_path.exists() {
+        fs::File::create(&config_path).map_err(|e| format!("Failed to create config file: {e}"))?;
+    }
+    open::that_detached(config_path.as_os_str()).map_err(|e| e.to_string())?;
+    Ok(true)
+}
+
+#[tauri::command]
+pub async fn open_settings_file() -> Result<bool, String> {
+    let settings_path = app_config_file_path()?;
+    if !settings_path.exists() {
+        return Err("Settings file does not exist".to_string());
+    }
+    open::that_detached(settings_path.as_os_str()).map_err(|e| e.to_string())?;
+    Ok(true)
 }

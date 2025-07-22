@@ -527,3 +527,33 @@
     padding: 1.5rem;
   }
 }
+
+/* Settings Section Actions */
+.settings-section-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin: 0;
+  gap: 0.5rem;
+}
+
+.settings-section-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.input-group .input-addon-btn:last-child:not(:only-child) {
+  border-radius: 0 8px 8px 0;
+  border-left: none;
+}
+
+.input-group .input-addon-btn:not(:first-child):not(:last-child) {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+}
+
+.input-group .input-addon-btn:first-child:not(:only-child) {
+  border-radius: 0;
+}

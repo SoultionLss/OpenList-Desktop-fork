@@ -143,7 +143,10 @@
           "placeholder": "可选。自定义数据目录路径",
           "help": "可选。为 OpenList 数据存储指定自定义目录",
           "selectTitle": "选择数据目录",
-          "selectError": "选择目录失败。请重试或手动输入路径。"
+          "selectError": "选择目录失败。请重试或手动输入路径。",
+          "openTitle": "打开数据目录",
+          "openSuccess": "数据目录打开成功",
+          "openError": "打开数据目录失败"
         },
         "ssl": {
           "title": "启用 SSL/HTTPS",
@@ -176,7 +179,10 @@
         "subtitle": "配置 rclone 远程存储访问",
         "label": "Rclone 配置 (JSON)",
         "invalidJson": "无效的 JSON 配置。请检查您的语法。",
-        "tips": "查看你的JSON配置"
+        "tips": "查看你的JSON配置",
+        "openFile": "打开 rclone.conf",
+        "openSuccess": "Rclone 配置文件打开成功",
+        "openError": "打开 Rclone 配置文件失败"
       }
     },
     "app": {
@@ -188,6 +194,13 @@
         "dark": "深色",
         "auto": "自动",
         "autoDesc": "跟随系统"
+      },
+      "config": {
+        "title": "配置文件",
+        "subtitle": "访问应用程序配置文件",
+        "openFile": "打开 settings.json",
+        "openSuccess": "设置文件打开成功",
+        "openError": "打开设置文件失败"
       },
       "ghProxy": {
         "title": "GitHub 代理",
@@ -232,7 +245,9 @@
       "copyFailed": "复制日志到剪贴板失败",
       "exportSuccess": "成功导出 {count} 条日志到文件",
       "clearSuccess": "日志清理成功",
-      "clearFailed": "清理日志失败"
+      "clearFailed": "清理日志失败",
+      "openDirectorySuccess": "日志目录打开成功",
+      "openDirectoryFailed": "打开日志目录失败"
     },
     "toolbar": {
       "pause": "暂停 (Space)",
@@ -243,6 +258,7 @@
       "copyToClipboard": "复制到剪贴板 (Ctrl+C)",
       "exportLogs": "导出日志",
       "clearLogs": "清除日志 (Ctrl+Delete)",
+      "openLogsDirectory": "打开日志目录",
       "toggleFullscreen": "切换全屏 (F11)",
       "scrollToTop": "滚动到顶部 (Home)",
       "scrollToBottom": "滚动到底部 (End)"

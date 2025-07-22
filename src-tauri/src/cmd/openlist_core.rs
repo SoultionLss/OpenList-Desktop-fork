@@ -4,7 +4,9 @@ use url::Url;
 
 use crate::object::structs::{AppState, ServiceStatus};
 use crate::utils::api::{CreateProcessResponse, ProcessConfig, get_api_key, get_server_port};
-use crate::utils::path::{get_app_logs_dir, get_openlist_binary_path};
+use crate::utils::path::{
+    get_app_logs_dir, get_default_openlist_data_dir, get_openlist_binary_path,
+};
 
 #[tauri::command]
 pub async fn create_openlist_core_process(
@@ -27,10 +29,19 @@ pub async fn create_openlist_core_process(
     let api_key = get_api_key();
     let port = get_server_port();
     let mut args = vec!["server".into()];
-    if !data_dir.is_empty() {
-        args.push("--data".into());
-        args.push(data_dir);
-    }
+
+    // Use custom data dir if set, otherwise use platform-specific default
+    let effective_data_dir = if !data_dir.is_empty() {
+        data_dir
+    } else {
+        get_default_openlist_data_dir()
+            .map_err(|e| format!("Failed to get default data directory: {e}"))?
+            .to_string_lossy()
+            .to_string()
+    };
+
+    args.push("--data".into());
+    args.push(effective_data_dir);
     let config = ProcessConfig {
         id: "openlist_core".into(),
         name: "single_openlist_core_process".into(),

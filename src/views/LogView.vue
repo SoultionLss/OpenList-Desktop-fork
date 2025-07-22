@@ -18,7 +18,8 @@ import {
   Minimize2,
   AlertCircle,
   Info,
-  AlertTriangle
+  AlertTriangle,
+  FolderOpen
 } from 'lucide-vue-next'
 import * as chrono from 'chrono-node'
 
@@ -61,6 +62,16 @@ const showNotificationMessage = (message: string, type: 'success' | 'info' | 'wa
   setTimeout(() => {
     showNotification.value = false
   }, 3000)
+}
+
+const openLogsDirectory = async () => {
+  try {
+    await appStore.openLogsDirectory()
+    showNotificationMessage(t('logs.notifications.openDirectorySuccess'), 'success')
+  } catch (error) {
+    console.error('Failed to open logs directory:', error)
+    showNotificationMessage(t('logs.notifications.openDirectoryFailed'), 'error')
+  }
 }
 
 const stripAnsiCodes = (text: string): string => {
@@ -488,6 +499,10 @@ onUnmounted(() => {
 
         <button class="toolbar-btn danger" @click="clearLogs" :title="t('logs.toolbar.clearLogs')">
           <Trash2 :size="16" />
+        </button>
+
+        <button class="toolbar-btn" @click="openLogsDirectory" :title="t('logs.toolbar.openLogsDirectory')">
+          <FolderOpen :size="16" />
         </button>
 
         <div class="toolbar-separator"></div>

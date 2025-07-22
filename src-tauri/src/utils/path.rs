@@ -16,6 +16,46 @@ fn get_app_dir() -> Result<PathBuf, String> {
     Ok(app_dir)
 }
 
+fn get_user_data_dir() -> Result<PathBuf, String> {
+    #[cfg(target_os = "macos")]
+    {
+        let home = env::var("HOME").map_err(|_| "Failed to get HOME environment variable")?;
+        let data_dir = PathBuf::from(home)
+            .join("Library")
+            .join("Application Support")
+            .join("OpenList Desktop");
+        fs::create_dir_all(&data_dir)
+            .map_err(|e| format!("Failed to create data directory: {e}"))?;
+        Ok(data_dir)
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        get_app_dir()
+    }
+}
+
+fn get_user_logs_dir() -> Result<PathBuf, String> {
+    #[cfg(target_os = "macos")]
+    {
+        let home = env::var("HOME").map_err(|_| "Failed to get HOME environment variable")?;
+        let logs_dir = PathBuf::from(home)
+            .join("Library")
+            .join("Logs")
+            .join("OpenList Desktop");
+        fs::create_dir_all(&logs_dir)
+            .map_err(|e| format!("Failed to create logs directory: {e}"))?;
+        Ok(logs_dir)
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        let logs = get_app_dir()?.join("logs");
+        fs::create_dir_all(&logs).map_err(|e| e.to_string())?;
+        Ok(logs)
+    }
+}
+
 fn get_binary_path(binary: &str, service_name: &str) -> Result<PathBuf, String> {
     let mut name = binary.to_string();
     if cfg!(target_os = "windows") {
@@ -40,7 +80,7 @@ pub fn get_rclone_binary_path() -> Result<PathBuf, String> {
 }
 
 pub fn get_app_config_dir() -> Result<PathBuf, String> {
-    get_app_dir()
+    get_user_data_dir()
 }
 
 pub fn app_config_file_path() -> Result<PathBuf, String> {
@@ -48,7 +88,21 @@ pub fn app_config_file_path() -> Result<PathBuf, String> {
 }
 
 pub fn get_app_logs_dir() -> Result<PathBuf, String> {
-    let logs = get_app_dir()?.join("logs");
-    fs::create_dir_all(&logs).map_err(|e| e.to_string())?;
-    Ok(logs)
+    get_user_logs_dir()
+}
+
+pub fn get_rclone_config_path() -> Result<PathBuf, String> {
+    Ok(get_user_data_dir()?.join("rclone.conf"))
+}
+
+pub fn get_default_openlist_data_dir() -> Result<PathBuf, String> {
+    #[cfg(target_os = "macos")]
+    {
+        Ok(get_user_data_dir()?.join("data"))
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        Ok(get_app_dir()?.join("data"))
+    }
 }
