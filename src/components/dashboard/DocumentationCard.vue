@@ -109,7 +109,9 @@ const openLink = async (url: string) => {
   } catch (error) {
     console.error('Failed to open link:', error)
   }
-  window.open(url, '_blank')
+  setTimeout(() => {
+    window.open(url, '_blank')
+  })
 }
 </script>
 
