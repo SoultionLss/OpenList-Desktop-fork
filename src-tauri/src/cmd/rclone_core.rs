@@ -1,6 +1,5 @@
-use std::time::Duration;
-
-use reqwest::{self, Client};
+use reqwest;
+use sysinfo::System;
 use tauri::State;
 
 use crate::cmd::http_api::{get_process_list, start_process};
@@ -108,13 +107,21 @@ pub async fn get_rclone_backend_status(_state: State<'_, AppState>) -> Result<bo
 }
 
 async fn is_rclone_running() -> bool {
-    let client = Client::new();
+    log::info!("Checking if Rclone is running...");
+    let mut system = System::new_all();
+    system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
 
-    let response = client
-        .get(format!("{RCLONE_API_BASE}/"))
-        .timeout(Duration::from_secs(3))
-        .send()
-        .await;
+    for (_pid, process) in system.processes() {
+        let process_name = process.name().to_string_lossy().to_lowercase();
 
-    response.is_ok()
+        if process_name.contains("rclone") {
+            let cmd_args = process.cmd();
+
+            if cmd_args.iter().any(|arg| arg == "rcd") {
+                return true;
+            }
+        }
+    }
+    log::info!("Rclone is not running");
+    false
 }
