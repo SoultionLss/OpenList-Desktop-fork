@@ -107,7 +107,6 @@ pub async fn get_rclone_backend_status(_state: State<'_, AppState>) -> Result<bo
 }
 
 async fn is_rclone_running() -> bool {
-    log::info!("Checking if Rclone is running...");
     let mut system = System::new_all();
     system.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
 
@@ -122,6 +121,5 @@ async fn is_rclone_running() -> bool {
             }
         }
     }
-    log::info!("Rclone is not running");
     false
 }
