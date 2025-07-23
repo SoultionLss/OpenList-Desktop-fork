@@ -1,0 +1,424 @@
+name: 'Build Test - All Platforms'
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_version:
+        description: 'Test version (e.g., 1.0.0-test). Leave empty to use package.json version with -test suffix'
+        required: false
+        type: string
+
+permissions: write-all
+env:
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: short
+  TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+  TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+  # macOS signing and notarization (optional for testing)
+  APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+  APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+  APPLE_ID: ${{ secrets.APPLE_ID }}
+  APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+  APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+  APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+concurrency:
+  group: "${{ github.workflow }} - ${{ github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Prepare Build Information
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build-date: ${{ steps.version.outputs.build-date }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+
+      - name: Calculate test version
+        id: version
+        run: |
+          # If manual test version is provided, use it
+          if [ -n "${{ inputs.test_version }}" ]; then
+            TEST_VERSION="${{ inputs.test_version }}"
+            echo "Using manual test version: $TEST_VERSION"
+            echo "version=$TEST_VERSION" >> $GITHUB_OUTPUT
+          else
+            # Use package.json version with test suffix
+            CURRENT_VERSION=$(node -p "require('./package.json').version")
+            TEST_VERSION="$CURRENT_VERSION-test"
+            echo "Using auto test version: $TEST_VERSION"
+            echo "version=$TEST_VERSION" >> $GITHUB_OUTPUT
+          fi
+          
+          # Add build date for reference
+          BUILD_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          echo "build-date=$BUILD_DATE" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            platform: windows
+            arch: x64
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            platform: windows
+            arch: arm64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            platform: macos
+            arch: arm64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            platform: macos
+            arch: x64
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            platform: linux
+            arch: x64
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Add Rust Target
+        run: rustup target add ${{ matrix.target }}
+      
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          save-if: false
+
+      - name: Install dependencies (ubuntu only)
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxslt1.1 libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+        
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      
+      - name: Install dependencies
+        uses: borales/actions-yarn@v5
+        with:
+          cmd: install
+
+      - name: Prebuild and check
+        run: |
+          yarn install
+          yarn run prebuild:dev --target=${{ matrix.target }}
+
+      - name: Update version for test build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # Update package.json
+          yarn version --new-version ${{ needs.prepare.outputs.version }} --no-git-tag-version
+          
+          # Update Cargo.toml
+          (Get-Content src-tauri/Cargo.toml) -replace '^version = ".*"', 'version = "${{ needs.prepare.outputs.version }}"' | Set-Content src-tauri/Cargo.toml
+          
+          # Update tauri.conf.json
+          (Get-Content src-tauri/tauri.conf.json) -replace '"version": ".*"', '"version": "${{ needs.prepare.outputs.version }}"' | Set-Content src-tauri/tauri.conf.json
+
+      - name: Update version for test build (macOS)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          # Update package.json
+          yarn version --new-version ${{ needs.prepare.outputs.version }} --no-git-tag-version
+          
+          # Update Cargo.toml
+          sed -i '' 's/^version = "[^"]*"/version = "${{ needs.prepare.outputs.version }}"/' src-tauri/Cargo.toml
+          
+          # Update tauri.conf.json
+          sed -i '' 's/"version": "[^"]*"/"version": "${{ needs.prepare.outputs.version }}"/' src-tauri/tauri.conf.json
+
+      - name: Update version for test build (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          # Update package.json
+          yarn version --new-version ${{ needs.prepare.outputs.version }} --no-git-tag-version
+          
+          # Update Cargo.toml
+          sed -i 's/^version = "[^"]*"/version = "${{ needs.prepare.outputs.version }}"/' src-tauri/Cargo.toml
+          
+          # Update tauri.conf.json
+          sed -i 's/"version": "[^"]*"/"version": "${{ needs.prepare.outputs.version }}"/' src-tauri/tauri.conf.json
+          
+      - name: Import Apple Developer Certificate (macOS only)
+        if: matrix.os == 'macos-latest' && env.APPLE_CERTIFICATE != ''
+        uses: apple-actions/import-codesign-certs@v5
+        with:
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+
+      - name: Import Windows certificate
+        if: matrix.os == 'windows-latest' && env.WINDOWS_CERTIFICATE != ''
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          if ($env:WINDOWS_CERTIFICATE) {
+            New-Item -ItemType directory -Path certificate
+            Set-Content -Path certificate/tempCert.txt -Value $env:WINDOWS_CERTIFICATE
+            certutil -decode certificate/tempCert.txt certificate/certificate.pfx
+            Remove-Item -path certificate -include tempCert.txt
+            Import-PfxCertificate -FilePath certificate/certificate.pfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText)
+          }
+
+      - name: Build the app
+        if: matrix.platform == 'windows' || matrix.platform == 'linux'
+        run: |
+          yarn build --target ${{ matrix.target }}
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          # macOS signing and notarization environment variables
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+      
+      - name: Build the app (macOS)
+        if: matrix.platform == 'macos'
+        run: |
+          export TAURI_SKIP_SIDECAR_SIGNATURE_CHECK=true
+          yarn build --target ${{ matrix.target }}
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          # macOS signing and notarization environment variables
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}-${{ matrix.arch }}-build
+          path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*
+          retention-days: 30
+  
+  build-linux-arm:
+    name: Build Linux ARM
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: aarch64-unknown-linux-gnu
+            arch: arm64
+          - os: ubuntu-22.04
+            target: armv7-unknown-linux-gnueabihf
+            arch: armhf
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Add Rust Target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          save-if: false
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        uses: borales/actions-yarn@v5
+        with:
+          cmd: install
+
+      - name: Prebuild and check
+        run: |
+          yarn install
+          yarn run prebuild:dev --target=${{ matrix.target }}
+
+      - name: Update version for test build
+        run: |
+          # Update package.json
+          yarn version --new-version ${{ needs.prepare.outputs.version }} --no-git-tag-version
+          
+          # Update Cargo.toml
+          sed -i 's/^version = "[^"]*"/version = "${{ needs.prepare.outputs.version }}"/' src-tauri/Cargo.toml
+          
+          # Update tauri.conf.json
+          sed -i 's/"version": "[^"]*"/"version": "${{ needs.prepare.outputs.version }}"/' src-tauri/tauri.conf.json
+
+      - name: Setup for Linux ARM cross-compilation
+        run: |-
+          sudo ls -lR /etc/apt/
+
+          cat > /tmp/sources.list << EOF
+          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu jammy main multiverse universe restricted
+          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu jammy-security main multiverse universe restricted
+          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu jammy-updates main multiverse universe restricted
+          deb [arch=amd64,i386] http://archive.ubuntu.com/ubuntu jammy-backports main multiverse universe restricted
+
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy main multiverse universe restricted
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy-security main multiverse universe restricted
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy-updates main multiverse universe restricted
+          deb [arch=armhf,arm64] http://ports.ubuntu.com/ubuntu-ports jammy-backports main multiverse universe restricted
+          EOF
+
+          sudo mv /etc/apt/sources.list /etc/apt/sources.list.default
+          sudo mv /tmp/sources.list /etc/apt/sources.list
+
+          sudo dpkg --add-architecture ${{ matrix.arch }}
+          sudo apt update
+
+          sudo apt install -y \
+            libxslt1.1:${{ matrix.arch }} \
+            libwebkit2gtk-4.1-dev:${{ matrix.arch }} \
+            libayatana-appindicator3-dev:${{ matrix.arch }} \
+            libssl-dev:${{ matrix.arch }} \
+            patchelf:${{ matrix.arch }} \
+            librsvg2-dev:${{ matrix.arch }}
+
+      - name: Install aarch64 tools
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt install -y \
+            gcc-aarch64-linux-gnu \
+            g++-aarch64-linux-gnu
+
+      - name: Install armv7 tools
+        if: matrix.target == 'armv7-unknown-linux-gnueabihf'
+        run: |
+          sudo apt install -y \
+            gcc-arm-linux-gnueabihf \
+            g++-arm-linux-gnueabihf
+
+      - name: Build for Linux ARM
+        run: |
+          export PKG_CONFIG_ALLOW_CROSS=1
+          if [ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]; then
+            export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig/:$PKG_CONFIG_PATH
+            export PKG_CONFIG_SYSROOT_DIR=/usr/aarch64-linux-gnu/
+          elif [ "${{ matrix.target }}" == "armv7-unknown-linux-gnueabihf" ]; then
+            export PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabihf/pkgconfig/:$PKG_CONFIG_PATH
+            export PKG_CONFIG_SYSROOT_DIR=/usr/arm-linux-gnueabihf/
+          fi
+          yarn build --target ${{ matrix.target }}
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+
+      - name: Upload Linux ARM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.target }}-build
+          path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
+            src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.rpm
+          retention-days: 30
+
+  summary:
+    name: Build Summary
+    needs: [prepare, build, build-linux-arm]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create build summary
+        run: |
+          echo "# Build Test Summary" > build-summary.md
+          echo "" >> build-summary.md
+          echo "**Version:** ${{ needs.prepare.outputs.version }}" >> build-summary.md
+          echo "**Build Date:** ${{ needs.prepare.outputs.build-date }}" >> build-summary.md
+          echo "**Commit:** ${{ github.sha }}" >> build-summary.md
+          echo "**Branch:** ${{ github.ref_name }}" >> build-summary.md
+          echo "" >> build-summary.md
+          echo "## Build Status" >> build-summary.md
+          echo "" >> build-summary.md
+          
+          # Check build status
+          if [ "${{ needs.build.result }}" == "success" ]; then
+            echo "✅ **Main platforms build:** Success" >> build-summary.md
+          else
+            echo "❌ **Main platforms build:** Failed" >> build-summary.md
+          fi
+          
+          if [ "${{ needs.build-linux-arm.result }}" == "success" ]; then
+            echo "✅ **Linux ARM build:** Success" >> build-summary.md
+          else
+            echo "❌ **Linux ARM build:** Failed" >> build-summary.md
+          fi
+          
+          echo "" >> build-summary.md
+          echo "## Available Artifacts" >> build-summary.md
+          echo "" >> build-summary.md
+          echo "The following build artifacts are available for download from the Actions tab:" >> build-summary.md
+          echo "" >> build-summary.md
+          
+          # List artifacts
+          if [ -d "artifacts" ]; then
+            find artifacts -name "*.exe" -o -name "*.msi" -o -name "*.dmg" -o -name "*.pkg" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" | while read file; do
+              echo "- $(basename "$file")" >> build-summary.md
+            done
+          fi
+          
+          echo "" >> build-summary.md
+          echo "## Testing Instructions" >> build-summary.md
+          echo "" >> build-summary.md
+          echo "1. Download the appropriate artifact for your platform from the GitHub Actions page" >> build-summary.md
+          echo "2. Extract and install the application" >> build-summary.md
+          echo "3. Test the functionality" >> build-summary.md
+          echo "4. Report any issues found" >> build-summary.md
+
+      - name: Upload build summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-summary
+          path: build-summary.md
+          retention-days: 30
