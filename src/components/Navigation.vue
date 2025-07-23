@@ -25,9 +25,13 @@ const navigationItems = computed(() => [
   }
 ])
 
+const isMacOs = computed(() => {
+  return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'darwin'
+})
+
 const openLink = async (url: string) => {
   try {
-    if (appStore.settings.app.open_links_in_browser) {
+    if (appStore.settings.app.open_links_in_browser || isMacOs.value) {
       await TauriAPI.files.urlInBrowser(url)
       return
     }

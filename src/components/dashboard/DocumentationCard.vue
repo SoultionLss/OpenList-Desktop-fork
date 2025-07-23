@@ -80,6 +80,7 @@ import { ExternalLink, Github, BookOpen, Cloud, Code, Terminal, HelpCircle, Mess
 import Card from '../ui/Card.vue'
 import { TauriAPI } from '../../api/tauri'
 import { useAppStore } from '../../stores/app'
+import { computed } from 'vue'
 
 const { t } = useTranslation()
 const appStore = useAppStore()
@@ -100,9 +101,13 @@ const openRcloneGitHub = () => {
   openLink('https://github.com/rclone/rclone')
 }
 
+const isMacOs = computed(() => {
+  return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'darwin'
+})
+
 const openLink = async (url: string) => {
   try {
-    if (appStore.settings.app.open_links_in_browser) {
+    if (appStore.settings.app.open_links_in_browser || isMacOs.value) {
       await TauriAPI.files.urlInBrowser(url)
       return
     }
