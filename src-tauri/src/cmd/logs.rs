@@ -91,6 +91,11 @@ async fn execute_openlist_admin_set(
     cmd.arg(&effective_data_dir);
     log::info!("Using data directory: {effective_data_dir}");
     log::info!("Executing command: {cmd:?}");
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
     let output = cmd
         .output()
         .map_err(|e| format!("Failed to execute openlist command: {e}"))?;

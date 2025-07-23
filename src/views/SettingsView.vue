@@ -254,7 +254,6 @@ const handleResetAdminPassword = async () => {
       appSettings.admin_password = newPassword
       message.value = t('settings.service.admin.resetSuccess')
       messageType.value = 'success'
-      await navigator.clipboard.writeText(newPassword)
     } else {
       message.value = t('settings.service.admin.resetFailed')
       messageType.value = 'error'

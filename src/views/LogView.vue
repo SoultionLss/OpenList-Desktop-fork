@@ -496,7 +496,12 @@ onUnmounted(() => {
           <Download :size="16" />
         </button>
 
-        <button class="toolbar-btn danger" @click="clearLogs" :title="t('logs.toolbar.clearLogs')">
+        <button
+          class="toolbar-btn danger"
+          @click="clearLogs"
+          :disabled="filteredLogs.length === 0 || filterSource === 'gin' || filterSource === 'all'"
+          :title="t('logs.toolbar.clearLogs')"
+        >
           <Trash2 :size="16" />
         </button>
 
