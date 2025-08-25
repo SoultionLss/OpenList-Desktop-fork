@@ -201,6 +201,13 @@ pub fn run() {
             setup_background_update_checker(app_handle);
 
             if let Some(window) = app.get_webview_window("main") {
+                if let Some(settings) = app_state.get_settings() {
+                    if !settings.app.show_window_on_startup.unwrap_or(false) {
+                        let _ = window.hide();
+                        log::info!("Main window hidden on startup based on user preference");
+                    }
+                }
+
                 let app_handle_clone = app_handle.clone();
                 window.on_window_event(move |event| {
                     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
