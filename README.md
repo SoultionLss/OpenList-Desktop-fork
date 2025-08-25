@@ -245,7 +245,6 @@ winget install OpenListTeam.OpenListDesktop
     "data_dir": "",
     "auto_launch": true,
     "ssl_enabled": false,
-    "admin_password": ""
   }
 }
 ```
@@ -266,6 +265,7 @@ winget install OpenListTeam.OpenListDesktop
         "extraFlags": ["--vfs-cache-mode", "full"]
       }
     },
+    "api_port": 45572
   }
 }
 ```
@@ -280,6 +280,8 @@ winget install OpenListTeam.OpenListDesktop
     "gh_proxy": "https://ghproxy.com/",
     "gh_proxy_api": false,
     "open_links_in_browser": true,
+    "admin_password": "",
+    "show_window_on_startup": false
   }
 }
 ```

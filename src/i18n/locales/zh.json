@@ -178,6 +178,15 @@
     },
     "rclone": {
       "subtitle": "配置远程存储连接",
+      "api": {
+        "title": "API 配置",
+        "subtitle": "配置 Rclone API 服务器设置",
+        "port": {
+          "label": "API 端口",
+          "placeholder": "45572",
+          "help": "Rclone API 服务器的端口号 (1-65535)。默认：45572"
+        }
+      },
       "config": {
         "title": "远程存储",
         "subtitle": "配置 rclone 远程存储访问",

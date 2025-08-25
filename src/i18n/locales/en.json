@@ -178,6 +178,15 @@
     },
     "rclone": {
       "subtitle": "Configure remote storage connections",
+      "api": {
+        "title": "API Configuration",
+        "subtitle": "Configure the Rclone API server settings",
+        "port": {
+          "label": "API Port",
+          "placeholder": "45572",
+          "help": "Port number for the Rclone API server (1-65535). Default: 45572"
+        }
+      },
       "config": {
         "title": "Remote Storage",
         "subtitle": "Configure rclone for remote storage access",

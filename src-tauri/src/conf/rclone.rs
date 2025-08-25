@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RcloneConfig {
     pub config: serde_json::Value,
+    pub api_port: u16,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -45,6 +46,7 @@ impl RcloneConfig {
     pub fn new() -> Self {
         Self {
             config: serde_json::Value::Object(Default::default()),
+            api_port: 45572,
         }
     }
 }

@@ -7,7 +7,7 @@ use serde_json::{Value, json};
 use tauri::State;
 
 use super::http_api::get_process_list;
-use super::rclone_core::{RCLONE_API_BASE, RCLONE_AUTH};
+use super::rclone_core::RCLONE_AUTH;
 use crate::conf::rclone::{RcloneCreateRemoteRequest, RcloneMountRequest, RcloneWebdavConfig};
 use crate::object::structs::{
     AppState, RcloneMountInfo, RcloneMountListResponse, RcloneRemoteListResponse,
@@ -16,14 +16,24 @@ use crate::utils::api::{CreateProcessResponse, ProcessConfig, get_api_key, get_s
 use crate::utils::args::split_args_vec;
 use crate::utils::path::{get_app_logs_dir, get_rclone_binary_path, get_rclone_config_path};
 
+fn get_rclone_api_base_url(state: &State<AppState>) -> String {
+    let port = state
+        .get_settings()
+        .map(|settings| settings.rclone.api_port)
+        .unwrap_or(45572);
+    format!("http://127.0.0.1:{}", port)
+}
+
 struct RcloneApi {
     client: Client,
+    api_base: String,
 }
 
 impl RcloneApi {
-    fn new() -> Self {
+    fn new(api_base: String) -> Self {
         Self {
             client: Client::new(),
+            api_base,
         }
     }
 
@@ -32,7 +42,7 @@ impl RcloneApi {
         endpoint: &str,
         body: Option<Value>,
     ) -> Result<T, String> {
-        let url = format!("{RCLONE_API_BASE}/{endpoint}");
+        let url = format!("{}/{endpoint}", self.api_base);
         let mut req = self.client.post(&url).header("Authorization", RCLONE_AUTH);
         if let Some(b) = body {
             req = req.json(&b).header("Content-Type", "application/json");
@@ -53,7 +63,7 @@ impl RcloneApi {
     }
 
     async fn post_text(&self, endpoint: &str) -> Result<String, String> {
-        let url = format!("{RCLONE_API_BASE}/{endpoint}");
+        let url = format!("{}/{endpoint}", self.api_base);
         let resp = self
             .client
             .post(&url)
@@ -76,9 +86,9 @@ impl RcloneApi {
 #[tauri::command]
 pub async fn rclone_list_config(
     remote_type: String,
-    _state: State<'_, AppState>,
+    state: State<'_, AppState>,
 ) -> Result<Value, String> {
-    let api = RcloneApi::new();
+    let api = RcloneApi::new(get_rclone_api_base_url(&state));
     let text = api.post_text("config/dump").await?;
     let all: Value = serde_json::from_str(&text).map_err(|e| format!("Invalid JSON: {e}"))?;
     let remotes = match (remote_type.as_str(), all.as_object()) {
@@ -101,15 +111,17 @@ pub async fn rclone_list_config(
 }
 
 #[tauri::command]
-pub async fn rclone_list_remotes() -> Result<Vec<String>, String> {
-    let api = RcloneApi::new();
+pub async fn rclone_list_remotes(state: State<'_, AppState>) -> Result<Vec<String>, String> {
+    let api = RcloneApi::new(get_rclone_api_base_url(&state));
     let resp: RcloneRemoteListResponse = api.post_json("config/listremotes", None).await?;
     Ok(resp.remotes)
 }
 
 #[tauri::command]
-pub async fn rclone_list_mounts() -> Result<RcloneMountListResponse, String> {
-    let api = RcloneApi::new();
+pub async fn rclone_list_mounts(
+    state: State<'_, AppState>,
+) -> Result<RcloneMountListResponse, String> {
+    let api = RcloneApi::new(get_rclone_api_base_url(&state));
     api.post_json("mount/listmounts", None).await
 }
 
@@ -118,9 +130,9 @@ pub async fn rclone_create_remote(
     name: String,
     r#type: String,
     config: RcloneWebdavConfig,
-    _state: State<'_, AppState>,
+    state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let api = RcloneApi::new();
+    let api = RcloneApi::new(get_rclone_api_base_url(&state));
     let req = RcloneCreateRemoteRequest {
         name,
         r#type,
@@ -136,9 +148,9 @@ pub async fn rclone_update_remote(
     name: String,
     r#type: String,
     config: RcloneWebdavConfig,
-    _state: State<'_, AppState>,
+    state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let api = RcloneApi::new();
+    let api = RcloneApi::new(get_rclone_api_base_url(&state));
     let body = json!({ "name": name, "type": r#type, "parameters": config });
     api.post_json::<Value>("config/update", Some(body))
         .await
@@ -148,9 +160,9 @@ pub async fn rclone_update_remote(
 #[tauri::command]
 pub async fn rclone_delete_remote(
     name: String,
-    _state: State<'_, AppState>,
+    state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let api = RcloneApi::new();
+    let api = RcloneApi::new(get_rclone_api_base_url(&state));
     let body = json!({ "name": name });
     api.post_json::<Value>("config/delete", Some(body))
         .await
@@ -160,9 +172,9 @@ pub async fn rclone_delete_remote(
 #[tauri::command]
 pub async fn rclone_mount_remote(
     mount_request: RcloneMountRequest,
-    _state: State<'_, AppState>,
+    state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let api = RcloneApi::new();
+    let api = RcloneApi::new(get_rclone_api_base_url(&state));
     api.post_json::<Value>("mount/mount", Some(json!(mount_request)))
         .await
         .map(|_| true)
@@ -171,9 +183,9 @@ pub async fn rclone_mount_remote(
 #[tauri::command]
 pub async fn rclone_unmount_remote(
     mount_point: String,
-    _state: State<'_, AppState>,
+    state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let api = RcloneApi::new();
+    let api = RcloneApi::new(get_rclone_api_base_url(&state));
     api.post_json::<Value>("mount/unmount", Some(json!({ "mountPoint": mount_point })))
         .await
         .map(|_| true)

@@ -35,6 +35,7 @@
     "src/i18n",
     "src/i18n/locales"
   ],
+  "i18n-ally.keystyle": "nested",
   // "rust-analyzer.cargo.target": "x86_64-unknown-linux-gnu"
   //"rust-analyzer.cargo.target": "x86_64-pc-windows-msvc"
   // "rust-analyzer.cargo.target": "x86_64-apple-darwin",

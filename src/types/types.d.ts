@@ -13,6 +13,7 @@ interface OpenListCoreConfig {
 
 interface RcloneConfig {
   config?: any // Flexible JSON object for rclone configuration
+  api_port: number // Port for the Rclone API server
 }
 
 interface RcloneWebdavConfig {

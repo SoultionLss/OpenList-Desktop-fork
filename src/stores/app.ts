@@ -8,14 +8,15 @@ type ActionFn<T = any> = () => Promise<T>
 export const useAppStore = defineStore('app', () => {
   const settings = ref<MergedSettings>({
     openlist: { port: 5244, data_dir: '', auto_launch: false, ssl_enabled: false },
-    rclone: { config: {} },
+    rclone: { config: {}, api_port: 45572 },
     app: {
       theme: 'light',
       auto_update_enabled: true,
       gh_proxy: '',
       gh_proxy_api: false,
       open_links_in_browser: false,
-      admin_password: undefined
+      admin_password: undefined,
+      show_window_on_startup: false
     }
   })
   const openlistCoreStatus = ref<OpenListCoreStatus>({ running: false })

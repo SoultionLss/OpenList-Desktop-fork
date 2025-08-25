@@ -244,8 +244,7 @@ Add custom Rclone flags for optimal performance:
     "port": 5244,
     "data_dir": "",
     "auto_launch": true,
-    "ssl_enabled": false,
-    "admin_password": ""
+    "ssl_enabled": false
   }
 }
 ```
@@ -266,6 +265,7 @@ Add custom Rclone flags for optimal performance:
         "extraFlags": ["--vfs-cache-mode", "full"]
       }
     },
+    "api_port": 45572
   }
 }
 ```
@@ -280,6 +280,8 @@ Add custom Rclone flags for optimal performance:
     "gh_proxy": "https://ghproxy.com/",
     "gh_proxy_api": false,
     "open_links_in_browser": true,
+    "admin_password": "",
+    "show_window_on_startup": false
   }
 }
 ```

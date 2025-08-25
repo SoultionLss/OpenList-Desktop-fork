@@ -6,6 +6,7 @@ use tokio::time::{Duration, sleep};
 
 use crate::cmd::http_api::{delete_process, get_process_list, start_process, stop_process};
 use crate::cmd::openlist_core::create_openlist_core_process;
+use crate::cmd::rclone_core::create_rclone_backend_process;
 use crate::conf::config::MergedSettings;
 use crate::object::structs::AppState;
 use crate::utils::path::{app_config_file_path, get_default_openlist_data_dir};
@@ -88,6 +89,23 @@ async fn recreate_openlist_core_process(state: State<'_, AppState>) -> Result<()
     Ok(())
 }
 
+async fn recreate_rclone_backend_process(state: State<'_, AppState>) -> Result<(), String> {
+    let procs = get_process_list(state.clone()).await?;
+    if let Some(proc) = procs
+        .into_iter()
+        .find(|p| p.config.name == "single_rclone_backend_process")
+    {
+        let id = proc.config.id.clone();
+        let _ = stop_process(id.clone(), state.clone()).await;
+        sleep(Duration::from_millis(1000)).await;
+        let _ = delete_process(id, state.clone()).await;
+        sleep(Duration::from_millis(1000)).await;
+
+        create_rclone_backend_process(state.clone()).await?;
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn load_settings(state: State<'_, AppState>) -> Result<Option<MergedSettings>, String> {
     state.load_settings()?;
@@ -111,8 +129,14 @@ pub async fn save_settings_with_update_port(
     state: State<'_, AppState>,
 ) -> Result<bool, String> {
     let old_settings = state.get_settings();
-    let needs_process_recreation = if let Some(old) = old_settings {
+    let needs_openlist_recreation = if let Some(old) = &old_settings {
         old.openlist.data_dir != settings.openlist.data_dir
+    } else {
+        false
+    };
+
+    let needs_rclone_recreation = if let Some(old) = &old_settings {
+        old.rclone.api_port != settings.rclone.api_port
     } else {
         false
     };
@@ -126,7 +150,7 @@ pub async fn save_settings_with_update_port(
     };
     update_data_config(settings.openlist.port, data_dir)?;
 
-    if needs_process_recreation {
+    if needs_openlist_recreation {
         if let Err(e) = recreate_openlist_core_process(state.clone()).await {
             log::error!("{e}");
             return Err(e);
@@ -140,6 +164,16 @@ pub async fn save_settings_with_update_port(
             return Err(e);
         }
         log::info!("Settings saved and OpenList core restarted with new port successfully");
+    }
+
+    if needs_rclone_recreation {
+        if let Err(e) = recreate_rclone_backend_process(state.clone()).await {
+            log::error!("Failed to recreate rclone backend process: {e}");
+            return Err(format!("Failed to recreate rclone backend process: {e}"));
+        }
+        log::info!("Rclone backend process recreated with new API port successfully");
+    } else {
+        log::info!("Settings saved successfully (no rclone port change detected)");
     }
 
     Ok(true)

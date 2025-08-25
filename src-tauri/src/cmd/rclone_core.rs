@@ -7,8 +7,6 @@ use crate::object::structs::AppState;
 use crate::utils::api::{CreateProcessResponse, ProcessConfig, get_api_key, get_server_port};
 use crate::utils::path::{get_app_logs_dir, get_rclone_binary_path, get_rclone_config_path};
 
-// use 45572 due to the reserved port on Windows
-pub const RCLONE_API_BASE: &str = "http://127.0.0.1:45572";
 // admin:admin base64 encoded
 pub const RCLONE_AUTH: &str = "Basic YWRtaW46YWRtaW4=";
 
@@ -33,7 +31,7 @@ pub async fn create_and_start_rclone_backend(
 
 #[tauri::command]
 pub async fn create_rclone_backend_process(
-    _state: State<'_, AppState>,
+    state: State<'_, AppState>,
 ) -> Result<ProcessConfig, String> {
     let binary_path =
         get_rclone_binary_path().map_err(|e| format!("Failed to get rclone binary path: {e}"))?;
@@ -44,6 +42,12 @@ pub async fn create_rclone_backend_process(
     let log_file_path = log_file_path.join("process_rclone.log");
     let api_key = get_api_key();
     let port = get_server_port();
+
+    let rclone_port = state
+        .get_settings()
+        .map(|settings| settings.rclone.api_port)
+        .unwrap_or(45572);
+
     let config = ProcessConfig {
         id: "rclone_backend".into(),
         name: "single_rclone_backend_process".into(),
@@ -57,7 +61,7 @@ pub async fn create_rclone_backend_process(
             "--rc-pass".into(),
             "admin".into(),
             "--rc-addr".into(),
-            format!("127.0.0.1:45572"),
+            format!("127.0.0.1:{}", rclone_port),
             "--rc-web-gui-no-open-browser".into(),
         ],
         log_file: log_file_path.to_string_lossy().into_owned(),
