@@ -237,6 +237,10 @@
         "title": "Auto-launch on startup(Immediate Effect)",
         "subtitle": "Automatically start OpenList Desktop application when the system starts",
         "description": "Automatically start OpenList service when the application launches"
+      },
+      "showWindowOnStartup": {
+        "title": "Show main window on startup",
+        "description": "Show the main application window when OpenList Desktop starts"
       }
     }
   },

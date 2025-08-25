@@ -237,6 +237,10 @@
         "title": "开机自动启动应用(立即生效)",
         "subtitle": "在系统启动时自动启动 OpenList 桌面应用",
         "description": "在系统启动时自动启动 OpenList 桌面应用"
+      },
+      "showWindowOnStartup": {
+        "title": "启动时显示主窗口",
+        "description": "在 OpenList 桌面应用启动时显示主应用窗口"
       }
     }
   },

@@ -50,6 +50,7 @@ interface AppConfig {
   gh_proxy_api?: boolean
   open_links_in_browser?: boolean
   admin_password?: string
+  show_window_on_startup?: boolean
 }
 
 interface MergedSettings {

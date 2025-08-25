@@ -93,6 +93,7 @@ onMounted(async () => {
   if (!appSettings.gh_proxy) appSettings.gh_proxy = ''
   if (appSettings.gh_proxy_api === undefined) appSettings.gh_proxy_api = false
   if (appSettings.open_links_in_browser === undefined) appSettings.open_links_in_browser = false
+  if (appSettings.show_window_on_startup === undefined) appSettings.show_window_on_startup = false
   if (!appSettings.admin_password) appSettings.admin_password = ''
   originalOpenlistPort = openlistCoreSettings.port || 5244
   originalDataDir = openlistCoreSettings.data_dir
@@ -572,6 +573,21 @@ const loadCurrentAdminPassword = async () => {
               <div class="switch-content">
                 <span class="switch-title">{{ t('settings.app.autoStartApp.title') }}</span>
                 <span class="switch-description">{{ t('settings.app.autoStartApp.description') }}</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h2>{{ t('settings.app.showWindowOnStartup.title') }}</h2>
+
+          <div class="form-group">
+            <label class="switch-label">
+              <input v-model="appSettings.show_window_on_startup" type="checkbox" class="switch-input" />
+              <span class="switch-slider"></span>
+              <div class="switch-content">
+                <span class="switch-title">{{ t('settings.app.showWindowOnStartup.title') }}</span>
+                <span class="switch-description">{{ t('settings.app.showWindowOnStartup.description') }}</span>
               </div>
             </label>
           </div>
