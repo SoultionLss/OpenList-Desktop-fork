@@ -204,7 +204,7 @@ const checkForUpdates = async () => {
     }
   } catch (err: any) {
     console.error('Failed to check for updates:', err)
-    error.value = err.message || t('update.checkError')
+    error.value = t('update.checkError') + String(err ? `: ${err}` : '')
   } finally {
     checking.value = false
   }

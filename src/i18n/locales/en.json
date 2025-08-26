@@ -160,7 +160,7 @@
       "startup": {
         "autoLaunch": {
           "title": "Auto-launch on startup",
-          "description": "Automatically start OpenList service when the application launches"
+          "description": "Automatically start OpenList core when the computer starts"
         }
       },
       "admin": {

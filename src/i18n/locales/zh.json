@@ -160,7 +160,7 @@
       "startup": {
         "autoLaunch": {
           "title": "开机自启",
-          "description": "应用程序启动时自动启动 OpenList 服务"
+          "description": "开机自动启动 OpenList 核心"
         }
       },
       "admin": {
