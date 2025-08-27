@@ -10,10 +10,10 @@
           <div v-if="message" class="notification-message">{{ message }}</div>
         </div>
         <div class="notification-actions">
-          <button v-if="showAction" @click="$emit('action')" class="action-btn">
+          <button v-if="showAction" class="action-btn" @click="$emit('action')">
             {{ actionText }}
           </button>
-          <button @click="$emit('dismiss')" class="dismiss-btn">
+          <button class="dismiss-btn" @click="$emit('dismiss')">
             <X :size="16" />
           </button>
         </div>
@@ -23,13 +23,13 @@
 </template>
 
 <script setup lang="ts">
-import { Download, CheckCircle, AlertCircle, X } from 'lucide-vue-next'
+import { AlertCircle, CheckCircle, Download, X } from 'lucide-vue-next'
 
 interface Props {
   visible: boolean
-  type: 'info' | 'success' | 'warning' | 'error'
+  type?: 'info' | 'success' | 'warning' | 'error'
   title: string
-  message?: string
+  message: string
   showAction?: boolean
   actionText?: string
 }

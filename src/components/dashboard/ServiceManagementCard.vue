@@ -19,10 +19,10 @@
       <div class="actions-section">
         <div class="action-buttons">
           <button
-            @click="installService"
+            v-if="serviceStatus !== 'running' && serviceStatus !== 'stopped'"
             :disabled="actionLoading || serviceStatus === 'installed'"
             class="action-btn install-btn"
-            v-if="serviceStatus !== 'running' && serviceStatus !== 'stopped'"
+            @click="installService"
           >
             <component :is="actionLoading && currentAction === 'install' ? LoaderIcon : Download" :size="16" />
             <span>{{
@@ -33,10 +33,10 @@
           </button>
 
           <button
-            @click="startService"
+            v-if="serviceStatus === 'installed' || serviceStatus === 'stopped'"
             :disabled="actionLoading || (serviceStatus !== 'installed' && serviceStatus !== 'stopped')"
             class="action-btn start-btn"
-            v-if="serviceStatus === 'installed' || serviceStatus === 'stopped'"
+            @click="startService"
           >
             <component :is="actionLoading && currentAction === 'start' ? LoaderIcon : Play" :size="16" />
             <span>{{
@@ -45,10 +45,10 @@
           </button>
 
           <button
-            @click="stopService"
+            v-if="serviceStatus === 'running'"
             :disabled="actionLoading"
             class="action-btn stop-btn"
-            v-if="serviceStatus === 'running'"
+            @click="stopService"
           >
             <component :is="actionLoading && currentAction === 'stop' ? LoaderIcon : Stop" :size="16" />
             <span>{{
@@ -57,10 +57,10 @@
           </button>
 
           <button
-            @click="showUninstallDialog = true"
+            v-if="serviceStatus !== 'not-installed'"
             :disabled="actionLoading"
             class="action-btn uninstall-btn"
-            v-if="serviceStatus !== 'not-installed'"
+            @click="showUninstallDialog = true"
           >
             <component :is="actionLoading && currentAction === 'uninstall' ? LoaderIcon : Trash2" :size="16" />
             <span>{{
@@ -87,23 +87,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useTranslation } from '../../composables/useI18n'
 import {
+  CheckCircle2,
+  Circle,
   Download,
+  Loader2 as LoaderIcon,
   Play,
+  Server,
   Square as Stop,
   Trash2,
-  Loader2 as LoaderIcon,
-  CheckCircle2,
-  XCircle,
-  Circle,
-  Server
+  XCircle
 } from 'lucide-vue-next'
-import Card from '../ui/Card.vue'
-import ConfirmDialog from '../ui/ConfirmDialog.vue'
-import { TauriAPI } from '../../api/tauri'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+
 import { useRcloneStore } from '@/stores/rclone'
+
+import { TauriAPI } from '../../api/tauri'
+import { useTranslation } from '../../composables/useI18n'
+import Card from '../ui/CardPage.vue'
+import ConfirmDialog from '../ui/ConfirmDialog.vue'
 
 const rcloneStore = useRcloneStore()
 
@@ -114,7 +116,7 @@ const actionLoading = ref(false)
 const currentAction = ref('')
 const showUninstallDialog = ref(false)
 
-let statusCheckInterval: number | null = null
+const statusCheckInterval: number | null = null
 
 const statusClass = computed(() => {
   switch (serviceStatus.value) {

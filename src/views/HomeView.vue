@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
-import { useAppStore } from '../stores/app'
+import { computed, onMounted, ref } from 'vue'
 
-import QuickActionsCard from '../components/dashboard/QuickActionsCard.vue'
 import CoreMonitorCard from '../components/dashboard/CoreMonitorCard.vue'
-import VersionManagerCard from '../components/dashboard/VersionManagerCard.vue'
 import DocumentationCard from '../components/dashboard/DocumentationCard.vue'
+import QuickActionsCard from '../components/dashboard/QuickActionsCard.vue'
 import ServiceManagementCard from '../components/dashboard/ServiceManagementCard.vue'
+import VersionManagerCard from '../components/dashboard/VersionManagerCard.vue'
+import { useAppStore } from '../stores/app'
 
 const appStore = useAppStore()
 

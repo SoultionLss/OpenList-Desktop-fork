@@ -1,28 +1,29 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import { useAppStore } from '../stores/app'
-import { useTranslation } from '../composables/useI18n'
+import * as chrono from 'chrono-node'
 import {
-  Search,
-  Filter,
-  Download,
-  Copy,
-  Trash2,
-  Play,
-  Pause,
-  RotateCcw,
-  Settings,
-  ArrowUp,
+  AlertCircle,
+  AlertTriangle,
   ArrowDown,
+  ArrowUp,
+  Copy,
+  Download,
+  Filter,
+  FolderOpen,
+  Info,
   Maximize2,
   Minimize2,
-  AlertCircle,
-  Info,
-  AlertTriangle,
-  FolderOpen
+  Pause,
+  Play,
+  RotateCcw,
+  Search,
+  Settings,
+  Trash2
 } from 'lucide-vue-next'
-import * as chrono from 'chrono-node'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
+import { useTranslation } from '../composables/useI18n'
+import { useAppStore } from '../stores/app'
 
 type filterSourceType = 'openlist' | 'rclone' | 'app' | 'service' | 'all'
 
@@ -420,14 +421,14 @@ onUnmounted(() => {
         <button
           class="toolbar-btn"
           :class="{ active: isPaused }"
-          @click="togglePause"
           :title="isPaused ? t('logs.toolbar.resume') : t('logs.toolbar.pause')"
+          @click="togglePause"
         >
           <Pause v-if="!isPaused" :size="16" />
           <Play v-else :size="16" />
         </button>
 
-        <button class="toolbar-btn" @click="refreshLogs" :title="t('logs.toolbar.refresh')">
+        <button class="toolbar-btn" :title="t('logs.toolbar.refresh')" @click="refreshLogs">
           <RotateCcw :size="16" />
         </button>
 
@@ -436,8 +437,8 @@ onUnmounted(() => {
         <button
           class="toolbar-btn"
           :class="{ active: showFilters }"
-          @click="showFilters = !showFilters"
           :title="t('logs.toolbar.showFilters')"
+          @click="showFilters = !showFilters"
         >
           <Filter :size="16" />
         </button>
@@ -445,8 +446,8 @@ onUnmounted(() => {
         <button
           class="toolbar-btn"
           :class="{ active: showSettings }"
-          @click="showSettings = !showSettings"
           :title="t('logs.toolbar.settings')"
+          @click="showSettings = !showSettings"
         >
           <Settings :size="16" />
         </button>
@@ -480,38 +481,38 @@ onUnmounted(() => {
 
         <button
           class="toolbar-btn"
-          @click="copyLogsToClipboard"
           :title="t('logs.toolbar.copyToClipboard')"
           :disabled="filteredLogs.length === 0"
+          @click="copyLogsToClipboard"
         >
           <Copy :size="16" />
         </button>
 
         <button
           class="toolbar-btn"
-          @click="exportLogs"
           :title="t('logs.toolbar.exportLogs')"
           :disabled="filteredLogs.length === 0"
+          @click="exportLogs"
         >
           <Download :size="16" />
         </button>
 
         <button
           class="toolbar-btn danger"
-          @click="clearLogs"
           :disabled="filteredLogs.length === 0 || filterSource === 'gin' || filterSource === 'all'"
           :title="t('logs.toolbar.clearLogs')"
+          @click="clearLogs"
         >
           <Trash2 :size="16" />
         </button>
 
-        <button class="toolbar-btn" @click="openLogsDirectory" :title="t('logs.toolbar.openLogsDirectory')">
+        <button class="toolbar-btn" :title="t('logs.toolbar.openLogsDirectory')" @click="openLogsDirectory">
           <FolderOpen :size="16" />
         </button>
 
         <div class="toolbar-separator"></div>
 
-        <button class="toolbar-btn" @click="toggleFullscreen" :title="t('logs.toolbar.toggleFullscreen')">
+        <button class="toolbar-btn" :title="t('logs.toolbar.toggleFullscreen')" @click="toggleFullscreen">
           <Maximize2 v-if="!isFullscreen" :size="16" />
           <Minimize2 v-else :size="16" />
         </button>
@@ -542,11 +543,11 @@ onUnmounted(() => {
       </div>
 
       <div class="filter-actions">
-        <button class="filter-btn" @click="selectAllVisible" :disabled="filteredLogs.length === 0">
+        <button class="filter-btn" :disabled="filteredLogs.length === 0" @click="selectAllVisible">
           {{ t('logs.filters.actions.selectAll') }}
         </button>
 
-        <button class="filter-btn" @click="clearSelection" :disabled="selectedEntries.size === 0">
+        <button class="filter-btn" :disabled="selectedEntries.size === 0" @click="clearSelection">
           {{ t('logs.filters.actions.clearSelection') }}
         </button>
 
@@ -587,10 +588,10 @@ onUnmounted(() => {
         <div class="log-col source">{{ t('logs.headers.source') }}</div>
         <div class="log-col message">{{ t('logs.headers.message') }}</div>
         <div class="log-col actions">
-          <button class="scroll-btn" @click="scrollToTop" :title="t('logs.toolbar.scrollToTop')">
+          <button class="scroll-btn" :title="t('logs.toolbar.scrollToTop')" @click="scrollToTop">
             <ArrowUp :size="14" />
           </button>
-          <button class="scroll-btn" @click="scrollToBottom" :title="t('logs.toolbar.scrollToBottom')">
+          <button class="scroll-btn" :title="t('logs.toolbar.scrollToBottom')" @click="scrollToBottom">
             <ArrowDown :size="14" />
           </button>
         </div>

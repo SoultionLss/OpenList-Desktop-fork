@@ -6,7 +6,7 @@
         <p class="view-subtitle">{{ t('update.subtitle') }}</p>
       </div>
       <div class="header-actions">
-        <button @click="goToSettings" class="settings-link">
+        <button class="settings-link" @click="goToSettings">
           <Settings :size="16" />
           {{ t('navigation.settings') }}
         </button>
@@ -36,10 +36,11 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { useTranslation } from '../composables/useI18n'
 import { Settings } from 'lucide-vue-next'
+import { useRouter } from 'vue-router'
+
 import UpdateManagerCard from '../components/dashboard/UpdateManagerCard.vue'
+import { useTranslation } from '../composables/useI18n'
 
 const { t } = useTranslation()
 const router = useRouter()

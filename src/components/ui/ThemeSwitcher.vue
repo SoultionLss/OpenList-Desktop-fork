@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { Monitor, Moon, Sun } from 'lucide-vue-next'
 import { computed } from 'vue'
-import { useAppStore } from '../../stores/app'
+
 import { useTranslation } from '../../composables/useI18n'
-import { Sun, Moon, Monitor } from 'lucide-vue-next'
+import { useAppStore } from '../../stores/app'
 
 const appStore = useAppStore()
 const { t } = useTranslation()
@@ -41,7 +42,7 @@ const toggleTheme = () => {
 
 <template>
   <div class="theme-switcher">
-    <button @click="toggleTheme" class="theme-toggle-btn" :title="t('settings.theme.toggle')">
+    <button class="theme-toggle-btn" :title="t('settings.theme.toggle')" @click="toggleTheme">
       <component :is="currentThemeOption.icon" :size="18" />
       <span class="theme-label">{{ currentThemeOption.label }}</span>
     </button>

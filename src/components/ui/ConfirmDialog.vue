@@ -8,10 +8,10 @@
         <p class="dialog-message">{{ message }}</p>
       </div>
       <div class="dialog-actions">
-        <button @click="onCancel" class="dialog-btn cancel-btn">
+        <button class="dialog-btn cancel-btn" @click="onCancel">
           {{ cancelText }}
         </button>
-        <button @click="onConfirm" class="dialog-btn confirm-btn" :class="confirmButtonClass">
+        <button class="dialog-btn confirm-btn" :class="confirmButtonClass" @click="onConfirm">
           {{ confirmText }}
         </button>
       </div>
@@ -79,7 +79,9 @@ export default {
 .dialog-container {
   background: white;
   border-radius: 0.75rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
   max-width: 28rem;
   width: 90%;
   max-height: 80vh;

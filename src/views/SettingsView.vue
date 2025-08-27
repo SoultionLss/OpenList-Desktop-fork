@@ -1,22 +1,23 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import { useAppStore } from '../stores/app'
-import { useTranslation } from '../composables/useI18n'
+import { disable, enable, isEnabled } from '@tauri-apps/plugin-autostart'
+import { open } from '@tauri-apps/plugin-dialog'
 import {
-  Settings,
-  Server,
-  HardDrive,
-  Save,
-  RotateCcw,
   AlertCircle,
   CheckCircle,
+  ExternalLink,
   FolderOpen,
-  ExternalLink
+  HardDrive,
+  RotateCcw,
+  Save,
+  Server,
+  Settings
 } from 'lucide-vue-next'
-import { enable, isEnabled, disable } from '@tauri-apps/plugin-autostart'
-import { open } from '@tauri-apps/plugin-dialog'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
+import { useTranslation } from '../composables/useI18n'
+import { useAppStore } from '../stores/app'
 
 const appStore = useAppStore()
 const route = useRoute()
@@ -335,11 +336,11 @@ const loadCurrentAdminPassword = async () => {
         </div>
       </div>
       <div class="header-actions">
-        <button @click="handleReset" class="btn btn-secondary" :title="t('settings.resetToDefaults')">
+        <button class="btn btn-secondary" :title="t('settings.resetToDefaults')" @click="handleReset">
           <RotateCcw :size="16" />
           {{ t('common.reset') }}
         </button>
-        <button @click="handleSave" :disabled="!hasUnsavedChanges || isSaving" class="btn btn-primary">
+        <button :disabled="!hasUnsavedChanges || isSaving" class="btn btn-primary" @click="handleSave">
           <Save :size="16" />
           {{ isSaving ? t('common.saving') : t('settings.saveChanges') }}
         </button>
@@ -349,16 +350,16 @@ const loadCurrentAdminPassword = async () => {
     <div v-if="message" class="message-banner" :class="messageType">
       <component :is="messageType === 'success' ? CheckCircle : AlertCircle" :size="16" />
       <span>{{ message }}</span>
-      <button @click="message = ''" class="message-close">×</button>
+      <button class="message-close" @click="message = ''">×</button>
     </div>
 
     <div class="tab-navigation">
       <button
         v-for="tab in tabs"
         :key="tab.id"
-        @click="activeTab = tab.id"
         class="tab-button"
         :class="{ active: activeTab === tab.id }"
+        @click="activeTab = tab.id"
       >
         <component :is="tab.icon" :size="18" />
         <span>{{ tab.label }}</span>
@@ -395,17 +396,17 @@ const loadCurrentAdminPassword = async () => {
                 />
                 <button
                   type="button"
-                  @click="handleSelectDataDir"
                   class="input-addon-btn"
                   :title="t('settings.service.network.dataDir.selectTitle')"
+                  @click="handleSelectDataDir"
                 >
                   <FolderOpen :size="16" />
                 </button>
                 <button
                   type="button"
-                  @click="handleOpenDataDir"
                   class="input-addon-btn"
                   :title="t('settings.service.network.dataDir.openTitle')"
+                  @click="handleOpenDataDir"
                 >
                   <ExternalLink :size="16" />
                 </button>
@@ -457,10 +458,10 @@ const loadCurrentAdminPassword = async () => {
               />
               <button
                 type="button"
-                @click="handleResetAdminPassword"
                 :disabled="isResettingPassword"
                 class="input-addon-btn reset-password-btn"
                 :title="t('settings.service.admin.resetTitle')"
+                @click="handleResetAdminPassword"
               >
                 <RotateCcw :size="16" />
               </button>
@@ -500,9 +501,9 @@ const loadCurrentAdminPassword = async () => {
             <div class="settings-section-actions">
               <button
                 type="button"
-                @click="handleOpenRcloneConfig"
                 class="btn btn-secondary"
                 :title="t('settings.rclone.config.openFile')"
+                @click="handleOpenRcloneConfig"
               >
                 <ExternalLink :size="16" />
                 {{ t('settings.rclone.config.openFile') }}
@@ -530,8 +531,8 @@ const loadCurrentAdminPassword = async () => {
               <label>{{ t('settings.theme.title') }}</label>
               <select
                 v-model="appSettings.theme"
-                @change="appStore.setTheme(appSettings.theme || 'light')"
                 class="form-input"
+                @change="appStore.setTheme(appSettings.theme || 'light')"
               >
                 <option value="light">{{ t('settings.app.theme.light') }}</option>
                 <option value="dark">{{ t('settings.app.theme.dark') }}</option>
@@ -550,9 +551,9 @@ const loadCurrentAdminPassword = async () => {
             <div class="settings-section-actions">
               <button
                 type="button"
-                @click="handleOpenSettingsFile"
                 class="btn btn-secondary"
                 :title="t('settings.app.config.openFile')"
+                @click="handleOpenSettingsFile"
               >
                 <ExternalLink :size="16" />
                 {{ t('settings.app.config.openFile') }}

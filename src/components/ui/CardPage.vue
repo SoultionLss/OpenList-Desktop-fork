@@ -28,6 +28,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
+  title: '',
   variant: 'default',
   hover: false,
   interactive: false

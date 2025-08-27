@@ -1,7 +1,8 @@
-// @ts-check
 import eslint from '@eslint/js'
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import simpleImportSort from 'eslint-plugin-simple-import-sort'
 import eslintPluginUnicorn from 'eslint-plugin-unicorn'
+import pluginVue from 'eslint-plugin-vue'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
@@ -24,6 +25,8 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   ...tseslint.configs.stylistic,
+  ...pluginVue.configs['flat/recommended'],
+  eslintPluginPrettierRecommended,
   {
     plugins: {
       'simple-import-sort': simpleImportSort,
@@ -39,7 +42,10 @@ export default tseslint.config(
       parserOptions: {
         warnOnUnsupportedTypeScriptVersion: false
       },
-      globals: globals.node
+      globals: {
+        ...globals.node,
+        ...globals.browser
+      }
     }
   },
   {
@@ -101,6 +107,20 @@ export default tseslint.config(
         { name: 'module' },
         { name: 'exports' }
       ]
+    }
+  },
+  {
+    files: ['*.vue', '**/*.vue'],
+    rules: {
+      'no-undef': 'off'
+    },
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: globals.browser,
+      parserOptions: {
+        parser: tseslint.parser
+      }
     }
   }
 )

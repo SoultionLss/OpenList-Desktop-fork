@@ -1,49 +1,3 @@
-<script setup lang="ts">
-import { computed } from 'vue'
-import { useTranslation } from '../composables/useI18n'
-import { useAppStore } from '../stores/app'
-import LanguageSwitcher from './ui/LanguageSwitcher.vue'
-import ThemeSwitcher from './ui/ThemeSwitcher.vue'
-
-import { Home, HardDrive, FileText, Settings, Download, DownloadCloud, Github } from 'lucide-vue-next'
-import { TauriAPI } from '@/api/tauri'
-
-const { t } = useTranslation()
-const appStore = useAppStore()
-
-const navigationItems = computed(() => [
-  { name: t('navigation.dashboard'), path: '/', icon: Home, shortcut: 'Ctrl+H' },
-  { name: t('navigation.mount'), path: '/mount', icon: HardDrive, shortcut: 'Ctrl+M' },
-  { name: t('navigation.logs'), path: '/logs', icon: FileText, shortcut: 'Ctrl+L' },
-  { name: t('navigation.settings'), path: '/settings', icon: Settings, shortcut: 'Ctrl+,' },
-  {
-    name: t('navigation.update'),
-    path: '/update',
-    icon: appStore.updateAvailable ? DownloadCloud : Download,
-    shortcut: 'Ctrl+U',
-    hasNotification: appStore.updateAvailable
-  }
-])
-
-const isMacOs = computed(() => {
-  return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'darwin'
-})
-
-const openLink = async (url: string) => {
-  try {
-    if (appStore.settings.app.open_links_in_browser || isMacOs.value) {
-      await TauriAPI.files.urlInBrowser(url)
-      return
-    }
-  } catch (error) {
-    console.error('Failed to open link:', error)
-  }
-  setTimeout(() => {
-    window.open(url, '_blank')
-  })
-}
-</script>
-
 <template>
   <nav class="navigation">
     <div class="title-bar">
@@ -82,15 +36,62 @@ const openLink = async (url: string) => {
 
     <div class="github-section">
       <a
-        @click.prevent="openLink('https://github.com/OpenListTeam/openlist-desktop')"
         class="github-link"
         title="View on GitHub"
+        @click.prevent="openLink('https://github.com/OpenListTeam/openlist-desktop')"
       >
         <Github :size="20" />
       </a>
     </div>
   </nav>
 </template>
+
+<script setup lang="ts">
+import { Download, DownloadCloud, FileText, Github, HardDrive, Home, Settings } from 'lucide-vue-next'
+import { computed } from 'vue'
+
+import { TauriAPI } from '@/api/tauri'
+
+import { useTranslation } from '../composables/useI18n'
+import { useAppStore } from '../stores/app'
+import LanguageSwitcher from './ui/LanguageSwitcher.vue'
+import ThemeSwitcher from './ui/ThemeSwitcher.vue'
+
+const { t } = useTranslation()
+const appStore = useAppStore()
+
+const navigationItems = computed(() => [
+  { name: t('navigation.dashboard'), path: '/', icon: Home, shortcut: 'Ctrl+H' },
+  { name: t('navigation.mount'), path: '/mount', icon: HardDrive, shortcut: 'Ctrl+M' },
+  { name: t('navigation.logs'), path: '/logs', icon: FileText, shortcut: 'Ctrl+L' },
+  { name: t('navigation.settings'), path: '/settings', icon: Settings, shortcut: 'Ctrl+,' },
+  {
+    name: t('navigation.update'),
+    path: '/update',
+    icon: appStore.updateAvailable ? DownloadCloud : Download,
+    shortcut: 'Ctrl+U',
+    hasNotification: appStore.updateAvailable
+  }
+])
+
+const isMacOs = computed(() => {
+  return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'darwin'
+})
+
+const openLink = async (url: string) => {
+  try {
+    if (appStore.settings.app.open_links_in_browser || isMacOs.value) {
+      await TauriAPI.files.urlInBrowser(url)
+      return
+    }
+  } catch (error) {
+    console.error('Failed to open link:', error)
+  }
+  setTimeout(() => {
+    window.open(url, '_blank')
+  })
+}
+</script>
 
 <style scoped>
 .navigation {

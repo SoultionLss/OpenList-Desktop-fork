@@ -10,19 +10,19 @@
         </div>
         <div class="action-buttons">
           <button
-            @click="toggleCore"
             :disabled="isCoreLoading"
             :class="['action-btn', 'service-btn', { running: isCoreRunning, loading: isCoreLoading }]"
+            @click="toggleCore"
           >
-            <component v-if="!isCoreLoading" :is="serviceButtonIcon" :size="20" />
+            <component :is="serviceButtonIcon" v-if="!isCoreLoading" :size="20" />
             <Loader v-else :size="20" class="loading-icon" />
             <span>{{ isCoreLoading ? t('dashboard.quickActions.processing') : serviceButtonText }}</span>
           </button>
 
           <button
-            @click="restartCore"
             :disabled="!isCoreRunning || isCoreLoading"
             :class="['action-btn', 'restart-btn', { loading: isCoreLoading }]"
+            @click="restartCore"
           >
             <RotateCcw v-if="!isCoreLoading" :size="18" />
             <Loader v-else :size="18" class="loading-icon" />
@@ -30,27 +30,27 @@
           </button>
 
           <button
-            @click="openWebUI"
             :disabled="!isCoreRunning || isCoreLoading"
             class="action-btn web-btn"
             :title="appStore.openListCoreUrl"
+            @click="openWebUI"
           >
             <ExternalLink :size="18" />
             <span>{{ t('dashboard.quickActions.openWeb') }}</span>
           </button>
 
           <button
-            @click="copyAdminPassword"
             class="action-btn password-btn icon-only-btn"
             :title="t('dashboard.quickActions.copyAdminPassword')"
+            @click="copyAdminPassword"
           >
             <Key :size="16" />
           </button>
 
           <button
-            @click="resetAdminPassword"
             class="action-btn reset-password-btn icon-only-btn"
             :title="t('dashboard.quickActions.resetAdminPassword')"
+            @click="resetAdminPassword"
           >
             <RotateCcw :size="16" />
           </button>
@@ -66,31 +66,31 @@
         </div>
         <div class="action-buttons">
           <button
-            @click="rcloneStore.serviceRunning ? stopBackend() : startBackend()"
             :disabled="isRcloneLoading"
             :class="[
               'action-btn',
               'service-indicator-btn',
               { active: rcloneStore.serviceRunning, loading: isRcloneLoading }
             ]"
+            @click="rcloneStore.serviceRunning ? stopBackend() : startBackend()"
           >
-            <component v-if="!isRcloneLoading" :is="rcloneStore.serviceRunning ? Square : Play" :size="18" />
+            <component :is="rcloneStore.serviceRunning ? Square : Play" v-if="!isRcloneLoading" :size="18" />
             <Loader v-else :size="18" class="loading-icon" />
             <span>{{
               isRcloneLoading
                 ? t('dashboard.quickActions.processing')
                 : rcloneStore.serviceRunning
-                ? t('dashboard.quickActions.stopRclone')
-                : t('dashboard.quickActions.startRclone')
+                  ? t('dashboard.quickActions.stopRclone')
+                  : t('dashboard.quickActions.startRclone')
             }}</span>
           </button>
 
-          <button @click="openRcloneConfig" class="action-btn config-btn">
+          <button class="action-btn config-btn" @click="openRcloneConfig">
             <Settings :size="18" />
             <span>{{ t('dashboard.quickActions.configRclone') }}</span>
           </button>
 
-          <button @click="viewMounts" class="action-btn mount-btn">
+          <button class="action-btn mount-btn" @click="viewMounts">
             <HardDrive :size="18" />
             <span>{{ t('dashboard.quickActions.manageMounts') }}</span>
           </button>
@@ -104,14 +104,13 @@
         </div>
         <div class="settings-toggles">
           <label class="toggle-item">
-            <input type="checkbox" v-model="settings.openlist.auto_launch" @change="handleAutoLaunchToggle" />
+            <input v-model="settings.openlist.auto_launch" type="checkbox" @change="handleAutoLaunchToggle" />
             <span class="toggle-text">{{ t('dashboard.quickActions.autoLaunch') }}</span>
           </label>
 
           <!-- Windows Firewall Management-->
           <button
             v-if="isWindows"
-            @click="toggleFirewallRule"
             :class="['firewall-toggle-btn', { active: firewallEnabled }]"
             :disabled="firewallLoading"
             :title="
@@ -119,6 +118,7 @@
                 ? t('dashboard.quickActions.firewall.disable')
                 : t('dashboard.quickActions.firewall.enable')
             "
+            @click="toggleFirewallRule"
           >
             <Shield :size="18" />
             <span>
@@ -136,14 +136,16 @@
 </template>
 
 <script setup lang="ts">
+import { ExternalLink, HardDrive, Key, Loader, Play, RotateCcw, Settings, Shield, Square } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+
+import { TauriAPI } from '@/api/tauri'
+
+import { useTranslation } from '../../composables/useI18n'
 import { useAppStore } from '../../stores/app'
 import { useRcloneStore } from '../../stores/rclone'
-import { useTranslation } from '../../composables/useI18n'
-import Card from '../ui/Card.vue'
-import { Play, Square, RotateCcw, ExternalLink, Settings, HardDrive, Key, Shield, Loader } from 'lucide-vue-next'
-import { TauriAPI } from '@/api/tauri'
+import Card from '../ui/CardPage.vue'
 
 const { t } = useTranslation()
 const router = useRouter()

@@ -1,19 +1,20 @@
 <template>
   <div class="window-controls">
-    <button class="control-btn minimize" @click="$emit('minimize')" :title="t('common.minimize')">
+    <button class="control-btn minimize" :title="t('common.minimize')" @click="$emit('minimize')">
       <Minimize2 :size="12" />
     </button>
-    <button class="control-btn maximize" @click="$emit('maximize')" :title="t('common.maximize')">
+    <button class="control-btn maximize" :title="t('common.maximize')" @click="$emit('maximize')">
       <Maximize2 :size="12" />
     </button>
-    <button class="control-btn close" @click="$emit('close')" :title="t('common.close')">
+    <button class="control-btn close" :title="t('common.close')" @click="$emit('close')">
       <X :size="12" />
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Minimize2, Maximize2, X } from 'lucide-vue-next'
+import { Maximize2, Minimize2, X } from 'lucide-vue-next'
+
 import { useTranslation } from '../../composables/useI18n'
 
 const { t } = useTranslation()

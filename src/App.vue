@@ -2,12 +2,12 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-import { useAppStore } from './stores/app'
+import { TauriAPI } from './api/tauri'
+import Navigation from './components/NavigationPage.vue'
+import TitleBar from './components/ui/TitleBar.vue'
 import { useTranslation } from './composables/useI18n'
 import { useTray } from './composables/useTray'
-import { TauriAPI } from './api/tauri'
-import Navigation from './components/Navigation.vue'
-import TitleBar from './components/ui/TitleBar.vue'
+import { useAppStore } from './stores/app'
 
 const appStore = useAppStore()
 const { t } = useTranslation()
@@ -365,7 +365,8 @@ body {
 .loading-backdrop {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 25% 25%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+  background:
+    radial-gradient(circle at 25% 25%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
     radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
 }
 

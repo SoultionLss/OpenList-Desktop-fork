@@ -13,11 +13,11 @@
             </div>
           </div>
           <div class="doc-actions">
-            <button @click="openOpenListDocs" class="doc-btn primary">
+            <button class="doc-btn primary" @click="openOpenListDocs">
               <ExternalLink :size="14" />
               <span>{{ t('dashboard.documentation.openDocs') }}</span>
             </button>
-            <button @click="openOpenListGitHub" class="doc-btn secondary">
+            <button class="doc-btn secondary" @click="openOpenListGitHub">
               <Github :size="14" />
               <span>{{ t('dashboard.documentation.github') }}</span>
             </button>
@@ -35,11 +35,11 @@
             </div>
           </div>
           <div class="doc-actions">
-            <button @click="openRcloneDocs" class="doc-btn primary">
+            <button class="doc-btn primary" @click="openRcloneDocs">
               <ExternalLink :size="14" />
               <span>{{ t('dashboard.documentation.openDocs') }}</span>
             </button>
-            <button @click="openRcloneGitHub" class="doc-btn secondary">
+            <button class="doc-btn secondary" @click="openRcloneGitHub">
               <Github :size="14" />
               <span>{{ t('dashboard.documentation.github') }}</span>
             </button>
@@ -52,19 +52,19 @@
           <h4>{{ t('dashboard.documentation.quickLinks') }}</h4>
         </div>
         <div class="links-grid">
-          <button @click="openLink('https://docs.oplist.org/guide/api')" class="link-btn">
+          <button class="link-btn" @click="openLink('https://docs.oplist.org/guide/api')">
             <Code :size="16" />
             <span>{{ t('dashboard.documentation.apiDocs') }}</span>
           </button>
-          <button @click="openLink('https://rclone.org/commands/')" class="link-btn">
+          <button class="link-btn" @click="openLink('https://rclone.org/commands/')">
             <Terminal :size="16" />
             <span>{{ t('dashboard.documentation.commands') }}</span>
           </button>
-          <button @click="openLink('https://github.com/OpenListTeam/OpenList-desktop/issues')" class="link-btn">
+          <button class="link-btn" @click="openLink('https://github.com/OpenListTeam/OpenList-desktop/issues')">
             <HelpCircle :size="16" />
             <span>{{ t('dashboard.documentation.issues') }}</span>
           </button>
-          <button @click="openLink('https://docs.oplist.org/faq/')" class="link-btn">
+          <button class="link-btn" @click="openLink('https://docs.oplist.org/faq/')">
             <MessageCircle :size="16" />
             <span>{{ t('dashboard.documentation.faq') }}</span>
           </button>
@@ -75,12 +75,13 @@
 </template>
 
 <script setup lang="ts">
-import { useTranslation } from '../../composables/useI18n'
-import { ExternalLink, Github, BookOpen, Cloud, Code, Terminal, HelpCircle, MessageCircle } from 'lucide-vue-next'
-import Card from '../ui/Card.vue'
-import { TauriAPI } from '../../api/tauri'
-import { useAppStore } from '../../stores/app'
+import { BookOpen, Cloud, Code, ExternalLink, Github, HelpCircle, MessageCircle, Terminal } from 'lucide-vue-next'
 import { computed } from 'vue'
+
+import { TauriAPI } from '../../api/tauri'
+import { useTranslation } from '../../composables/useI18n'
+import { useAppStore } from '../../stores/app'
+import Card from '../ui/CardPage.vue'
 
 const { t } = useTranslation()
 const appStore = useAppStore()

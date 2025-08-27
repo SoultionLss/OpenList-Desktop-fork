@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-v-html -->
 <template>
   <Card
     :title="t('update.title')"
@@ -12,7 +13,7 @@
           <h4>{{ t('update.currentVersion') }}</h4>
           <span class="version-tag">v{{ currentVersion }}</span>
         </div>
-        <button @click="checkForUpdates" :disabled="checking || downloading || installing" class="check-update-btn">
+        <button :disabled="checking || downloading || installing" class="check-update-btn" @click="checkForUpdates">
           <RefreshCw :size="16" />
           {{ checking ? t('update.checking') : t('update.checkForUpdates') }}
         </button>
@@ -21,7 +22,7 @@
       <div class="settings-row">
         <div class="auto-check-setting">
           <label class="checkbox-container">
-            <input type="checkbox" v-model="autoCheckEnabled" @change="toggleAutoCheck" :disabled="settingsLoading" />
+            <input v-model="autoCheckEnabled" type="checkbox" :disabled="settingsLoading" @change="toggleAutoCheck" />
             <span class="label-text">{{ t('update.autoCheck') }}</span>
           </label>
         </div>
@@ -32,7 +33,7 @@
           <AlertCircle :size="16" />
           <span>{{ error }}</span>
         </div>
-        <button @click="clearError" class="clear-error-btn">×</button>
+        <button class="clear-error-btn" @click="clearError">×</button>
       </div>
 
       <div v-if="!updateCheck?.hasUpdate && lastChecked && !checking && !error" class="no-updates">
@@ -100,11 +101,11 @@
           </div>
         </div>
 
-        <div class="update-actions" v-if="!downloading">
+        <div v-if="!downloading" class="update-actions">
           <button
-            @click="downloadAndInstall"
             :disabled="!selectedAsset || checking || downloading || installing"
             class="install-btn"
+            @click="downloadAndInstall"
           >
             <Download :size="16" />
             {{ t('update.downloadAndInstall') }}
@@ -124,7 +125,7 @@
           <Info :size="20" class="notification-icon" />
           <div class="notification-text">
             <span>{{ t('update.backgroundUpdateAvailable') }}</span>
-            <button @click="showBackgroundUpdate" class="show-update-btn">
+            <button class="show-update-btn" @click="showBackgroundUpdate">
               {{ t('update.showUpdate') }}
             </button>
           </div>
@@ -135,13 +136,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { AlertCircle, ArrowRight, CheckCircle, CheckCircle2, Download, Info, RefreshCw } from 'lucide-vue-next'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+
+import { formatBytes } from '@/utils/formatters'
+
+import { TauriAPI } from '../../api/tauri'
 import { useTranslation } from '../../composables/useI18n'
 import { useAppStore } from '../../stores/app'
-import { TauriAPI } from '../../api/tauri'
-import Card from '../ui/Card.vue'
-import { formatBytes } from '@/utils/formatters'
-import { RefreshCw, Download, ArrowRight, CheckCircle, AlertCircle, Info, CheckCircle2 } from 'lucide-vue-next'
+import Card from '../ui/CardPage.vue'
 
 interface Props {
   isStandalone?: boolean

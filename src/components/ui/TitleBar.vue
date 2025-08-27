@@ -18,7 +18,8 @@
 
 <script setup lang="ts">
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import { ref, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
+
 import WindowControls from './WindowControls.vue'
 interface Props {
   appTitle?: string

@@ -8,7 +8,7 @@
               <h4>{{ t('dashboard.versionManager.openlist') }}</h4>
               <span class="current-version">{{ currentVersions.openlist }}</span>
             </div>
-            <button @click="refreshVersions" :disabled="refreshing" class="refresh-icon-btn">
+            <button :disabled="refreshing" class="refresh-icon-btn" @click="refreshVersions">
               <component
                 :is="refreshing ? Loader : RefreshCw"
                 :size="16"
@@ -24,11 +24,11 @@
               </option>
             </select>
             <button
-              @click="updateVersion('openlist')"
               :disabled="
                 !selectedVersions.openlist || loading.openlist || selectedVersions.openlist === currentVersions.openlist
               "
               class="update-btn"
+              @click="updateVersion('openlist')"
             >
               <component :is="loading.openlist ? Loader : Download" :size="14" />
               <span>{{
@@ -43,7 +43,7 @@
               <h4>{{ t('dashboard.versionManager.rclone') }}</h4>
               <span class="current-version">{{ currentVersions.rclone }}</span>
             </div>
-            <button @click="refreshVersions" :disabled="refreshing" class="refresh-icon-btn">
+            <button :disabled="refreshing" class="refresh-icon-btn" @click="refreshVersions">
               <component
                 :is="refreshing ? Loader : RefreshCw"
                 :size="16"
@@ -59,11 +59,11 @@
               </option>
             </select>
             <button
-              @click="updateVersion('rclone')"
               :disabled="
                 !selectedVersions.rclone || loading.rclone || selectedVersions.rclone === currentVersions.rclone
               "
               class="update-btn"
+              @click="updateVersion('rclone')"
             >
               <component :is="loading.rclone ? Loader : Download" :size="14" />
               <span>{{
@@ -78,11 +78,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useTranslation } from '../../composables/useI18n'
-import { Download, RefreshCw, Loader } from 'lucide-vue-next'
-import Card from '../ui/Card.vue'
+import { Download, Loader, RefreshCw } from 'lucide-vue-next'
+import { onMounted, ref } from 'vue'
+
 import { TauriAPI } from '../../api/tauri'
+import { useTranslation } from '../../composables/useI18n'
+import Card from '../ui/CardPage.vue'
 
 const { t } = useTranslation()
 

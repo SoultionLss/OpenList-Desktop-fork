@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useTranslation } from '../../composables/useI18n'
 import { ChevronDown } from 'lucide-vue-next'
+import { computed, onMounted, ref } from 'vue'
+
+import { useTranslation } from '../../composables/useI18n'
 
 const { currentLocale, switchLanguage } = useTranslation()
 const isOpen = ref(false)
@@ -35,7 +36,7 @@ onMounted(() => {
 
 <template>
   <div ref="dropdownRef" class="language-switcher relative">
-    <button @click="toggleDropdown" class="language-button">
+    <button class="language-button" @click="toggleDropdown">
       <span class="language-label">{{ currentLanguage?.name }}</span>
       <ChevronDown :size="12" :class="{ flipped: isOpen }" />
     </button>
@@ -44,9 +45,9 @@ onMounted(() => {
       <div
         v-for="language in languages"
         :key="language.code"
-        @click="handleLanguageChange(language.code)"
         class="language-option"
         :class="{ active: language.code === currentLocale }"
+        @click="handleLanguageChange(language.code)"
       >
         <span class="language-flag">{{ language.flag }}</span>
         <span class="language-name">{{ language.name }}</span>

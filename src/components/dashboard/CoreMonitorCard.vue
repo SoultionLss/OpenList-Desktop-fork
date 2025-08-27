@@ -10,7 +10,7 @@
     <div class="heartbeat-section">
       <div class="heartbeat-header">
         <h4></h4>
-        <div class="metrics" v-if="isCoreRunning">
+        <div v-if="isCoreRunning" class="metrics">
           <span class="metric info">
             <Globe :size="14" />
             Port: {{ openlistCoreStatus.port || 5244 }}
@@ -33,7 +33,7 @@
         </div>
       </div>
 
-      <div class="heartbeat-chart" ref="chartContainer">
+      <div ref="chartContainer" class="heartbeat-chart">
         <svg :width="chartWidth" :height="chartHeight" class="heartbeat-svg">
           <defs>
             <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -70,11 +70,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
-import { useAppStore } from '../../stores/app'
+import { Activity, Globe } from 'lucide-vue-next'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+
 import { useTranslation } from '../../composables/useI18n'
-import Card from '../ui/Card.vue'
-import { Globe, Activity } from 'lucide-vue-next'
+import { useAppStore } from '../../stores/app'
+import Card from '../ui/CardPage.vue'
 
 const { t } = useTranslation()
 const appStore = useAppStore()
@@ -82,7 +83,7 @@ const appStore = useAppStore()
 const chartContainer = ref<HTMLElement>()
 const chartWidth = ref(400)
 const chartHeight = ref(120)
-const dataPoints = ref<Array<{ timestamp: number; responseTime: number; isHealthy: boolean }>>([])
+const dataPoints = ref<{ timestamp: number; responseTime: number; isHealthy: boolean }[]>([])
 const responseTime = ref(0)
 const startTime = ref(Date.now())
 const monitoringInterval = ref<number>()
@@ -258,7 +259,9 @@ watch(isCoreRunning, (newValue: boolean, oldValue: boolean) => {
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(226, 232, 240, 0.6);
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 @media (prefers-color-scheme: dark) {

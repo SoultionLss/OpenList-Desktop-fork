@@ -1,27 +1,29 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, ComputedRef, Ref } from 'vue'
-import { useTranslation } from '../composables/useI18n'
-import { useRcloneStore } from '../stores/rclone'
 import {
-  HardDrive,
-  Plus,
-  Edit,
-  Trash2,
-  Play,
-  Square,
   CheckCircle,
-  XCircle,
-  Loader,
   Cloud,
-  Search,
+  Edit,
+  FolderOpen,
+  HardDrive,
+  Loader,
+  Play,
+  Plus,
   RefreshCw,
   Save,
-  X,
+  Search,
   Settings,
-  FolderOpen
+  Square,
+  Trash2,
+  X,
+  XCircle
 } from 'lucide-vue-next'
-import { useAppStore } from '@/stores/app'
+import { computed, ComputedRef, onMounted, onUnmounted, Ref, ref } from 'vue'
+
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+import { useAppStore } from '@/stores/app'
+
+import { useTranslation } from '../composables/useI18n'
+import { useRcloneStore } from '../stores/rclone'
 
 const { t } = useTranslation()
 const rcloneStore = useRcloneStore()
@@ -127,7 +129,7 @@ const commonFlags = ref([
 const showFlagSelector = ref(false)
 
 const filteredConfigs: ComputedRef<RcloneFormConfig[]> = computed(() => {
-  let filtered: RcloneFormConfig[] = []
+  const filtered: RcloneFormConfig[] = []
   const fullRemoteConfigs = appStore.fullRcloneConfigs
 
   for (const config of fullRemoteConfigs) {
@@ -456,7 +458,7 @@ const dismissWebdavTip = () => {
 const isWindows = computed(() => {
   return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'win32'
 })
-const showWinfspTip = ref(isWindows && !localStorage.getItem('winfsp_tip_dismissed'))
+const showWinfspTip = ref(isWindows.value && !localStorage.getItem('winfsp_tip_dismissed'))
 
 const dismissWinfspTip = () => {
   showWinfspTip.value = false
@@ -464,7 +466,7 @@ const dismissWinfspTip = () => {
 }
 
 const shouldShowWebdavTip = computed(() => {
-  if (isWindows) {
+  if (isWindows.value) {
     return !showWinfspTip.value && showWebdavTip.value
   }
   return showWebdavTip.value
@@ -533,14 +535,14 @@ onUnmounted(() => {
               {{ rcloneStore.serviceRunning ? t('mount.service.running') : t('mount.service.stopped') }}
             </span>
             <button
-              @click="rcloneStore.serviceRunning ? stopBackend() : startBackend()"
               :class="['service-toggle', { active: rcloneStore.serviceRunning }]"
               :disabled="rcloneStore.loading"
+              @click="rcloneStore.serviceRunning ? stopBackend() : startBackend()"
             >
               <component :is="rcloneStore.serviceRunning ? Square : Play" class="btn-icon" />
             </button>
           </div>
-          <button @click="addNewConfig" class="primary-btn">
+          <button class="primary-btn" @click="addNewConfig">
             <Plus class="btn-icon" />
             <span>{{ t('mount.actions.addRemote') }}</span>
           </button>
@@ -557,7 +559,7 @@ onUnmounted(() => {
           <h4 class="tip-title">{{ t('mount.tip.webdavTitle') }}</h4>
           <p class="tip-description">{{ t('mount.tip.webdavMessage') }}</p>
         </div>
-        <button @click="dismissWebdavTip" class="tip-close" :title="t('mount.tip.dismissForever')">
+        <button class="tip-close" :title="t('mount.tip.dismissForever')" @click="dismissWebdavTip">
           <X class="close-icon" />
         </button>
       </div>
@@ -572,7 +574,7 @@ onUnmounted(() => {
           <h4 class="tip-title">{{ t('mount.tip.winfspTitle') }}</h4>
           <p class="tip-description">{{ t('mount.tip.winfspMessage') }}</p>
         </div>
-        <button @click="dismissWinfspTip" class="tip-close" :title="t('mount.tip.dismissForever')">
+        <button class="tip-close" :title="t('mount.tip.dismissForever')" @click="dismissWinfspTip">
           <X class="close-icon" />
         </button>
       </div>
@@ -596,7 +598,7 @@ onUnmounted(() => {
           <option value="unmounted">{{ t('mount.status.unmounted') }}</option>
           <option value="error">{{ t('mount.status.error') }}</option>
         </select>
-        <button @click="appStore.loadMountInfos" class="refresh-btn" :disabled="rcloneStore.loading">
+        <button class="refresh-btn" :disabled="rcloneStore.loading" @click="appStore.loadMountInfos">
           <RefreshCw class="refresh-icon" :class="{ spinning: rcloneStore.loading }" />
         </button>
       </div>
@@ -605,7 +607,7 @@ onUnmounted(() => {
     <div v-if="rcloneStore.error" class="error-alert">
       <XCircle class="alert-icon" />
       <span class="alert-message">{{ rcloneStore.error }}</span>
-      <button @click="rcloneStore.clearError" class="alert-close">
+      <button class="alert-close" @click="rcloneStore.clearError">
         <X class="close-icon" />
       </button>
     </div>
@@ -617,7 +619,7 @@ onUnmounted(() => {
           <Cloud class="empty-icon" />
           <h3 class="empty-title">{{ t('mount.empty.title') }}</h3>
           <p class="empty-description">{{ t('mount.empty.description') }}</p>
-          <button @click="addNewConfig" class="empty-action-btn">
+          <button class="empty-action-btn" @click="addNewConfig">
             <Plus class="btn-icon" />
             <span>{{ t('mount.actions.addRemote') }}</span>
           </button>
@@ -664,8 +666,8 @@ onUnmounted(() => {
               <span
                 v-if="config.mountPoint"
                 class="meta-tag clickable-mount-point"
-                @click="openInFileExplorer(config.mountPoint)"
                 :title="t('mount.meta.openInExplorer')"
+                @click="openInFileExplorer(config.mountPoint)"
               >
                 <FolderOpen class="mount-point-icon" />
                 {{ config.mountPoint }}
@@ -679,19 +681,19 @@ onUnmounted(() => {
             <div class="action-group">
               <button
                 v-if="!isConfigMounted(config)"
-                @click="mountConfig(config)"
                 class="action-btn primary"
                 :disabled="isConfigMounting(config) || !config.mountPoint"
                 :title="!config.mountPoint ? t('mount.messages.mountPointRequired') : ''"
+                @click="mountConfig(config)"
               >
                 <Play class="btn-icon" />
                 <span>{{ t('mount.actions.mount') }}</span>
               </button>
               <button
                 v-else
-                @click="unmountConfig(config)"
                 class="action-btn warning"
                 :disabled="isConfigMounting(config)"
+                @click="unmountConfig(config)"
               >
                 <Square class="btn-icon" />
                 <span>{{ t('mount.actions.unmount') }}</span>
@@ -699,22 +701,22 @@ onUnmounted(() => {
             </div>
 
             <div class="secondary-actions">
-              <button @click="editConfig(config)" class="secondary-btn" :title="t('mount.actions.edit')">
+              <button class="secondary-btn" :title="t('mount.actions.edit')" @click="editConfig(config)">
                 <Edit class="btn-icon" />
               </button>
               <button
-                @click="deleteConfig(config)"
                 class="secondary-btn danger"
                 :disabled="isConfigMounted(config)"
                 :title="t('mount.actions.delete')"
+                @click="deleteConfig(config)"
               >
                 <Trash2 class="btn-icon" />
               </button>
               <button
                 v-if="isConfigMounted(config)"
-                @click="openInFileExplorer(config.mountPoint)"
                 class="secondary-btn"
                 :title="t('mount.actions.openInExplorer')"
+                @click="openInFileExplorer(config.mountPoint)"
               >
                 <FolderOpen class="btn-icon" />
               </button>
@@ -733,7 +735,7 @@ onUnmounted(() => {
               {{ editingConfig ? t('mount.config.editTitle') : t('mount.config.addTitle') }}
             </h2>
           </div>
-          <button @click="cancelForm" class="modal-close">
+          <button class="modal-close" @click="cancelForm">
             <X class="close-icon" />
           </button>
         </div>
@@ -847,10 +849,10 @@ onUnmounted(() => {
 
                 <div class="flags-header">
                   <button
-                    @click="showFlagSelector = !showFlagSelector"
                     type="button"
                     class="quick-flags-btn"
                     :title="t('mount.config.quickFlagsTooltip')"
+                    @click="showFlagSelector = !showFlagSelector"
                   >
                     <Settings class="btn-icon" />
                     <span>{{ t('mount.config.quickFlags') }}</span>
@@ -861,7 +863,7 @@ onUnmounted(() => {
                   <div class="flag-selector-popup" @click.stop>
                     <div class="flag-selector-header">
                       <h4>{{ t('mount.config.selectCommonFlags') }}</h4>
-                      <button @click="closeFlagSelector" class="close-selector-btn">
+                      <button class="close-selector-btn" @click="closeFlagSelector">
                         <X class="btn-icon" />
                       </button>
                     </div>
@@ -880,13 +882,13 @@ onUnmounted(() => {
                             <div
                               v-for="flag in category.flags"
                               :key="`${flag.flag}-${flag.value}`"
-                              @click="toggleFlag(flag)"
                               class="flag-option"
                               :class="{
                                 selected: isFlagInConfig(flag),
                                 'in-config': isFlagInConfig(flag)
                               }"
                               :title="getFlagDescription(flag)"
+                              @click="toggleFlag(flag)"
                             >
                               <div class="flag-checkbox">
                                 <div class="custom-checkbox" :class="{ checked: isFlagInConfig(flag) }">
@@ -915,15 +917,15 @@ onUnmounted(() => {
                       :placeholder="t('mount.config.flagPlaceholder')"
                     />
                     <button
-                      @click="removeFlag(index)"
                       type="button"
                       class="remove-flag-btn"
                       :title="t('mount.config.removeFlag')"
+                      @click="removeFlag(index)"
                     >
                       <X class="btn-icon" />
                     </button>
                   </div>
-                  <button @click="addFlag" type="button" class="add-flag-btn">
+                  <button type="button" class="add-flag-btn" @click="addFlag">
                     <Plus class="btn-icon" />
                     <span>{{ t('mount.config.addFlag') }}</span>
                   </button>
@@ -934,11 +936,11 @@ onUnmounted(() => {
         </div>
 
         <div class="modal-footer">
-          <button @click="cancelForm" class="cancel-btn">
+          <button class="cancel-btn" @click="cancelForm">
             <X class="btn-icon" />
             <span>{{ t('common.cancel') }}</span>
           </button>
-          <button @click="saveConfig" class="save-btn" :disabled="appStore.loading">
+          <button class="save-btn" :disabled="appStore.loading" @click="saveConfig">
             <Save class="btn-icon" />
             <span>{{ editingConfig ? t('common.save') : t('common.add') }}</span>
           </button>
