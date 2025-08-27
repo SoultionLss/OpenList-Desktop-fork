@@ -185,6 +185,9 @@ pub fn run() {
             utils::path::get_app_logs_dir()?;
             utils::init_log::init_log()?;
             utils::path::get_app_config_dir()?;
+            let settings = conf::config::MergedSettings::load().unwrap_or_default();
+            let show_window = settings.app.show_window_on_startup.unwrap_or(false);
+
             let app_state = app.state::<AppState>();
             if let Err(e) = app_state.init(app_handle) {
                 log::error!("Failed to initialize app state: {e}");
@@ -201,11 +204,11 @@ pub fn run() {
             setup_background_update_checker(app_handle);
 
             if let Some(window) = app.get_webview_window("main") {
-                if let Some(settings) = app_state.get_settings() {
-                    if !settings.app.show_window_on_startup.unwrap_or(false) {
-                        let _ = window.hide();
-                        log::info!("Main window hidden on startup based on user preference");
-                    }
+                if show_window {
+                    let _ = window.show();
+                    log::info!("Main window shown on startup based on user preference");
+                } else {
+                    log::info!("Main window hidden on startup based on user preference");
                 }
 
                 let app_handle_clone = app_handle.clone();
