@@ -20,7 +20,7 @@ impl AppConfig {
             gh_proxy_api: Some(false),
             open_links_in_browser: Some(false),
             admin_password: None,
-            show_window_on_startup: Some(false),
+            show_window_on_startup: Some(true),
         }
     }
 }

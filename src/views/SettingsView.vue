@@ -96,7 +96,7 @@ onMounted(async () => {
   if (!appSettings.gh_proxy) appSettings.gh_proxy = ''
   if (appSettings.gh_proxy_api === undefined) appSettings.gh_proxy_api = false
   if (appSettings.open_links_in_browser === undefined) appSettings.open_links_in_browser = false
-  if (appSettings.show_window_on_startup === undefined) appSettings.show_window_on_startup = false
+  if (appSettings.show_window_on_startup === undefined) appSettings.show_window_on_startup = true
   if (!appSettings.admin_password) appSettings.admin_password = ''
   originalOpenlistPort = openlistCoreSettings.port || 5244
   originalDataDir = openlistCoreSettings.data_dir

@@ -281,7 +281,7 @@ winget install OpenListTeam.OpenListDesktop
     "gh_proxy_api": false,
     "open_links_in_browser": true,
     "admin_password": "",
-    "show_window_on_startup": false
+    "show_window_on_startup": true
   }
 }
 ```

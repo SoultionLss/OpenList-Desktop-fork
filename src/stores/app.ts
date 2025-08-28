@@ -16,7 +16,7 @@ export const useAppStore = defineStore('app', () => {
       gh_proxy_api: false,
       open_links_in_browser: false,
       admin_password: undefined,
-      show_window_on_startup: false
+      show_window_on_startup: true
     }
   })
   const openlistCoreStatus = ref<OpenListCoreStatus>({ running: false })

@@ -186,7 +186,7 @@ pub fn run() {
             utils::init_log::init_log()?;
             utils::path::get_app_config_dir()?;
             let settings = conf::config::MergedSettings::load().unwrap_or_default();
-            let show_window = settings.app.show_window_on_startup.unwrap_or(false);
+            let show_window = settings.app.show_window_on_startup.unwrap_or(true);
 
             let app_state = app.state::<AppState>();
             if let Err(e) = app_state.init(app_handle) {
