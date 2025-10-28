@@ -26,6 +26,10 @@ env:
   APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
   APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+  # Certum cloud code signing for Windows
+  CERTUM_OTP_URI: ${{ secrets.CERTUM_OTP_URI }}
+  CERTUM_USERNAME: ${{ secrets.CERTUM_USERNAME }}
+  CERTUM_CERTIFICATE_SHA1: ${{ secrets.CERTUM_CERTIFICATE_SHA1 }}
   PERSONAL_GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
 concurrency:
   group: "${{ github.workflow }} - ${{ github.head_ref || github.ref }}"
@@ -396,17 +400,50 @@ jobs:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
 
-      - name: import windows certificate
+      - name: Setup Certum Code Signing (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          echo "=== SETTING UP CERTUM CODE SIGNING FOR WINDOWS ==="
+          echo "Installing SimplySign Desktop and configuring for automatic authentication"
+          
+          # Install SimplySign Desktop
+          chmod +x ./.github/scripts/install-simplysign.sh
+          ./.github/scripts/install-simplysign.sh
+          
+          # Configure registry for auto-login dialog
+          echo "Configuring registry for automatic login dialog..."
+          powershell -ExecutionPolicy Bypass -File "./.github/scripts/configure-simplysign-registry.ps1"
+          
+          echo "Certum signing environment ready"
+        shell: bash
+
+      - name: Authenticate Certum (Windows)
         if: matrix.os == 'windows-latest'
         env:
-          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          CERTUM_OTP_URI: ${{ secrets.CERTUM_OTP_URI }}
+          CERTUM_USERNAME: ${{ secrets.CERTUM_USERNAME }}
         run: |
-          New-Item -ItemType directory -Path certificate
-          Set-Content -Path certificate/tempCert.txt -Value $env:WINDOWS_CERTIFICATE
-          certutil -decode certificate/tempCert.txt certificate/certificate.pfx
-          Remove-Item -path certificate -include tempCert.txt
-          Import-PfxCertificate -FilePath certificate/certificate.pfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText)
+          echo "=== CERTUM AUTHENTICATION ==="
+          echo "Authenticating with Certum cloud certificate using TOTP"
+          
+          # Authenticate with Certum using our enhanced script
+          powershell -ExecutionPolicy Bypass -File "./.github/scripts/Connect-SimplySign-Enhanced.ps1"
+          
+          echo "Authentication completed"
+        shell: bash
+
+      - name: Configure Certum Certificate Thumbprint (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          echo "=== CONFIGURING CERTUM CERTIFICATE THUMBPRINT ==="
+          CONFIG_PATH="src-tauri/tauri.windows.conf.json"
+          THUMBPRINT="${{ secrets.CERTUM_CERTIFICATE_SHA1 }}"
+          
+          # Update the certificateThumbprint field using jq
+          jq --arg thumbprint "$THUMBPRINT" '.bundle.windows.certificateThumbprint = $thumbprint' "$CONFIG_PATH" > tmp.$$ && mv tmp.$$ "$CONFIG_PATH"
+          
+          echo "Certificate thumbprint configured: $THUMBPRINT"
 
       - name: Build the app
         uses: tauri-apps/tauri-action@v0
@@ -423,8 +460,6 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           # Enable signing and notarization for macOS
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
         with:
           tagName: ${{ needs.changelog.outputs.tag }}
           releaseName: 'OpenList Desktop ${{ needs.changelog.outputs.tag }}'

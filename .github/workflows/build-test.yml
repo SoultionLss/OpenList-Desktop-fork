@@ -21,6 +21,10 @@ env:
   APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
   APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+  # Certum cloud code signing for Windows
+  CERTUM_OTP_URI: ${{ secrets.CERTUM_OTP_URI }}
+  CERTUM_USERNAME: ${{ secrets.CERTUM_USERNAME }}
+  CERTUM_CERTIFICATE_SHA1: ${{ secrets.CERTUM_CERTIFICATE_SHA1 }}
 
 concurrency:
   group: "${{ github.workflow }} - ${{ github.head_ref || github.ref }}"
@@ -174,19 +178,50 @@ jobs:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
 
-      - name: Import Windows certificate
-        if: matrix.os == 'windows-latest' && env.WINDOWS_CERTIFICATE != ''
-        env:
-          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+      - name: Setup Certum Code Signing (Windows)
+        if: matrix.platform == 'windows'
         run: |
-          if ($env:WINDOWS_CERTIFICATE) {
-            New-Item -ItemType directory -Path certificate
-            Set-Content -Path certificate/tempCert.txt -Value $env:WINDOWS_CERTIFICATE
-            certutil -decode certificate/tempCert.txt certificate/certificate.pfx
-            Remove-Item -path certificate -include tempCert.txt
-            Import-PfxCertificate -FilePath certificate/certificate.pfx -CertStoreLocation Cert:\CurrentUser\My -Password (ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText)
-          }
+          echo "=== SETTING UP CERTUM CODE SIGNING FOR WINDOWS ==="
+          echo "Installing SimplySign Desktop and configuring for automatic authentication"
+          
+          # Install SimplySign Desktop
+          chmod +x ./.github/scripts/install-simplysign.sh
+          ./.github/scripts/install-simplysign.sh
+          
+          # Configure registry for auto-login dialog
+          echo "Configuring registry for automatic login dialog..."
+          powershell -ExecutionPolicy Bypass -File "./.github/scripts/configure-simplysign-registry.ps1"
+          
+          echo "Certum signing environment ready"
+        shell: bash
+
+      - name: Authenticate Certum (Windows)
+        if: matrix.platform == 'windows'
+        env:
+          CERTUM_OTP_URI: ${{ secrets.CERTUM_OTP_URI }}
+          CERTUM_USERNAME: ${{ secrets.CERTUM_USERNAME }}
+        run: |
+          echo "=== CERTUM AUTHENTICATION ==="
+          echo "Authenticating with Certum cloud certificate using TOTP"
+          
+          # Authenticate with Certum using our enhanced script
+          powershell -ExecutionPolicy Bypass -File "./.github/scripts/Connect-SimplySign-Enhanced.ps1"
+          
+          echo "Authentication completed"
+        shell: bash
+
+      - name: Configure Certum Certificate Thumbprint (Windows)
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          echo "=== CONFIGURING CERTUM CERTIFICATE THUMBPRINT ==="
+          CONFIG_PATH="src-tauri/tauri.windows.conf.json"
+          THUMBPRINT="${{ secrets.CERTUM_CERTIFICATE_SHA1 }}"
+          
+          # Update the certificateThumbprint field using jq
+          jq --arg thumbprint "$THUMBPRINT" '.bundle.windows.certificateThumbprint = $thumbprint' "$CONFIG_PATH" > tmp.$$ && mv tmp.$$ "$CONFIG_PATH"
+          
+          echo "Certificate thumbprint configured: $THUMBPRINT"
 
       - name: Build the app
         if: matrix.platform == 'windows' || matrix.platform == 'linux'
@@ -196,15 +231,6 @@ jobs:
           NODE_OPTIONS: "--max_old_space_size=4096"
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
-          # macOS signing and notarization environment variables
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
       
       - name: Build the app (macOS)
         if: matrix.platform == 'macos'
@@ -222,8 +248,6 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
