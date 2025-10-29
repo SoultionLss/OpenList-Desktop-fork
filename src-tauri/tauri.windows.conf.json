@@ -4,9 +4,7 @@
   "bundle": {
     "targets": ["nsis"],
     "windows": {
-      "certificateThumbprint": "209114AD26E9B9B5788E4E9F6E522DFE8E4FABAD",
-      "digestAlgorithm": "sha256",
-      "timestampUrl": "http://timestamp.comodoca.com",
+      "signingIdentity": null,
       "webviewInstallMode": {
         "type": "embedBootstrapper",
         "silent": true
