@@ -51,23 +51,44 @@ if ($FoundTargets.Count -eq 0) {
 Write-Host "Found $($FoundTargets.Count) architecture(s) to process"
 Write-Host ""
 
-# Find signtool
+# Find signtool - Auto-detect Windows SDK version
 Write-Host "Locating signtool..."
-$SignToolPaths = @(
-    "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.0.26100.0\x64\signtool.exe"
-)
+$WindowsKitsBase = "${env:ProgramFiles(x86)}\Windows Kits\10\bin"
 
+if (-not (Test-Path $WindowsKitsBase)) {
+    Write-Host "ERROR: Windows Kits base directory not found: $WindowsKitsBase"
+    exit 1
+}
+
+# Scan for all SDK versions and sort by version number (descending)
+Write-Host "Scanning Windows SDK versions in: $WindowsKitsBase"
+$SDKVersions = Get-ChildItem -Path $WindowsKitsBase -Directory -ErrorAction SilentlyContinue | 
+    Where-Object { $_.Name -match '^\d+\.\d+\.\d+\.\d+$' } |
+    Sort-Object { [version]$_.Name } -Descending
+
+if ($SDKVersions.Count -eq 0) {
+    Write-Host "ERROR: No Windows SDK version directories found"
+    exit 1
+}
+
+Write-Host "Found $($SDKVersions.Count) SDK version(s): $($SDKVersions.Name -join ', ')"
+
+# Try each SDK version until we find signtool
 $SignTool = $null
-foreach ($path in $SignToolPaths) {
-    if (Test-Path $path) {
-        $SignTool = $path
-        Write-Host "Found signtool: $SignTool"
+foreach ($sdkVersion in $SDKVersions) {
+    $signtoolPath = Join-Path $sdkVersion.FullName "x64\signtool.exe"
+    Write-Host "Checking: $signtoolPath"
+    
+    if (Test-Path $signtoolPath) {
+        $SignTool = $signtoolPath
+        Write-Host "Found signtool: $SignTool (SDK version: $($sdkVersion.Name))"
         break
     }
 }
 
 if (-not $SignTool) {
-    Write-Host "ERROR: signtool.exe not found in any expected location"
+    Write-Host "ERROR: signtool.exe not found in any SDK version directory"
+    Write-Host "Searched in: $WindowsKitsBase"
     exit 1
 }
 
