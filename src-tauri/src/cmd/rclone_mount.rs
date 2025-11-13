@@ -204,6 +204,23 @@ pub async fn create_rclone_mount_remote_process(
     let rclone_conf_path =
         get_rclone_config_path().map_err(|e| format!("Failed to get rclone config path: {e}"))?;
 
+    // Extract mount point from args and create directory if it doesn't exist.
+    // The mount point is the second non-flag argument (first is remote:path).
+    let args_vec = split_args_vec(config.args.clone());
+    let mount_point_opt = args_vec.iter().filter(|arg| !arg.starts_with('-')).nth(1); // 0th is remote:path, 1st is mount_point
+
+    if let Some(mount_point) = mount_point_opt {
+        let mount_path = Path::new(mount_point);
+        if !mount_path.exists()
+            && let Err(e) = fs::create_dir_all(mount_path)
+        {
+            return Err(format!(
+                "Failed to create mount point directory '{}': {}",
+                mount_point, e
+            ));
+        }
+    }
+
     let api_key = get_api_key();
     let port = get_server_port();
     let mut args: Vec<String> = vec![
@@ -211,7 +228,7 @@ pub async fn create_rclone_mount_remote_process(
         "--config".into(),
         rclone_conf_path.to_string_lossy().into_owned(),
     ];
-    args.extend(split_args_vec(config.args.clone()));
+    args.extend(args_vec);
 
     let config = ProcessConfig {
         id: config.id.clone(),
@@ -311,9 +328,10 @@ pub async fn get_mount_info_list(
                         Ok(is_mounted) => {
                             if process.is_running {
                                 if is_mounted { "mounted" } else { "mounting" }
-                            } else if is_mounted {
-                                "unmounting"
                             } else {
+                                // If process is not running, the mount point should be considered
+                                // unmounted regardless of whether
+                                // the directory exists or not
                                 "unmounted"
                             }
                         }
