@@ -9,7 +9,7 @@ const isOpen = ref(false)
 
 const languages = [
   { code: 'zh', name: '中文', flag: '🇨🇳' },
-  { code: 'en', name: 'English', flag: '🇺🇸' }
+  { code: 'en', name: 'English', flag: '🇺🇸' },
 ]
 
 const currentLanguage = computed(() => languages.find(lang => lang.code === currentLocale.value))

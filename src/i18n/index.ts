@@ -22,8 +22,8 @@ export function setupI18n(options: { locale?: string } = {}) {
     fallbackLocale: 'en',
     messages: {
       zh,
-      en
-    }
+      en,
+    },
   })
   return i18n
 }

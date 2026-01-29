@@ -17,7 +17,7 @@ import {
   RotateCcw,
   Search,
   Settings,
-  Trash2
+  Trash2,
 } from 'lucide-vue-next'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
@@ -52,7 +52,7 @@ const confirmDialogConfig = ref({
   title: '',
   message: '',
   onConfirm: () => {},
-  onCancel: () => {}
+  onCancel: () => {},
 })
 
 watch(filterLevel, async newValue => {
@@ -150,7 +150,7 @@ const parseLogEntry = (logText: string) => {
     message: message || cleanText,
     original: cleanText,
     rawMessage: stripAnsiColors.value ? message : originalText,
-    fullTimestamp: timestamp
+    fullTimestamp: timestamp,
   }
 }
 
@@ -174,7 +174,7 @@ const filteredLogs = computed(() => {
       (log: any) =>
         log.message.toLowerCase().includes(query) ||
         log.source.toLowerCase().includes(query) ||
-        log.level.toLowerCase().includes(query)
+        log.level.toLowerCase().includes(query),
     )
   }
 
@@ -219,7 +219,7 @@ const clearLogs = async () => {
         await appStore.clearLogs(
           (filterSource.value !== 'all' && filterSource.value !== 'gin'
             ? filterSource.value
-            : 'openlist') as filterSourceType
+            : 'openlist') as filterSourceType,
         )
         selectedEntries.value.clear()
         showNotificationMessage(t('logs.notifications.clearSuccess'), 'success')
@@ -230,7 +230,7 @@ const clearLogs = async () => {
     },
     onCancel: () => {
       showConfirmDialog.value = false
-    }
+    },
   }
 
   showConfirmDialog.value = true
@@ -306,7 +306,9 @@ const togglePause = () => {
 
 const refreshLogs = async () => {
   await appStore.loadLogs(
-    (filterSource.value !== 'all' && filterSource.value !== 'gin' ? filterSource.value : 'openlist') as filterSourceType
+    (filterSource.value !== 'all' && filterSource.value !== 'gin'
+      ? filterSource.value
+      : 'openlist') as filterSourceType,
   )
   await scrollToBottom()
   if (isPaused.value) {
@@ -618,8 +620,8 @@ onUnmounted(() => {
             logLevelClass(log.level),
             {
               selected: selectedEntries.has(index),
-              compact: isCompactMode
-            }
+              compact: isCompactMode,
+            },
           ]"
           @click="toggleSelectEntry(index)"
         >

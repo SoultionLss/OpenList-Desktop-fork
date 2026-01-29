@@ -10,7 +10,7 @@ import {
   RotateCcw,
   Save,
   Server,
-  Settings
+  Settings,
 } from 'lucide-vue-next'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -34,7 +34,7 @@ const confirmDialogConfig = ref({
   title: '',
   message: '',
   onConfirm: () => {},
-  onCancel: () => {}
+  onCancel: () => {},
 })
 
 const openlistCoreSettings = reactive({ ...appStore.settings.openlist })
@@ -58,20 +58,20 @@ const tabs = computed(() => [
     id: 'openlist',
     label: t('settings.tabs.openlist'),
     icon: Server,
-    description: t('settings.service.subtitle')
+    description: t('settings.service.subtitle'),
   },
   {
     id: 'rclone',
     label: t('settings.tabs.rclone'),
     icon: HardDrive,
-    description: t('settings.rclone.subtitle')
+    description: t('settings.rclone.subtitle'),
   },
   {
     id: 'app',
     label: t('settings.tabs.app'),
     icon: Settings,
-    description: t('settings.app.subtitle')
-  }
+    description: t('settings.app.subtitle'),
+  },
 ])
 
 onMounted(async () => {
@@ -130,7 +130,7 @@ const handleSave = async () => {
   try {
     try {
       rcloneSettings.config = JSON.parse(rcloneConfigJson.value)
-    } catch (error) {
+    } catch (_error) {
       message.value = t('settings.rclone.config.invalidJson')
       messageType.value = 'error'
       isSaving.value = false
@@ -201,14 +201,14 @@ const handleReset = async () => {
 
         message.value = t('settings.resetSuccess')
         messageType.value = 'info'
-      } catch (error) {
+      } catch (_error) {
         message.value = t('settings.resetFailed')
         messageType.value = 'error'
       }
     },
     onCancel: () => {
       showConfirmDialog.value = false
-    }
+    },
   }
 
   showConfirmDialog.value = true
@@ -220,7 +220,7 @@ const handleSelectDataDir = async () => {
       directory: true,
       multiple: false,
       title: t('settings.service.network.dataDir.selectTitle'),
-      defaultPath: openlistCoreSettings.data_dir || undefined
+      defaultPath: openlistCoreSettings.data_dir || undefined,
     })
 
     if (selected && typeof selected === 'string') {

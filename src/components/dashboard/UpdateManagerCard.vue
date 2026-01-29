@@ -151,7 +151,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  isStandalone: false
+  isStandalone: false,
 })
 
 const { t } = useTranslation()

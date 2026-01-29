@@ -70,7 +70,7 @@
             :class="[
               'action-btn',
               'service-indicator-btn',
-              { active: rcloneStore.serviceRunning, loading: isRcloneLoading }
+              { active: rcloneStore.serviceRunning, loading: isRcloneLoading },
             ]"
             @click="rcloneStore.serviceRunning ? stopBackend() : startBackend()"
           >

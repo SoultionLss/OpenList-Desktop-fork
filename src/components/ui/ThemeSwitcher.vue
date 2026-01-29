@@ -15,24 +15,24 @@ const themeOptions = computed(() => [
     value: 'light',
     label: t('settings.theme.light'),
     icon: Sun,
-    description: t('settings.theme.lightDesc')
+    description: t('settings.theme.lightDesc'),
   },
   {
     value: 'dark',
     label: t('settings.theme.dark'),
     icon: Moon,
-    description: t('settings.theme.darkDesc')
+    description: t('settings.theme.darkDesc'),
   },
   {
     value: 'auto',
     label: t('settings.theme.auto'),
     icon: Monitor,
-    description: t('settings.theme.autoDesc')
-  }
+    description: t('settings.theme.autoDesc'),
+  },
 ])
 
 const currentThemeOption = computed(
-  () => themeOptions.value.find(option => option.value === currentTheme.value) || themeOptions.value[0]
+  () => themeOptions.value.find(option => option.value === currentTheme.value) || themeOptions.value[0],
 )
 
 const toggleTheme = () => {

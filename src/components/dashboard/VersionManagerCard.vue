@@ -89,22 +89,22 @@ const { t } = useTranslation()
 
 const currentVersions = ref({
   openlist: 'unknown',
-  rclone: 'unknown'
+  rclone: 'unknown',
 })
 
 const selectedVersions = ref({
   openlist: '',
-  rclone: ''
+  rclone: '',
 })
 
 const availableVersions = ref({
   openlist: [] as string[],
-  rclone: [] as string[]
+  rclone: [] as string[],
 })
 
 const loading = ref({
   openlist: false,
-  rclone: false
+  rclone: false,
 })
 
 const refreshing = ref(false)
@@ -113,7 +113,7 @@ const getCurrentVersions = async () => {
   try {
     const [openlistVersion, rcloneVersion] = await Promise.all([
       TauriAPI.bin.version('openlist'),
-      TauriAPI.bin.version('rclone')
+      TauriAPI.bin.version('rclone'),
     ])
     currentVersions.value.openlist = openlistVersion || 'unknown'
     currentVersions.value.rclone = rcloneVersion || 'unknown'
@@ -135,7 +135,7 @@ const fetchRcloneVersions = async () => {
   try {
     const versions = await TauriAPI.bin.availableVersions('rclone')
     return versions
-  } catch (error) {
+  } catch (_error) {
     return []
   }
 }
@@ -166,7 +166,7 @@ const updateVersion = async (type: 'openlist' | 'rclone') => {
 
     showNotification(
       'success',
-      t('dashboard.versionManager.updateSuccess', { type: type.charAt(0).toUpperCase() + type.slice(1) })
+      t('dashboard.versionManager.updateSuccess', { type: type.charAt(0).toUpperCase() + type.slice(1) }),
     )
 
     console.log(`Updated ${type}:`, result)
@@ -177,8 +177,8 @@ const updateVersion = async (type: 'openlist' | 'rclone') => {
       'error',
       t('dashboard.versionManager.updateError', {
         type: type.charAt(0).toUpperCase() + type.slice(1),
-        error: errorMessage
-      })
+        error: errorMessage,
+      }),
     )
   } finally {
     loading.value[type] = false

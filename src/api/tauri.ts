@@ -11,7 +11,7 @@ export class TauriAPI {
     install: (): Promise<boolean> => call('install_service'),
     uninstall: (): Promise<boolean> => call('uninstall_service'),
     start: (): Promise<boolean> => call('start_service'),
-    stop: (): Promise<boolean> => call('stop_service')
+    stop: (): Promise<boolean> => call('stop_service'),
   }
 
   // --- process management ---
@@ -22,13 +22,13 @@ export class TauriAPI {
     restart: (id: string): Promise<boolean> => call('restart_process', { id }),
     update: (id: string, cfg: Partial<ProcessConfig>): Promise<boolean> =>
       call('update_process', { id, updateConfig: cfg }),
-    delete: (id: string): Promise<boolean> => call('delete_process', { id })
+    delete: (id: string): Promise<boolean> => call('delete_process', { id }),
   }
 
   // --- OpenList Core management ---
   static core = {
     create: (autoStart: boolean): Promise<ProcessConfig> => call('create_openlist_core_process', { autoStart }),
-    getStatus: (): Promise<OpenListCoreStatus> => call('get_openlist_core_status')
+    getStatus: (): Promise<OpenListCoreStatus> => call('get_openlist_core_status'),
   }
 
   // --- Rclone management ---
@@ -37,7 +37,7 @@ export class TauriAPI {
       create: (): Promise<boolean> => call('create_rclone_backend_process'),
       createAndStart: (): Promise<ProcessConfig> => call('create_and_start_rclone_backend'),
       isRunning: (): Promise<boolean> => call('get_rclone_backend_status'),
-      isAvailable: (): Promise<boolean> => call('check_rclone_available')
+      isAvailable: (): Promise<boolean> => call('check_rclone_available'),
     },
     remotes: {
       list: (): Promise<string[]> => call('rclone_list_remotes'),
@@ -46,14 +46,14 @@ export class TauriAPI {
       update: (name: string, type: string, config: RcloneWebdavConfig): Promise<boolean> =>
         call('rclone_update_remote', { name, type, config }),
       delete: (name: string): Promise<boolean> => call('rclone_delete_remote', { name }),
-      listConfig: (t: string): Promise<IRemoteConfig> => call('rclone_list_config', { remoteType: t })
+      listConfig: (t: string): Promise<IRemoteConfig> => call('rclone_list_config', { remoteType: t }),
     },
     mounts: {
       list: (): Promise<RcloneMountInfo[]> => call('get_mount_info_list'),
       check: (mp: string): Promise<boolean> => call('check_mount_status', { mountPoint: mp }),
       createProcess: (cfg: ProcessConfig): Promise<ProcessConfig> =>
-        call('create_rclone_mount_remote_process', { config: cfg })
-    }
+        call('create_rclone_mount_remote_process', { config: cfg }),
+    },
   }
 
   // -- File management ---
@@ -66,7 +66,7 @@ export class TauriAPI {
     openOpenListDataDir: (): Promise<boolean> => call('open_openlist_data_dir'),
     openLogsDirectory: (): Promise<boolean> => call('open_logs_directory'),
     openRcloneConfigFile: (): Promise<boolean> => call('open_rclone_config_file'),
-    openSettingsFile: (): Promise<boolean> => call('open_settings_file')
+    openSettingsFile: (): Promise<boolean> => call('open_settings_file'),
   }
 
   // --- Settings management ---
@@ -75,7 +75,7 @@ export class TauriAPI {
     save: (s: MergedSettings): Promise<boolean> => call('save_settings', { settings: s }),
     saveWithUpdatePort: (s: MergedSettings): Promise<boolean> =>
       call('save_settings_with_update_port', { settings: s }),
-    reset: (): Promise<MergedSettings | null> => call('reset_settings')
+    reset: (): Promise<MergedSettings | null> => call('reset_settings'),
   }
 
   // --- Logs management ---
@@ -86,21 +86,21 @@ export class TauriAPI {
       call('clear_logs', { source: src }),
     adminPassword: (): Promise<string> => call('get_admin_password'),
     resetAdminPassword: (): Promise<string> => call('reset_admin_password'),
-    setAdminPassword: (password: string): Promise<string> => call('set_admin_password', { password })
+    setAdminPassword: (password: string): Promise<string> => call('set_admin_password', { password }),
   }
 
   // --- Binary management ---
   static bin = {
     version: (name: 'openlist' | 'rclone'): Promise<string> => call('get_binary_version', { binaryName: name }),
     availableVersions: (tool: string): Promise<string[]> => call('get_available_versions', { tool }),
-    updateVersion: (tool: string, version: string): Promise<string> => call('update_tool_version', { tool, version })
+    updateVersion: (tool: string, version: string): Promise<string> => call('update_tool_version', { tool, version }),
   }
 
   // --- Utility functions ---
   static util = {
     defaultDataDir: (): Promise<string> => appDataDir().then(d => join(d, 'openlist-desktop')),
     defaultConfig: (): Promise<string> => appDataDir().then(d => join(d, 'openlist-desktop', 'rclone.conf')),
-    selectDirectory: (title: string): Promise<string | null> => call('select_directory', { title })
+    selectDirectory: (title: string): Promise<string | null> => call('select_directory', { title }),
   }
 
   // --- Tray management ---
@@ -108,14 +108,14 @@ export class TauriAPI {
     update: (r: boolean): Promise<void> => call('update_tray_menu', { serviceRunning: r }),
     updateDelayed: (r: boolean): Promise<void> => call('update_tray_menu_delayed', { serviceRunning: r }),
     forceUpdate: (r: boolean): Promise<void> => call('force_update_tray_menu', { serviceRunning: r }),
-    listen: (cb: (action: string) => void) => listen('tray-core-action', e => cb(e.payload as string))
+    listen: (cb: (action: string) => void) => listen('tray-core-action', e => cb(e.payload as string)),
   }
 
   // --- Firewall management ---
   static firewall = {
     check: (): Promise<boolean> => call('check_firewall_rule'),
     add: (): Promise<boolean> => call('add_firewall_rule'),
-    remove: (): Promise<boolean> => call('remove_firewall_rule')
+    remove: (): Promise<boolean> => call('remove_firewall_rule'),
   }
 
   // --- Update management ---
@@ -133,6 +133,6 @@ export class TauriAPI {
       listen('download-progress', e => cb(e.payload as DownloadProgress)),
     onInstallStarted: (cb: () => void) => listen('update-install-started', () => cb()),
     onInstallError: (cb: (err: string) => void) => listen('update-install-error', e => cb(e.payload as string)),
-    onAppQuit: (cb: () => void) => listen('quit-app', () => cb())
+    onAppQuit: (cb: () => void) => listen('quit-app', () => cb()),
   }
 }

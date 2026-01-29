@@ -16,8 +16,8 @@ export const useAppStore = defineStore('app', () => {
       gh_proxy_api: false,
       open_links_in_browser: false,
       admin_password: undefined,
-      show_window_on_startup: true
-    }
+      show_window_on_startup: true,
+    },
   })
   const openlistCoreStatus = ref<OpenListCoreStatus>({ running: false })
   const remoteConfigs = ref<IRemoteConfig>({})
@@ -38,7 +38,7 @@ export const useAppStore = defineStore('app', () => {
     mountPoint: '',
     volumeName: '',
     extraFlags: [],
-    autoMount: false
+    autoMount: false,
   }
 
   // Computed
@@ -59,7 +59,7 @@ export const useAppStore = defineStore('app', () => {
           mountPoint: settings.value.rclone.config[key].mountPoint,
           volumeName: settings.value.rclone.config[key].volumeName,
           extraFlags: settings.value.rclone.config[key].extraFlags || [],
-          autoMount: settings.value.rclone.config[key].autoMount ?? false
+          autoMount: settings.value.rclone.config[key].autoMount ?? false,
         }
       } else {
         newConfig = {
@@ -68,7 +68,7 @@ export const useAppStore = defineStore('app', () => {
           url: config.url,
           vendor: config.vendor,
           user: config.user,
-          pass: config.pass
+          pass: config.pass,
         } as RcloneFormConfig
       }
       result.push(newConfig)
@@ -144,13 +144,13 @@ export const useAppStore = defineStore('app', () => {
         mountPoint: config.mountPoint || undefined,
         volumeName: config.volumeName || undefined,
         extraFlags: config.extraFlags || [],
-        autoMount: config.autoMount ?? false
+        autoMount: config.autoMount ?? false,
       }
       const createdConfig: RcloneWebdavConfig = {
         url: fullConfig.url,
         vendor: fullConfig.vendor || undefined,
         user: fullConfig.user,
-        pass: fullConfig.pass
+        pass: fullConfig.pass,
       }
       const result = await TauriAPI.rclone.remotes.create(name, type, createdConfig)
       if (!result) {
@@ -182,13 +182,13 @@ export const useAppStore = defineStore('app', () => {
         mountPoint: config.mountPoint || undefined,
         volumeName: config.volumeName || undefined,
         extraFlags: config.extraFlags || [],
-        autoMount: config.autoMount ?? false
+        autoMount: config.autoMount ?? false,
       }
       const updatedConfig: RcloneWebdavConfig = {
         url: fullConfig.url,
         vendor: fullConfig.vendor || undefined,
         user: fullConfig.user,
-        pass: fullConfig.pass
+        pass: fullConfig.pass,
       }
       if (name !== config.name) {
         const result = createRemoteConfig(config.name, type, config)
@@ -219,7 +219,7 @@ export const useAppStore = defineStore('app', () => {
           const mountArgs = [
             `${fullConfig.name}:${fullConfig.volumeName || ''}`,
             fullConfig.mountPoint || '',
-            ...(fullConfig.extraFlags || [])
+            ...(fullConfig.extraFlags || []),
           ]
           const newProcessConfig: ProcessConfig = {
             id: `rclone_mount_${fullConfig.name}_process`,
@@ -231,7 +231,7 @@ export const useAppStore = defineStore('app', () => {
             auto_restart: true,
             run_as_admin: false,
             created_at: 0,
-            updated_at: 0
+            updated_at: 0,
           }
           await TauriAPI.rclone.mounts.createProcess(newProcessConfig)
         } catch (err) {
@@ -321,7 +321,7 @@ export const useAppStore = defineStore('app', () => {
         const mountArgs = [
           `${config.name}:${config.volumeName || ''}`,
           config.mountPoint || '',
-          ...(config.extraFlags || [])
+          ...(config.extraFlags || []),
         ]
         const createRemoteConfig: ProcessConfig = {
           id: `rclone_mount_${name}_process`,
@@ -333,7 +333,7 @@ export const useAppStore = defineStore('app', () => {
           auto_restart: true,
           run_as_admin: false,
           created_at: 0,
-          updated_at: 0
+          updated_at: 0,
         }
         const createResponse = await TauriAPI.rclone.mounts.createProcess(createRemoteConfig)
         if (!createResponse || !createResponse.id) {
@@ -493,7 +493,7 @@ export const useAppStore = defineStore('app', () => {
       const id = await getOpenListProcessId()
       if (!id) return
       const result = await TauriAPI.process.update(id, {
-        auto_start: autoLaunch
+        auto_start: autoLaunch,
       })
       if (!result) {
         throw new Error('Failed to enable auto-launch')
@@ -545,7 +545,7 @@ export const useAppStore = defineStore('app', () => {
       if (statusChanged) {
         await TauriAPI.tray.updateDelayed(status.running)
       }
-    } catch (err) {
+    } catch (_err) {
       const wasRunning = openlistCoreStatus.value.running
       openlistCoreStatus.value = { running: false }
       if (wasRunning) {
@@ -847,6 +847,6 @@ export const useAppStore = defineStore('app', () => {
     applyTheme,
 
     setUpdateAvailable,
-    clearUpdateStatus
+    clearUpdateStatus,
   }
 })

@@ -37,7 +37,7 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   confirmText: 'Confirm',
   cancelText: 'Cancel',
-  variant: 'default'
+  variant: 'default',
 })
 
 const emit = defineEmits<Emits>()
@@ -58,7 +58,7 @@ const onCancel = () => {
 <script lang="ts">
 import { computed } from 'vue'
 export default {
-  name: 'ConfirmDialog'
+  name: 'ConfirmDialog',
 }
 </script>
 

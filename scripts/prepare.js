@@ -49,7 +49,7 @@ async function getLatestOpenlistVersion() {
   try {
     const response = await fetch(
       'https://api.github.com/repos/OpenListTeam/OpenList/releases/latest',
-      getFetchOptions()
+      getFetchOptions(),
     )
     const data = await response.json()
     openlistVersion = data.tag_name || 'v4.0.8'
@@ -66,7 +66,7 @@ const createBinaryInfo = (name, archMap, baseUrl, version = '') => {
     targetFile: `${name}-${sidecarHost}${isWin ? '.exe' : ''}`,
     exeFile: `${name}${isWin ? '.exe' : ''}`,
     zipFile: zipName,
-    downloadURL: `${baseUrl}${version ? `/${version}` : ''}/${zipName}`
+    downloadURL: `${baseUrl}${version ? `/${version}` : ''}/${zipName}`,
   }
 }
 
@@ -78,7 +78,7 @@ const getServiceInfo = exeName => {
   const suffix = '-' + sidecarHost
   return {
     file: exeName + suffix + ext,
-    downloadURL: `${serviceUrl}/${exeName}${ext}`
+    downloadURL: `${serviceUrl}/${exeName}${ext}`,
   }
 }
 
@@ -146,7 +146,7 @@ const resolveAccessControlPlugin = async pluginDir => {
     if (!fs.existsSync(sourcePath)) {
       const altPaths = [
         path.join(tempDir, 'AccessControl.dll'),
-        path.join(tempDir, 'Plugins', 'i386-unicode', 'AccessControl.dll')
+        path.join(tempDir, 'Plugins', 'i386-unicode', 'AccessControl.dll'),
       ]
       for (const altPath of altPaths) {
         if (fs.existsSync(altPath)) {
@@ -244,9 +244,9 @@ async function main() {
         'openlist',
         getOpenlistArchMap,
         'https://github.com/OpenListTeam/OpenList/releases/download',
-        openlistVersion
-      )
-    )
+        openlistVersion,
+      ),
+    ),
   )
 
   // Only bundle rclone for Windows and macOS, Linux users should install rclone from system package manager
@@ -255,7 +255,7 @@ async function main() {
     await retryTask('rclone', async () => {
       await getLatestRcloneVersion()
       await resolveSidecar(
-        createBinaryInfo('rclone', getRcloneArchMap(rcloneVersion), `https://downloads.rclone.org`, rcloneVersion)
+        createBinaryInfo('rclone', getRcloneArchMap(rcloneVersion), `https://downloads.rclone.org`, rcloneVersion),
       )
     })
   } else {

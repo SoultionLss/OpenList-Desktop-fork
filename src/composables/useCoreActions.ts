@@ -33,6 +33,6 @@ export const useCoreActions = () => {
   return {
     startOpenListCore,
     stopOpenListCore,
-    restartOpenListCore
+    restartOpenListCore,
   }
 }

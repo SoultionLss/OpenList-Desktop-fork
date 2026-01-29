@@ -13,13 +13,13 @@ const appStore = useAppStore()
 const isLoading = ref(true)
 
 const serviceStatus = ref({
-  isRunning: false
+  isRunning: false,
 })
 
 const layoutClass = computed(() => ({
   'dashboard-loading': isLoading.value,
   'dashboard-ready': !isLoading.value,
-  'service-running': serviceStatus.value.isRunning
+  'service-running': serviceStatus.value.isRunning,
 }))
 
 onMounted(async () => {

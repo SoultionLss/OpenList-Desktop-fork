@@ -96,7 +96,7 @@ import {
   Server,
   Square as Stop,
   Trash2,
-  XCircle
+  XCircle,
 } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
@@ -193,7 +193,7 @@ const installService = async () => {
     } catch (stopError) {
       console.warn('Failed to stop service during installation:', stopError)
     }
-  } catch (error) {
+  } catch (_error) {
     serviceStatus.value = 'error'
   } finally {
     actionLoading.value = false
@@ -227,7 +227,6 @@ const stopService = async () => {
     if (!result) {
       throw new Error('Service stop failed')
     }
-    let attempts = 0
     const maxAttempts = 5
     for (let i = 0; i < maxAttempts; i++) {
       const status = await checkServiceStatus()
@@ -235,7 +234,6 @@ const stopService = async () => {
         serviceStatus.value = status
         break
       }
-      attempts++
       await new Promise(resolve => setTimeout(resolve, 3000))
     }
   } catch (error) {

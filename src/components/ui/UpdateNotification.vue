@@ -37,7 +37,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   type: 'info',
   showAction: false,
-  actionText: 'Action'
+  actionText: 'Action',
 })
 
 defineEmits<{

@@ -26,7 +26,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-  appTitle: 'OpenList Desktop'
+  appTitle: 'OpenList Desktop',
 })
 
 const isMaximized = ref(false)

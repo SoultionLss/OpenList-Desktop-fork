@@ -20,7 +20,7 @@ const colors = {
   yellow: '\x1b[33m',
   blue: '\x1b[34m',
   magenta: '\x1b[35m',
-  cyan: '\x1b[36m'
+  cyan: '\x1b[36m',
 }
 
 function colorize(text, color) {
@@ -69,7 +69,7 @@ function getAllI18nKeys() {
     localeData[locale] = {
       file: filePath,
       keys,
-      data
+      data,
     }
 
     keys.forEach(key => allKeys.add(key))
@@ -79,7 +79,7 @@ function getAllI18nKeys() {
 
   return {
     allKeys: Array.from(allKeys).sort(),
-    localeData
+    localeData,
   }
 }
 
@@ -118,7 +118,7 @@ function findKeyUsage(keys) {
       used: false,
       files: [],
       patterns: [],
-      dynamicMatch: false
+      dynamicMatch: false,
     }
   })
 
@@ -131,7 +131,7 @@ function findKeyUsage(keys) {
   const searchPatterns = [
     /\$?t\s*\(\s*['"`]([^'"`]+)['"`]/g,
     /(?:^|[^a-zA-Z])t\s*\(\s*['"`]([^'"`]+)['"`]/g,
-    /\{\{\s*\$?t\s*\(\s*['"`]([^'"`]+)['"`]/g
+    /\{\{\s*\$?t\s*\(\s*['"`]([^'"`]+)['"`]/g,
   ]
 
   const dynamicPattern = /\$?t\s*\(\s*`([^`]*\$\{[^}]+\}[^`]*)`/g
@@ -166,7 +166,7 @@ function findKeyUsage(keys) {
         const patternInfo = {
           template: templateString,
           file: relativePath,
-          staticParts
+          staticParts,
         }
 
         if (!dynamicPatterns.some(p => p.template === templateString && p.file === relativePath)) {
@@ -245,7 +245,7 @@ function findLocaleInconsistencies(localeData) {
     const currentKeys = new Set(localeData[locale].keys)
     inconsistencies[locale] = {
       missing: [],
-      extra: []
+      extra: [],
     }
 
     locales.forEach(otherLocale => {
@@ -260,7 +260,7 @@ function findLocaleInconsistencies(localeData) {
 
     localeData[locale].keys.forEach(key => {
       const existsInOthers = locales.some(
-        otherLocale => locale !== otherLocale && localeData[otherLocale].keys.includes(key)
+        otherLocale => locale !== otherLocale && localeData[otherLocale].keys.includes(key),
       )
       if (!existsInOthers) {
         inconsistencies[locale].extra.push(key)
@@ -310,7 +310,7 @@ function main() {
         console.log(
           `   ${colorize('Matches', 'green')} (${matchingKeys.length}): ${matchingKeys.slice(0, 5).join(', ')}${
             matchingKeys.length > 5 ? '...' : ''
-          }`
+          }`,
         )
       }
     })

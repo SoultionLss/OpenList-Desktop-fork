@@ -11,7 +11,7 @@ export const platformIdentifierMap = {
   'x86_64-unknown-linux-gnu': 'linux-x64',
   'i686-unknown-linux-gnu': 'linux-ia32',
   'aarch64-unknown-linux-gnu': 'linux-arm64',
-  'armv7-unknown-linux-gnueabihf': 'linux-arm'
+  'armv7-unknown-linux-gnueabihf': 'linux-arm',
 }
 
 const archMaps = {
@@ -23,14 +23,14 @@ const archMaps = {
   'linux-x64': { openlist: 'linux-amd64', rclone: 'linux-amd64' },
   'linux-ia32': { openlist: 'linux-386', rclone: 'linux-386' },
   'linux-arm64': { openlist: 'linux-arm64', rclone: 'linux-arm64' },
-  'linux-arm': { openlist: 'linux-arm-7', rclone: 'linux-arm-v7' }
+  'linux-arm': { openlist: 'linux-arm-7', rclone: 'linux-arm-v7' },
 }
 
 export const getOpenlistArchMap = Object.fromEntries(
   Object.entries(archMaps).map(([key, { openlist }]) => [
     key,
-    `openlist-${openlist}.${key.startsWith('darwin') || key.startsWith('linux') ? 'tar.gz' : 'zip'}`
-  ])
+    `openlist-${openlist}.${key.startsWith('darwin') || key.startsWith('linux') ? 'tar.gz' : 'zip'}`,
+  ]),
 )
 
 export const getRcloneArchMap = version =>
@@ -39,7 +39,7 @@ export const getRcloneArchMap = version =>
 export async function downloadFile(url, path) {
   const response = await fetch(url, {
     ...getFetchOptions(),
-    headers: { 'Content-Type': 'application/octet-stream' }
+    headers: { 'Content-Type': 'application/octet-stream' },
   })
   await fs.writeFile(path, new Uint8Array(await response.arrayBuffer()))
   console.log(`download finished: ${url}`)

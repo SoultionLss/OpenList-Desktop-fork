@@ -15,7 +15,7 @@ import {
   Square,
   Trash2,
   X,
-  XCircle
+  XCircle,
 } from 'lucide-vue-next'
 import { computed, ComputedRef, onMounted, onUnmounted, Ref, ref } from 'vue'
 
@@ -38,7 +38,7 @@ const showConfirmDialog = ref(false)
 const confirmDialogConfig = ref({
   title: '',
   message: '',
-  configToDelete: null as RcloneFormConfig | null
+  configToDelete: null as RcloneFormConfig | null,
 })
 
 let mountRefreshInterval: NodeJS.Timeout | null = null
@@ -56,8 +56,8 @@ const configForm = ref({
   autoMount: false,
   extraFlags: [] as string[],
   extraOptions: {
-    'vfs-cache-mode': 'full'
-  }
+    'vfs-cache-mode': 'full',
+  },
 }) as Ref<RcloneFormConfig>
 
 const commonFlags = ref([
@@ -69,8 +69,8 @@ const commonFlags = ref([
       { flag: '--vfs-cache-mode', value: 'minimal', descriptionKey: 'vfs-cache-mode-minimal' },
       { flag: '--vfs-cache-max-age', value: '24h', descriptionKey: 'vfs-cache-max-age' },
       { flag: '--vfs-cache-max-size', value: '10G', descriptionKey: 'vfs-cache-max-size' },
-      { flag: '--dir-cache-time', value: '5m', descriptionKey: 'dir-cache-time' }
-    ]
+      { flag: '--dir-cache-time', value: '5m', descriptionKey: 'dir-cache-time' },
+    ],
   },
   {
     category: 'Performance',
@@ -79,16 +79,16 @@ const commonFlags = ref([
       { flag: '--buffer-size', value: '32M', descriptionKey: 'buffer-size-32M' },
       { flag: '--vfs-read-chunk-size', value: '128M', descriptionKey: 'vfs-read-chunk-size' },
       { flag: '--transfers', value: '4', descriptionKey: 'transfers' },
-      { flag: '--checkers', value: '8', descriptionKey: 'checkers' }
-    ]
+      { flag: '--checkers', value: '8', descriptionKey: 'checkers' },
+    ],
   },
   {
     category: 'Bandwidth',
     flags: [
       { flag: '--bwlimit', value: '10M', descriptionKey: 'bwlimit-10M' },
       { flag: '--bwlimit', value: '10M:100M', descriptionKey: 'bwlimit-10M:100M' },
-      { flag: '--bwlimit', value: '08:00,512k 18:00,10M 23:00,off', descriptionKey: 'bwlimit-schedule' }
-    ]
+      { flag: '--bwlimit', value: '08:00,512k 18:00,10M 23:00,off', descriptionKey: 'bwlimit-schedule' },
+    ],
   },
   {
     category: 'Network',
@@ -96,8 +96,8 @@ const commonFlags = ref([
       { flag: '--timeout', value: '5m', descriptionKey: 'timeout' },
       { flag: '--contimeout', value: '60s', descriptionKey: 'contimeout' },
       { flag: '--low-level-retries', value: '10', descriptionKey: 'low-level-retries' },
-      { flag: '--retries', value: '3', descriptionKey: 'retries' }
-    ]
+      { flag: '--retries', value: '3', descriptionKey: 'retries' },
+    ],
   },
   {
     category: 'Security',
@@ -105,15 +105,15 @@ const commonFlags = ref([
       { flag: '--read-only', value: '', descriptionKey: 'read-only' },
       { flag: '--allow-other', value: '', descriptionKey: 'allow-other' },
       { flag: '--allow-root', value: '', descriptionKey: 'allow-root' },
-      { flag: '--umask', value: '022', descriptionKey: 'umask' }
-    ]
+      { flag: '--umask', value: '022', descriptionKey: 'umask' },
+    ],
   },
   {
     category: 'WebDAV Specific',
     flags: [
       { flag: '--webdav-headers', value: 'User-Agent,rclone/1.0', descriptionKey: 'webdav-headers' },
-      { flag: '--webdav-bearer-token', value: '', descriptionKey: 'webdav-bearer-token' }
-    ]
+      { flag: '--webdav-bearer-token', value: '', descriptionKey: 'webdav-bearer-token' },
+    ],
   },
   {
     category: 'Debugging',
@@ -121,9 +121,9 @@ const commonFlags = ref([
       { flag: '--log-level', value: 'INFO', descriptionKey: 'log-level' },
       { flag: '--verbose', value: '', descriptionKey: 'verbose' },
       { flag: '--use-json-log', value: '', descriptionKey: 'use-json-log' },
-      { flag: '--progress', value: '', descriptionKey: 'progress' }
-    ]
-  }
+      { flag: '--progress', value: '', descriptionKey: 'progress' },
+    ],
+  },
 ])
 
 const showFlagSelector = ref(false)
@@ -158,7 +158,7 @@ const configCounts = computed(() => {
     total: fullConfigs.length,
     mounted: appStore.mountedConfigs.length,
     unmounted: fullConfigs.length - appStore.mountedConfigs.length,
-    error: appStore.mountInfos.filter(m => m.status === 'error').length
+    error: appStore.mountInfos.filter(m => m.status === 'error').length,
   }
 })
 
@@ -179,7 +179,7 @@ const editConfig = (config: RcloneFormConfig) => {
     mountPoint: config.mountPoint || '',
     volumeName: config.volumeName || '',
     autoMount: config.autoMount,
-    extraFlags: config.extraFlags || []
+    extraFlags: config.extraFlags || [],
   }
   showAddForm.value = true
 }
@@ -202,7 +202,7 @@ const saveConfig = async () => {
         mountPoint: configForm.value.mountPoint || undefined,
         volumeName: configForm.value.volumeName || undefined,
         autoMount: configForm.value.autoMount,
-        extraFlags: configForm.value.extraFlags
+        extraFlags: configForm.value.extraFlags,
       })
     } else {
       await appStore.createRemoteConfig(configForm.value.name, configForm.value.type, {
@@ -215,7 +215,7 @@ const saveConfig = async () => {
         mountPoint: configForm.value.mountPoint || undefined,
         volumeName: configForm.value.volumeName || undefined,
         autoMount: configForm.value.autoMount,
-        extraFlags: configForm.value.extraFlags
+        extraFlags: configForm.value.extraFlags,
       })
     }
     showAddForm.value = false
@@ -241,7 +241,7 @@ const resetForm = () => {
     mountPoint: '',
     volumeName: '',
     autoMount: false,
-    extraFlags: []
+    extraFlags: [],
   }
   editingConfig.value = null
 }
@@ -269,7 +269,7 @@ const deleteConfig = async (config: RcloneFormConfig) => {
   confirmDialogConfig.value = {
     title: t('mount.messages.confirmDeleteTitle'),
     message: t('mount.messages.confirmDelete', { name: config.name }),
-    configToDelete: config
+    configToDelete: config,
   }
   showConfirmDialog.value = true
 }
@@ -668,7 +668,7 @@ onUnmounted(() => {
           :class="{
             mounted: isConfigMounted(config),
             error: getConfigStatus(config) === 'error',
-            loading: isConfigMounting(config)
+            loading: isConfigMounting(config),
           }"
         >
           <div class="card-header">
@@ -688,7 +688,7 @@ onUnmounted(() => {
                 :class="{
                   spinning: isConfigMounting(config) || appStore.loading,
                   success: getConfigStatus(config) === 'mounted',
-                  error: getConfigStatus(config) === 'error'
+                  error: getConfigStatus(config) === 'error',
                 }"
               />
             </div>
@@ -919,7 +919,7 @@ onUnmounted(() => {
                               class="flag-option"
                               :class="{
                                 selected: isFlagInConfig(flag),
-                                'in-config': isFlagInConfig(flag)
+                                'in-config': isFlagInConfig(flag),
                               }"
                               :title="getFlagDescription(flag)"
                               @click="toggleFlag(flag)"

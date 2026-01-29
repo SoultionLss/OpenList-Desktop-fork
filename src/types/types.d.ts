@@ -1,8 +1,6 @@
 declare const OS_PLATFORM: Platform
 
-interface IRemoteConfig {
-  [key: string]: RcloneWebdavConfig
-}
+type IRemoteConfig = Record<string, RcloneWebdavConfig>
 
 interface OpenListCoreConfig {
   port: number

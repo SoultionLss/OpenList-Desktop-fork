@@ -77,6 +77,6 @@ export const useTray = () => {
   return {
     updateTrayMenu,
     initTrayListeners,
-    cleanupTrayListeners
+    cleanupTrayListeners,
   }
 }

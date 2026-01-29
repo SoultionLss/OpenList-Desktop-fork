@@ -70,8 +70,8 @@ const navigationItems = computed(() => [
     path: '/update',
     icon: appStore.updateAvailable ? DownloadCloud : Download,
     shortcut: 'Ctrl+U',
-    hasNotification: appStore.updateAvailable
-  }
+    hasNotification: appStore.updateAvailable,
+  },
 ])
 
 const isMacOs = computed(() => {

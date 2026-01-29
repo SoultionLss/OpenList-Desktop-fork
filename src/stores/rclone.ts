@@ -87,6 +87,6 @@ export const useRcloneStore = defineStore('rclone', () => {
     stopRcloneBackend,
     checkRcloneBackendStatus,
     checkRcloneAvailable,
-    init
+    init,
   }
 })

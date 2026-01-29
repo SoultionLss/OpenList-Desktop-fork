@@ -25,6 +25,6 @@ export function useTranslation() {
     switchLanguage,
     getStoredLanguage,
     isChineseLocale,
-    isEnglishLocale
+    isEnglishLocale,
   }
 }

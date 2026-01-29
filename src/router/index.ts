@@ -11,37 +11,37 @@ const routes = [
     path: '/',
     name: 'Dashboard',
     component: HomeView,
-    meta: { title: 'Dashboard' }
+    meta: { title: 'Dashboard' },
   },
   {
     path: '/mount',
     name: 'Mount',
     component: MountView,
-    meta: { title: 'Mount' }
+    meta: { title: 'Mount' },
   },
   {
     path: '/update',
     name: 'Update',
     component: UpdateView,
-    meta: { title: 'Update' }
+    meta: { title: 'Update' },
   },
   {
     path: '/settings',
     name: 'Settings',
     component: SettingsView,
-    meta: { title: 'Settings' }
+    meta: { title: 'Settings' },
   },
   {
     path: '/logs',
     name: 'Logs',
     component: LogView,
-    meta: { title: 'Logs' }
-  }
+    meta: { title: 'Logs' },
+  },
 ]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
 })
 
 export default router

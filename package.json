@@ -31,7 +31,7 @@
     "lint:dpdm": "dpdm -T --tsconfig ./tsconfig.json --no-tree --no-warning --exit-code circular:1 src/main.ts",
     "i18n:check": "node scripts/find-unused-i18n.js",
     "i18n:check:verbose": "node scripts/find-unused-i18n.js --verbose",
-    "cz": "git-cz",
+    "cz": "czg",
     "release": "bump-version",
     "prebuild:dev": "node scripts/prepare.js",
     "check:rust": "cd src-tauri && cargo check --all-targets --all-features",
@@ -44,19 +44,6 @@
     "fix:frontend": "yarn lint:fix",
     "fix:all": "yarn fix:frontend && yarn fix:rust && yarn i18n:check"
   },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-customizable"
-    },
-    "cz-customizable": {
-      "config": "./node_modules/node-bump-version/.cz-config.cjs"
-    }
-  },
-  "commitlint": {
-    "extends": [
-      "./node_modules/node-bump-version/dist/commitlint-node/index.js"
-    ]
-  },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",
     "@tauri-apps/plugin-autostart": "^2.5.0",
@@ -67,40 +54,41 @@
     "@tauri-apps/plugin-shell": "^2.3.1",
     "@tauri-apps/plugin-store": "^2.4.0",
     "chrono-node": "^2.8.4",
-    "lucide-vue-next": "^0.542.0",
-    "pinia": "^3.0.3",
-    "vue": "^3.5.19",
-    "vue-i18n": "11.1.11",
-    "vue-router": "^4.5.1"
+    "lucide-vue-next": "^0.563.0",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.27",
+    "vue-i18n": "11.2.8",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.8.3",
     "@types/node": "^24.3.0",
-    "@typescript-eslint/eslint-plugin": "^8.41.0",
-    "@typescript-eslint/parser": "^8.41.0",
-    "@vitejs/plugin-vue": "^6.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "@vitejs/plugin-vue": "^6.0.3",
     "adm-zip": "^0.5.16",
     "cross-env": "^7.0.3",
+    "czg": "^1.12.0",
     "dpdm": "^3.14.0",
-    "eslint": "^9.34.0",
+    "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-jsonc": "^2.21.0",
+    "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-simple-import-sort": "^12.1.1",
-    "eslint-plugin-unicorn": "^60.0.0",
-    "eslint-plugin-vue": "^10.4.0",
-    "fs-extra": "^11.3.1",
+    "eslint-plugin-unicorn": "^62.0.0",
+    "eslint-plugin-vue": "^10.7.0",
+    "fs-extra": "^11.3.3",
     "https-proxy-agent": "^7.0.6",
     "husky": "^9.1.7",
-    "lint-staged": "^16.1.5",
-    "node-bump-version": "^2.0.0",
+    "lint-staged": "^16.2.7",
     "node-fetch": "^3.3.2",
-    "prettier": "^3.6.2",
-    "tar": "^7.4.3",
+    "prettier": "^3.8.1",
+    "tar": "^7.5.7",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.41.0",
-    "vite": "^7.1.11",
+    "typescript-eslint": "^8.54.0",
+    "vite": "^7.3.1",
     "vue-eslint-parser": "^10.2.0",
-    "vue-tsc": "^3.0.6"
+    "vue-tsc": "^3.2.4"
   },
   "resolutions": {
     "tmp": "^0.2.4",

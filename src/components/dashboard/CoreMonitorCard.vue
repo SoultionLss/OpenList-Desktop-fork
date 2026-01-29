@@ -24,7 +24,7 @@
             :class="{
               healthy: avgResponseTime < 100,
               warning: avgResponseTime >= 100 && avgResponseTime < 500,
-              error: avgResponseTime >= 500
+              error: avgResponseTime >= 500,
             }"
           >
             {{ avgResponseTime }}ms avg
@@ -95,7 +95,7 @@ const tooltip = ref({
   time: '',
   value: '',
   status: '',
-  statusText: ''
+  statusText: '',
 })
 
 const isCoreRunning = computed(() => appStore.isCoreRunning)
@@ -127,7 +127,7 @@ const visibleDataPoints = computed(() => {
       y,
       isHealthy: point.isHealthy,
       responseTime: point.responseTime,
-      timestamp: point.timestamp
+      timestamp: point.timestamp,
     }
   })
 })
@@ -164,7 +164,7 @@ const checkCoreHealth = async () => {
     dataPoints.value.push({
       timestamp: Date.now(),
       responseTime: 0,
-      isHealthy: false
+      isHealthy: false,
     })
     responseTime.value = 0
     return
@@ -182,7 +182,7 @@ const checkCoreHealth = async () => {
     dataPoints.value.push({
       timestamp: endTime,
       responseTime: responseTimeMs,
-      isHealthy
+      isHealthy,
     })
 
     responseTime.value = responseTimeMs
@@ -190,11 +190,11 @@ const checkCoreHealth = async () => {
     if (dataPoints.value.length > 100) {
       dataPoints.value = dataPoints.value.slice(-100)
     }
-  } catch (error) {
+  } catch (_error) {
     dataPoints.value.push({
       timestamp: Date.now(),
       responseTime: 5000,
-      isHealthy: false
+      isHealthy: false,
     })
   }
 }
@@ -207,7 +207,7 @@ const showTooltip = (point: any, event: MouseEvent) => {
     time: new Date(point.timestamp).toLocaleTimeString(),
     value: point.responseTime.toString(),
     status: point.isHealthy ? 'healthy' : 'unhealthy',
-    statusText: point.isHealthy ? t('dashboard.coreMonitor.healthy') : t('dashboard.coreMonitor.unhealthy')
+    statusText: point.isHealthy ? t('dashboard.coreMonitor.healthy') : t('dashboard.coreMonitor.unhealthy'),
   }
 }
 
