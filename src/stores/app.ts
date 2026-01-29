@@ -696,16 +696,19 @@ export const useAppStore = defineStore('app', () => {
       root.classList.add('auto')
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
       root.classList.add(prefersDark ? 'dark' : 'light')
+      root.setAttribute('data-theme', prefersDark ? 'dark' : 'light')
 
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
       mediaQuery.addEventListener('change', e => {
         if (settings.value.app.theme === 'auto') {
           root.classList.remove('light', 'dark')
           root.classList.add(e.matches ? 'dark' : 'light')
+          root.setAttribute('data-theme', e.matches ? 'dark' : 'light')
         }
       })
     } else {
       root.classList.add(theme)
+      root.setAttribute('data-theme', theme)
     }
   }
 

@@ -40,17 +40,18 @@
         title="View on GitHub"
         @click.prevent="openLink('https://github.com/OpenListTeam/openlist-desktop')"
       >
-        <Github :size="20" />
+        <BaseSvg name="GitHub" :size="18" />
       </a>
     </div>
   </nav>
 </template>
 
 <script setup lang="ts">
-import { Download, DownloadCloud, FileText, Github, HardDrive, Home, Settings } from 'lucide-vue-next'
+import { Download, DownloadCloud, FileText, HardDrive, Home, Settings } from 'lucide-vue-next'
 import { computed } from 'vue'
 
 import { TauriAPI } from '@/api/tauri'
+import BaseSvg from '@/assets/svg/BaseSvg.vue'
 
 import { useTranslation } from '../composables/useI18n'
 import { useAppStore } from '../stores/app'

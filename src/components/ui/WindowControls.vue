@@ -1,68 +1,32 @@
 <template>
-  <div class="window-controls">
-    <button class="control-btn minimize" :title="t('common.minimize')" @click="$emit('minimize')">
+  <div class="flex gap-1">
+    <button class="control-btn minimize" :title="t('common.minimize')" @click="emit('minimize')">
       <Minimize2 :size="12" />
     </button>
-    <button class="control-btn maximize" :title="t('common.maximize')" @click="$emit('maximize')">
+    <button class="control-btn maximize" :title="t('common.maximize')" @click="emit('maximize')">
       <Maximize2 :size="12" />
     </button>
-    <button class="control-btn close" :title="t('common.close')" @click="$emit('close')">
-      <X :size="12" />
+    <button class="control-btn close" :title="t('common.close')" @click="emit('close')">
+      <XIcon :size="16" />
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Maximize2, Minimize2, X } from 'lucide-vue-next'
+import { Maximize2, Minimize2, XIcon } from 'lucide-vue-next'
 
 import { useTranslation } from '../../composables/useI18n'
 
 const { t } = useTranslation()
 
-defineEmits<{
-  minimize: []
-  maximize: []
-  close: []
-}>()
+const emit = defineEmits(['minimize', 'maximize', 'close'])
 </script>
 
 <style scoped>
-.window-controls {
-  display: flex;
-  gap: 0.25rem;
-}
+@import 'tailwindcss' reference;
+@import '../../assets/css/index.css' reference;
 
 .control-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border: none;
-  background: transparent;
-  color: rgb(107 114 128);
-  border-radius: 0.25rem;
-  cursor: pointer;
-}
-
-.control-btn:hover {
-  background: rgb(243 244 246);
-  color: rgb(75 85 99);
-}
-
-@media (prefers-color-scheme: dark) {
-  .control-btn {
-    color: rgb(156 163 175);
-  }
-
-  .control-btn:hover {
-    background: rgb(55 65 81);
-    color: rgb(209 213 219);
-  }
-}
-
-.control-btn.close:hover {
-  background: rgb(239 68 68);
-  color: white;
+  @apply flex h-5 w-7 cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent text-secondary transition-all duration-fast ease-standard hover:bg-surface-elevated hover:text-main [.close:hover]:bg-danger [.close:hover]:text-white [.maximize:hover]:bg-success/85 [.maximize:hover]:text-white [.minimize:hover]:bg-accent/85 [.minimize:hover]:text-white;
 }
 </style>
