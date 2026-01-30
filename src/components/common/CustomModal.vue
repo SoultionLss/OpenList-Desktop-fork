@@ -1,9 +1,5 @@
 <template>
-  <div
-    class="fixed inset-0 z-1000 flex items-center justify-center overflow-y-auto bg-black/30"
-    :class="{ 'advanced-animation': enableAdvancedAnimation }"
-    @click.stop
-  >
+  <div class="fixed inset-0 z-1000 flex items-center justify-center overflow-y-auto bg-black/30" @click.stop>
     <div
       class="m-auto flex flex-col overflow-hidden rounded-lg border border-border-secondary bg-bg-tertiary shadow-xl"
       :style="{
@@ -44,17 +40,12 @@
 
 <script setup lang="ts">
 import { XIcon } from 'lucide-vue-next'
-import { onBeforeMount, ref } from 'vue'
-
-import { getConfig } from '@/utils/dataSender'
 
 const visible = defineModel<boolean>('visible')
 
 function handleClose() {
   visible.value = false
 }
-
-const enableAdvancedAnimation = ref(false)
 
 const {
   title = '',
@@ -71,12 +62,4 @@ const {
   maxHeight?: string
   maxWidth?: string
 }>()
-
-async function initConf() {
-  enableAdvancedAnimation.value = (await getConfig('settings.enableAdvancedAnimation')) || false
-}
-
-onBeforeMount(() => {
-  initConf()
-})
 </script>

@@ -4,13 +4,16 @@ use url::Url;
 use crate::core::process_manager::{PROCESS_MANAGER, ProcessConfig, ProcessInfo};
 use crate::object::structs::{AppState, ServiceStatus};
 use crate::utils::path::{
-    get_app_logs_dir, get_default_openlist_data_dir, get_openlist_binary_path,
+    get_app_logs_dir, get_default_openlist_data_dir, get_openlist_binary_path_with_custom,
 };
 
 const OPENLIST_CORE_PROCESS_ID: &str = "openlist_core";
 
-fn build_openlist_config(data_dir: String) -> Result<ProcessConfig, String> {
-    let binary_path = get_openlist_binary_path()
+fn build_openlist_config(
+    data_dir: String,
+    custom_binary_path: Option<&str>,
+) -> Result<ProcessConfig, String> {
+    let binary_path = get_openlist_binary_path_with_custom(custom_binary_path)
         .map_err(|e| format!("Failed to get OpenList binary path: {e}"))?;
     let log_file_path =
         get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {e}"))?;
@@ -44,15 +47,16 @@ fn build_openlist_config(data_dir: String) -> Result<ProcessConfig, String> {
 pub async fn create_openlist_core_process(
     state: State<'_, AppState>,
 ) -> Result<ProcessInfo, String> {
-    let data_dir = state
+    let settings = state
         .app_settings
         .read()
         .clone()
-        .ok_or("Failed to read app settings")?
-        .openlist
-        .data_dir;
+        .ok_or("Failed to read app settings")?;
 
-    let config = build_openlist_config(data_dir)?;
+    let data_dir = settings.openlist.data_dir;
+    let custom_binary_path = settings.app.custom_openlist_binary_path;
+
+    let config = build_openlist_config(data_dir, custom_binary_path.as_deref())?;
 
     if PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
         let info = PROCESS_MANAGER.get_status(OPENLIST_CORE_PROCESS_ID)?;
@@ -85,10 +89,24 @@ pub async fn stop_openlist_core(_state: State<'_, AppState>) -> Result<ProcessIn
 
 #[tauri::command]
 pub async fn restart_openlist_core(state: State<'_, AppState>) -> Result<ProcessInfo, String> {
-    if !PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
-        return create_openlist_core_process(state).await;
+    // Always re-create with latest settings to pick up any custom path changes
+    let settings = state
+        .app_settings
+        .read()
+        .clone()
+        .ok_or("Failed to read app settings")?;
+
+    let data_dir = settings.openlist.data_dir;
+    let custom_binary_path = settings.app.custom_openlist_binary_path;
+    let config = build_openlist_config(data_dir, custom_binary_path.as_deref())?;
+
+    if PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
+        // Stop and remove the old process, then re-register with new config
+        let _ = PROCESS_MANAGER.stop(OPENLIST_CORE_PROCESS_ID);
+        let _ = PROCESS_MANAGER.remove(OPENLIST_CORE_PROCESS_ID);
     }
-    PROCESS_MANAGER.restart(OPENLIST_CORE_PROCESS_ID)
+
+    PROCESS_MANAGER.register_and_start(config)
 }
 
 #[tauri::command]

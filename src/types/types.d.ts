@@ -52,6 +52,10 @@ interface AppConfig {
   show_window_on_startup?: boolean
   log_filter_level?: string
   log_filter_source?: string
+  // Custom binary/config paths
+  custom_openlist_binary_path?: string
+  custom_rclone_binary_path?: string
+  custom_rclone_config_path?: string
 }
 
 interface MergedSettings {

@@ -427,6 +427,29 @@
         "subtitle": "管理 OpenList 核心网页界面的管理员密码",
         "title": "管理员密码"
       },
+      "customPaths": {
+        "openlistBinary": {
+          "help": "覆盖默认的 OpenList 核心二进制文件。留空使用内置二进制文件。",
+          "label": "OpenList 二进制路径",
+          "placeholder": "可选。自定义 OpenList 可执行文件路径",
+          "selectTitle": "选择 OpenList 二进制文件"
+        },
+        "rcloneBinary": {
+          "help": "覆盖默认的 Rclone 二进制文件。留空使用内置二进制文件。",
+          "label": "Rclone 二进制路径",
+          "placeholder": "可选。自定义 Rclone 可执行文件路径",
+          "selectTitle": "选择 Rclone 二进制文件"
+        },
+        "rcloneConfig": {
+          "help": "覆盖默认的 rclone.conf 位置。留空使用默认路径。",
+          "label": "Rclone 配置路径",
+          "placeholder": "可选。自定义 rclone.conf 路径",
+          "selectTitle": "选择 Rclone 配置文件"
+        },
+        "selectError": "选择文件失败。请重试或手动输入路径。",
+        "subtitle": "覆盖默认的二进制文件和配置文件路径",
+        "title": "自定义路径"
+      },
       "network": {
         "dataDir": {
           "help": "可选。为 OpenList 数据存储指定自定义目录",

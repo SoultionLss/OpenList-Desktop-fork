@@ -17,6 +17,9 @@ export const useAppStore = defineStore('app', () => {
       open_links_in_browser: false,
       admin_password: undefined,
       show_window_on_startup: true,
+      custom_openlist_binary_path: undefined,
+      custom_rclone_binary_path: undefined,
+      custom_rclone_config_path: undefined,
     },
   })
   const openlistCoreStatus = ref<OpenListCoreStatus>({ running: false })

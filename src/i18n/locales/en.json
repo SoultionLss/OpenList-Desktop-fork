@@ -51,8 +51,8 @@
         "removed": "Port removed successfully"
       },
       "manageMounts": "Manage Mounts",
-      "openWeb": "Web",
       "openlistService": "OpenList Core",
+      "openWeb": "Web",
       "processing": "Processing...",
       "quickSettings": "Quick Settings",
       "rclone": "RClone",
@@ -412,20 +412,43 @@
     "resetSuccess": "Settings reset to defaults successfully!",
     "resetToDefaults": "Reset to defaults",
     "saveChanges": "Save Changes",
-    "saveFailed": "Failed to save settings. Please try again.",
     "saved": "Settings saved successfully!",
+    "saveFailed": "Failed to save settings. Please try again.",
     "service": {
       "admin": {
         "currentPassword": "Admin Password",
         "help": "Enter a custom admin password or click the reset button to generate a new random password. Click 'Save Changes' to apply the password to OpenList Core.",
         "passwordPlaceholder": "Enter admin password or click reset to generate",
-        "passwordUpdateFailed": "Failed to update admin password. Please check the logs for more details.",
         "passwordUpdated": "Admin password updated successfully!",
+        "passwordUpdateFailed": "Failed to update admin password. Please check the logs for more details.",
         "resetFailed": "Failed to reset admin password. Please check the logs for more details.",
         "resetSuccess": "Admin password reset successfully! New password has been generated and saved.",
         "resetTitle": "Reset admin password to a new random value",
         "subtitle": "Manage the admin password for OpenList Core web interface",
         "title": "Admin Password"
+      },
+      "customPaths": {
+        "openlistBinary": {
+          "help": "Override the default OpenList core binary. Leave empty to use bundled binary.",
+          "label": "OpenList Binary Path",
+          "placeholder": "Optional. Custom OpenList executable path",
+          "selectTitle": "Select OpenList Binary"
+        },
+        "rcloneBinary": {
+          "help": "Override the default Rclone binary. Leave empty to use bundled binary.",
+          "label": "Rclone Binary Path",
+          "placeholder": "Optional. Custom Rclone executable path",
+          "selectTitle": "Select Rclone Binary"
+        },
+        "rcloneConfig": {
+          "help": "Override the default rclone.conf location. Leave empty to use default path.",
+          "label": "Rclone Config Path",
+          "placeholder": "Optional. Custom rclone.conf path",
+          "selectTitle": "Select Rclone Config File"
+        },
+        "selectError": "Failed to select file. Please try again or enter path manually.",
+        "subtitle": "Override default binary and configuration file paths",
+        "title": "Custom Paths"
       },
       "network": {
         "dataDir": {
@@ -505,7 +528,7 @@
     "startingDownload": "Starting download...",
     "subtitle": "Keep your application up to date with the latest features and security improvements",
     "title": "App Updates",
-    "upToDate": "App is up to date",
-    "updateAvailable": "Update Available"
+    "updateAvailable": "Update Available",
+    "upToDate": "App is up to date"
   }
 }

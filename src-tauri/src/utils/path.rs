@@ -28,7 +28,7 @@ fn normalize_path(path: &Path) -> Result<PathBuf, String> {
     }
 }
 
-fn get_app_dir() -> Result<PathBuf, String> {
+pub fn get_app_dir() -> Result<PathBuf, String> {
     let app_dir = env::current_exe()
         .map_err(|e| format!("Failed to get current exe path: {e}"))?
         .parent()
@@ -114,6 +114,18 @@ pub fn get_openlist_binary_path() -> Result<PathBuf, String> {
     get_binary_path("openlist", "OpenList")
 }
 
+/// Get OpenList binary path, with optional custom path override
+pub fn get_openlist_binary_path_with_custom(custom_path: Option<&str>) -> Result<PathBuf, String> {
+    if let Some(path) = custom_path.filter(|p| !p.is_empty()) {
+        let custom = PathBuf::from(path);
+        if custom.exists() {
+            return Ok(custom);
+        }
+        return Err(format!("Custom OpenList binary not found at: {custom:?}"));
+    }
+    get_openlist_binary_path()
+}
+
 pub fn get_rclone_binary_path() -> Result<PathBuf, String> {
     // Windows/macOS: rclone is bundled with the app
     #[cfg(not(target_os = "linux"))]
@@ -141,6 +153,18 @@ pub fn get_rclone_binary_path() -> Result<PathBuf, String> {
     }
 }
 
+/// Get Rclone binary path, with optional custom path override
+pub fn get_rclone_binary_path_with_custom(custom_path: Option<&str>) -> Result<PathBuf, String> {
+    if let Some(path) = custom_path.filter(|p| !p.is_empty()) {
+        let custom = PathBuf::from(path);
+        if custom.exists() {
+            return Ok(custom);
+        }
+        return Err(format!("Custom Rclone binary not found at: {custom:?}"));
+    }
+    get_rclone_binary_path()
+}
+
 pub fn get_app_config_dir() -> Result<PathBuf, String> {
     get_user_data_dir()
 }
@@ -165,6 +189,23 @@ pub fn get_rclone_config_path() -> Result<PathBuf, String> {
             .map_err(|e| format!("Failed to create rclone config file: {e}"))?;
     }
     Ok(rclone_config_path)
+}
+
+/// Get Rclone config path, with optional custom path override
+pub fn get_rclone_config_path_with_custom(custom_path: Option<&str>) -> Result<PathBuf, String> {
+    if let Some(path) = custom_path.filter(|p| !p.is_empty()) {
+        let custom = PathBuf::from(path);
+        // Create the config file if it doesn't exist
+        if !custom.exists() {
+            if let Some(parent) = custom.parent() {
+                let _ = fs::create_dir_all(parent);
+            }
+            fs::File::create(&custom)
+                .map_err(|e| format!("Failed to create custom rclone config file: {e}"))?;
+        }
+        return Ok(custom);
+    }
+    get_rclone_config_path()
 }
 
 pub fn get_default_openlist_data_dir() -> Result<PathBuf, String> {

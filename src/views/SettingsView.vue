@@ -85,12 +85,34 @@
                 </template>
               </CustomInput>
             </SettingCard>
-            <SettingCard p1>
+            <SettingCard>
+              <CustomInput
+                v-model="appSettings.custom_openlist_binary_path"
+                type="text"
+                :placeholder="t('settings.service.customPaths.openlistBinary.placeholder')"
+                :tips="t('settings.service.customPaths.openlistBinary.help')"
+                :title="t('settings.service.customPaths.openlistBinary.label')"
+              >
+                <template #input-extra>
+                  <div class="flex gap-2 mt-1">
+                    <CustomButton
+                      type="secondary"
+                      text=""
+                      :icon="FolderOpen"
+                      :title="t('settings.service.customPaths.openlistBinary.selectTitle')"
+                      @click="handleSelectOpenlistBinary"
+                    />
+                  </div>
+                </template>
+              </CustomInput>
+            </SettingCard>
+            <SettingCard p1 class="flex items-center">
               <CustomSwitch
                 v-model="openlistCoreSettings.ssl_enabled"
                 :title="t('settings.service.network.ssl.title')"
                 no-border
                 small
+                class="w-full"
                 :tips="t('settings.service.network.ssl.description')"
               />
             </SettingCard>
@@ -135,6 +157,50 @@
           v-if="activeTab === 'rclone'"
           class="no-scrollbar flex h-full w-full flex-1 flex-col gap-6 overflow-auto p-4"
         >
+          <SettingSection :icon="Package" :title="t('settings.service.customPaths.title')">
+            <SettingCard>
+              <CustomInput
+                v-model="appSettings.custom_rclone_binary_path"
+                type="text"
+                :placeholder="t('settings.service.customPaths.rcloneBinary.placeholder')"
+                :tips="t('settings.service.customPaths.rcloneBinary.help')"
+                :title="t('settings.service.customPaths.rcloneBinary.label')"
+              >
+                <template #input-extra>
+                  <div class="flex gap-2 mt-1">
+                    <CustomButton
+                      type="secondary"
+                      text=""
+                      :icon="FolderOpen"
+                      :title="t('settings.service.customPaths.rcloneBinary.selectTitle')"
+                      @click="handleSelectRcloneBinary"
+                    />
+                  </div>
+                </template>
+              </CustomInput>
+            </SettingCard>
+            <SettingCard>
+              <CustomInput
+                v-model="appSettings.custom_rclone_config_path"
+                type="text"
+                :placeholder="t('settings.service.customPaths.rcloneConfig.placeholder')"
+                :tips="t('settings.service.customPaths.rcloneConfig.help')"
+                :title="t('settings.service.customPaths.rcloneConfig.label')"
+              >
+                <template #input-extra>
+                  <div class="flex gap-2 mt-1">
+                    <CustomButton
+                      type="secondary"
+                      text=""
+                      :icon="FolderOpen"
+                      :title="t('settings.service.customPaths.rcloneConfig.selectTitle')"
+                      @click="handleSelectRcloneConfig"
+                    />
+                  </div>
+                </template>
+              </CustomInput>
+            </SettingCard>
+          </SettingSection>
           <SettingSection :icon="SaveIcon" :title="t('settings.rclone.config.subtitle')" only-one-row>
             <div class="flex flex-col gap-4">
               <CustomButton
@@ -229,6 +295,7 @@ import {
   FolderOpen,
   Github,
   HardDrive,
+  Package,
   RotateCcw,
   Save,
   SaveIcon,
@@ -321,6 +388,9 @@ onMounted(async () => {
   if (appSettings.open_links_in_browser === undefined) appSettings.open_links_in_browser = false
   if (appSettings.show_window_on_startup === undefined) appSettings.show_window_on_startup = true
   if (!appSettings.admin_password) appSettings.admin_password = ''
+  if (!appSettings.custom_openlist_binary_path) appSettings.custom_openlist_binary_path = ''
+  if (!appSettings.custom_rclone_binary_path) appSettings.custom_rclone_binary_path = ''
+  if (!appSettings.custom_rclone_config_path) appSettings.custom_rclone_config_path = ''
   originalOpenlistPort = openlistCoreSettings.port || 5244
   originalDataDir = openlistCoreSettings.data_dir
 
@@ -484,6 +554,78 @@ const handleOpenSettingsFile = async () => {
   } catch (error) {
     console.error('Failed to open settings file:', error)
     message.error(t('settings.app.config.openError'))
+  }
+}
+
+const handleSelectOpenlistBinary = async () => {
+  try {
+    const selected = await open({
+      directory: false,
+      multiple: false,
+      title: t('settings.service.customPaths.openlistBinary.selectTitle'),
+      defaultPath: appSettings.custom_openlist_binary_path || undefined,
+      filters: [
+        {
+          name: 'Executable',
+          extensions: OS_PLATFORM === 'windows' ? ['exe'] : ['*'],
+        },
+      ],
+    })
+
+    if (selected && typeof selected === 'string') {
+      appSettings.custom_openlist_binary_path = selected
+    }
+  } catch (error) {
+    console.error('Failed to select OpenList binary:', error)
+    message.error(t('settings.service.customPaths.selectError'))
+  }
+}
+
+const handleSelectRcloneBinary = async () => {
+  try {
+    const selected = await open({
+      directory: false,
+      multiple: false,
+      title: t('settings.service.customPaths.rcloneBinary.selectTitle'),
+      defaultPath: appSettings.custom_rclone_binary_path || undefined,
+      filters: [
+        {
+          name: 'Executable',
+          extensions: OS_PLATFORM === 'windows' ? ['exe'] : ['*'],
+        },
+      ],
+    })
+
+    if (selected && typeof selected === 'string') {
+      appSettings.custom_rclone_binary_path = selected
+    }
+  } catch (error) {
+    console.error('Failed to select Rclone binary:', error)
+    message.error(t('settings.service.customPaths.selectError'))
+  }
+}
+
+const handleSelectRcloneConfig = async () => {
+  try {
+    const selected = await open({
+      directory: false,
+      multiple: false,
+      title: t('settings.service.customPaths.rcloneConfig.selectTitle'),
+      defaultPath: appSettings.custom_rclone_config_path || undefined,
+      filters: [
+        {
+          name: 'Config',
+          extensions: ['conf', '*'],
+        },
+      ],
+    })
+
+    if (selected && typeof selected === 'string') {
+      appSettings.custom_rclone_config_path = selected
+    }
+  } catch (error) {
+    console.error('Failed to select Rclone config:', error)
+    message.error(t('settings.service.customPaths.selectError'))
   }
 }
 

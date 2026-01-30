@@ -5,7 +5,7 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-use crate::utils::path::get_rclone_config_path;
+use crate::utils::path::{get_rclone_config_path, get_rclone_config_path_with_custom};
 
 /// Represents a remote configuration entry in rclone.conf
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -20,6 +20,7 @@ pub struct RcloneRemoteConfig {
 #[derive(Debug, Clone, Default)]
 pub struct RcloneConfigFile {
     pub remotes: HashMap<String, RcloneRemoteConfig>,
+    custom_config_path: Option<String>,
 }
 
 impl RcloneConfigFile {
@@ -27,6 +28,14 @@ impl RcloneConfigFile {
         let config_path =
             get_rclone_config_path().map_err(|e| format!("Failed to get config path: {e}"))?;
         Self::load_from_path(&config_path)
+    }
+
+    pub fn load_with_custom(custom_path: Option<&str>) -> Result<Self, String> {
+        let config_path = get_rclone_config_path_with_custom(custom_path)
+            .map_err(|e| format!("Failed to get config path: {e}"))?;
+        let mut config = Self::load_from_path(&config_path)?;
+        config.custom_config_path = custom_path.map(|s| s.to_string());
+        Ok(config)
     }
 
     pub fn load_from_path(path: &Path) -> Result<Self, String> {
@@ -91,8 +100,12 @@ impl RcloneConfigFile {
     }
 
     pub fn save(&self) -> Result<(), String> {
-        let config_path =
-            get_rclone_config_path().map_err(|e| format!("Failed to get config path: {e}"))?;
+        let config_path = if let Some(custom) = &self.custom_config_path {
+            get_rclone_config_path_with_custom(Some(custom.as_str()))
+                .map_err(|e| format!("Failed to get config path: {e}"))?
+        } else {
+            get_rclone_config_path().map_err(|e| format!("Failed to get config path: {e}"))?
+        };
         self.save_to_path(&config_path)
     }
 

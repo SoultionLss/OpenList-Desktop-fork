@@ -10,7 +10,9 @@ use crate::conf::rclone_config::{RcloneConfigFile, WebDavRemoteConfig};
 use crate::core::process_manager::{PROCESS_MANAGER, ProcessConfig, ProcessInfo};
 use crate::object::structs::{AppState, RcloneMountInfo};
 use crate::utils::args::split_args_vec;
-use crate::utils::path::{get_app_logs_dir, get_rclone_binary_path, get_rclone_config_path};
+use crate::utils::path::{
+    get_app_logs_dir, get_rclone_binary_path_with_custom, get_rclone_config_path_with_custom,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RcloneWebdavConfigInput {
@@ -141,14 +143,23 @@ pub async fn rclone_delete_remote(name: String) -> Result<bool, String> {
 #[tauri::command]
 pub async fn create_rclone_mount_remote_process(
     config: MountProcessInput,
-    _state: State<'_, AppState>,
+    state: State<'_, AppState>,
 ) -> Result<ProcessInfo, String> {
-    let binary_path =
-        get_rclone_binary_path().map_err(|e| format!("Failed to get rclone binary path: {e}"))?;
+    let settings = state
+        .app_settings
+        .read()
+        .clone()
+        .ok_or("Failed to read app settings")?;
+
+    let custom_rclone_binary = settings.app.custom_rclone_binary_path;
+    let custom_rclone_config = settings.app.custom_rclone_config_path;
+
+    let binary_path = get_rclone_binary_path_with_custom(custom_rclone_binary.as_deref())
+        .map_err(|e| format!("Failed to get rclone binary path: {e}"))?;
     let log_dir =
         get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {e}"))?;
-    let rclone_conf_path =
-        get_rclone_config_path().map_err(|e| format!("Failed to get rclone config path: {e}"))?;
+    let rclone_conf_path = get_rclone_config_path_with_custom(custom_rclone_config.as_deref())
+        .map_err(|e| format!("Failed to get rclone config path: {e}"))?;
 
     let args_vec = split_args_vec(config.args.clone());
 
