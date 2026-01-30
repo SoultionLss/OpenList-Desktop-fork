@@ -1,7 +1,7 @@
 use std::env;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -33,7 +33,7 @@ pub struct GitHubAsset {
     content_type: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UpdateAsset {
     name: String,
     url: String,
@@ -43,7 +43,7 @@ pub struct UpdateAsset {
     asset_type: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UpdateCheck {
     #[serde(rename = "hasUpdate")]
     has_update: bool,
@@ -56,6 +56,13 @@ pub struct UpdateCheck {
     #[serde(rename = "releaseNotes")]
     release_notes: String,
     assets: Vec<UpdateAsset>,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct CachedUpdate {
+    pub data: UpdateCheck,
+    pub etag: Option<String>,
+    pub last_check_time: SystemTime,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -170,6 +177,25 @@ fn compare_versions(current: &str, latest: &str) -> bool {
 #[tauri::command]
 pub async fn check_for_updates(state: State<'_, AppState>) -> Result<UpdateCheck, String> {
     log::info!("Checking for updates...");
+    let now = SystemTime::now();
+    let cache_duration = Duration::from_secs(1800);
+
+    let old_etag = {
+        let cache_read = state.update_cache.read();
+        if let Some(cache) = &*cache_read {
+            if now
+                .duration_since(cache.last_check_time)
+                .unwrap_or_default()
+                < cache_duration
+            {
+                log::info!("Returning cached update result.");
+                return Ok(cache.data.clone());
+            }
+            cache.etag.clone()
+        } else {
+            None
+        }
+    };
 
     let gh_proxy = state
         .get_settings()
@@ -185,34 +211,50 @@ pub async fn check_for_updates(state: State<'_, AppState>) -> Result<UpdateCheck
 
     log::info!("Fetching updates from: {proxied_url}");
 
-    let response = client
+    let mut request = client
         .get(&proxied_url)
         .header("User-Agent", "OpenList-Desktop")
-        .timeout(Duration::from_secs(30))
-        .send()
-        .await
-        .map_err(|e| {
-            let error_msg = format!("Network error while checking for updates: {e}");
-            log::error!("{error_msg}");
-            error_msg
-        })?;
+        .timeout(Duration::from_secs(30));
+
+    if let Some(etag) = old_etag {
+        request = request.header("If-None-Match", etag);
+    }
+
+    let response = request.send().await.map_err(|e| {
+        let error_msg = format!("Network error while checking for updates: {e}");
+        log::error!("{error_msg}");
+        error_msg
+    })?;
+
+    if response.status() == reqwest::StatusCode::NOT_MODIFIED {
+        log::info!("GitHub returned 304: No changes since last check.");
+        let mut cache_write = state.update_cache.write();
+        if let Some(cache) = &mut *cache_write {
+            cache.last_check_time = now;
+            return Ok(cache.data.clone());
+        }
+    }
 
     if !response.status().is_success() {
         let status = response.status();
-        let error_msg = if status.as_u16() == 404 {
-            "Repository not found. Please check the repository URL.".to_string()
-        } else if status.as_u16() == 403 {
-            "API rate limit exceeded. Please try again later.".to_string()
-        } else {
-            format!(
+        let error_msg = match status.as_u16() {
+            404 => "Repository not found. Please check the repository URL.".to_string(),
+            403 => "API rate limit exceeded. Please try again later.".to_string(),
+            _ => format!(
                 "GitHub API returned status: {} ({})",
                 status.as_u16(),
                 status.canonical_reason().unwrap_or("Unknown")
-            )
+            ),
         };
         log::error!("{error_msg}");
         return Err(error_msg);
     }
+
+    let new_etag = response
+        .headers()
+        .get("etag")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string());
 
     let release: GitHubRelease = response.json().await.map_err(|e| {
         log::error!("Failed to parse GitHub response: {e}");
@@ -240,14 +282,25 @@ pub async fn check_for_updates(state: State<'_, AppState>) -> Result<UpdateCheck
         assets.len()
     );
 
-    Ok(UpdateCheck {
+    let update_result = UpdateCheck {
         has_update,
         current_version: current_version.to_string(),
         latest_version: latest_version.to_string(),
         release_date: release.published_at,
         release_notes: release.body,
         assets,
-    })
+    };
+
+    {
+        let mut cache_write = state.update_cache.write();
+        *cache_write = Some(CachedUpdate {
+            data: update_result.clone(),
+            etag: new_etag,
+            last_check_time: now,
+        });
+    }
+
+    Ok(update_result)
 }
 
 #[tauri::command]

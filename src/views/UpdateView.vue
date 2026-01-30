@@ -1,35 +1,25 @@
 <template>
-  <div class="update-view">
-    <div class="view-header">
-      <div class="header-content">
-        <h1>{{ t('update.title') }}</h1>
-        <p class="view-subtitle">{{ t('update.subtitle') }}</p>
-      </div>
-      <div class="header-actions">
-        <button class="settings-link" @click="goToSettings">
-          <Settings :size="16" />
-          {{ t('navigation.settings') }}
-        </button>
-      </div>
-    </div>
-
-    <div class="update-content">
-      <UpdateManagerCard :is-standalone="true" />
-
-      <div class="update-info-section">
-        <div class="info-card">
-          <h3>{{ t('update.aboutUpdates') }}</h3>
-          <ul class="info-list">
-            <li>{{ t('update.autoCheckInfo') }}</li>
-            <li>{{ t('update.securityInfo') }}</li>
-            <li>{{ t('update.backupInfo') }}</li>
-          </ul>
+  <div class="relative flex h-full w-full items-center justify-center">
+    <div class="relative z-1 flex h-full w-full flex-col items-center justify-start gap-4 rounded-xl border-none p-4">
+      <div
+        class="flex w-full items-center justify-between gap-4 overflow-visible rounded-2xl border border-border-secondary px-4 py-2 shadow-md"
+      >
+        <div class="flex flex-1 flex-wrap items-center gap-4 p-1">
+          <Settings :size="24" class="text-accent" />
+          <div>
+            <h1 class="m-0 text-xl font-semibold tracking-tight text-main">{{ t('update.title') }}</h1>
+            <p class="m-0 text-xs text-secondary">{{ t('update.subtitle') }}</p>
+          </div>
         </div>
-
-        <div class="info-card">
-          <h3>{{ t('update.releaseChannels') }}</h3>
-          <p>{{ t('update.releaseChannelsInfo') }}</p>
+        <div class="flex flex-wrap gap-3 overflow-visible">
+          <CustomButton type="secondary" :icon="Settings" :text="t('navigation.settings')" @click="goToSettings" />
         </div>
+      </div>
+
+      <div
+        class="relative flex h-full w-full flex-1 items-center justify-center overflow-hidden rounded-2xl border border-border-secondary p-4 shadow-md"
+      >
+        <UpdateManagerCard :is-standalone="true" />
       </div>
     </div>
   </div>
@@ -38,6 +28,8 @@
 <script setup lang="ts">
 import { Settings } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
+
+import CustomButton from '@/components/common/CustomButton.vue'
 
 import UpdateManagerCard from '../components/dashboard/UpdateManagerCard.vue'
 import { useTranslation } from '../composables/useI18n'

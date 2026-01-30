@@ -11,6 +11,7 @@ impl AppState {
         Self {
             app_settings: Arc::new(RwLock::new(None)),
             app_handle: Arc::new(RwLock::new(None)),
+            update_cache: Arc::new(RwLock::new(None)),
         }
     }
 

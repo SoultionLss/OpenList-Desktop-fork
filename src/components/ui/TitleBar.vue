@@ -22,26 +22,6 @@ const isMaximized = ref(false)
 let appWindow: any = null
 let unlistenResize: (() => void) | null = null
 
-onMounted(async () => {
-  appWindow = getCurrentWindow()
-
-  try {
-    unlistenResize = await appWindow.listen('tauri://resize', async () => {
-      isMaximized.value = await appWindow.isMaximized()
-    })
-
-    isMaximized.value = await appWindow.isMaximized()
-  } catch (error) {
-    console.error('Error setting up window listeners:', error)
-  }
-})
-
-onUnmounted(() => {
-  if (unlistenResize) {
-    unlistenResize()
-  }
-})
-
 const handleMinimize = async () => {
   try {
     const appWindow = getCurrentWindow()
@@ -78,4 +58,24 @@ const handleClose = async () => {
 const handleDoubleClick = async () => {
   await handleMaximize()
 }
+
+onMounted(async () => {
+  appWindow = getCurrentWindow()
+
+  try {
+    unlistenResize = await appWindow.listen('tauri://resize', async () => {
+      isMaximized.value = await appWindow.isMaximized()
+    })
+
+    isMaximized.value = await appWindow.isMaximized()
+  } catch (error) {
+    console.error('Error setting up window listeners:', error)
+  }
+})
+
+onUnmounted(() => {
+  if (unlistenResize) {
+    unlistenResize()
+  }
+})
 </script>

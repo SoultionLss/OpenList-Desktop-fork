@@ -1,33 +1,7 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
-  <Card
-    :title="t('update.title')"
-    variant="elevated"
-    hover
-    class="update-manager-card"
-    :class="{ standalone: isStandalone }"
-  >
-    <div class="update-content">
-      <div class="version-info">
-        <div class="current-version">
-          <h4>{{ t('update.currentVersion') }}</h4>
-          <span class="version-tag">v{{ currentVersion }}</span>
-        </div>
-        <button :disabled="checking || downloading || installing" class="check-update-btn" @click="checkForUpdates">
-          <RefreshCw :size="16" />
-          {{ checking ? t('update.checking') : t('update.checkForUpdates') }}
-        </button>
-      </div>
-
-      <div class="settings-row">
-        <div class="auto-check-setting">
-          <label class="checkbox-container">
-            <input v-model="autoCheckEnabled" type="checkbox" :disabled="settingsLoading" @change="toggleAutoCheck" />
-            <span class="label-text">{{ t('update.autoCheck') }}</span>
-          </label>
-        </div>
-      </div>
-
+  <div :title="t('update.title')" class="w-full h-full overflow-auto flex items-center justify-center">
+    <div class="w-full h-full flex flex-col gap-6">
       <div v-if="error" class="error-state">
         <div class="error-content">
           <AlertCircle :size="16" />
@@ -35,6 +9,36 @@
         </div>
         <button class="clear-error-btn" @click="clearError">×</button>
       </div>
+      <SettingSection :icon="RefreshCw" :title="t('update.title')">
+        <CustomNavCard noarrow :icon="RefreshCw" :title="t('update.currentVersion')">
+          <template #description>
+            <div class="flex items-center gap-2">
+              <span class="rounded-md bg-accent/30 px-2 py-1 text-sm font-semibold text-secondary"
+                >v{{ currentVersion }}</span
+              >
+            </div>
+          </template>
+          <template #extra>
+            <CustomButton
+              :icon="RefreshCw"
+              :text="checking ? t('update.checking') : t('update.checkForUpdates')"
+              type="secondary"
+              :disabled="checking || downloading || installing"
+              @click="checkForUpdates"
+            />
+          </template>
+        </CustomNavCard>
+
+        <SettingCard p1 class="flex items-center">
+          <CustomSwitch
+            v-model="autoCheckEnabled"
+            no-border
+            small
+            :title="t('update.autoCheck')"
+            @change="toggleAutoCheck"
+          />
+        </SettingCard>
+      </SettingSection>
 
       <div v-if="!updateCheck?.hasUpdate && lastChecked && !checking && !error" class="no-updates">
         <CheckCircle :size="24" class="check-icon" />
@@ -132,7 +136,7 @@
         </div>
       </div>
     </div>
-  </Card>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -144,20 +148,14 @@ import { formatBytes } from '@/utils/formatters'
 import { TauriAPI } from '../../api/tauri'
 import { useTranslation } from '../../composables/useI18n'
 import { useAppStore } from '../../stores/app'
-import Card from '../ui/CardPage.vue'
-
-interface Props {
-  isStandalone?: boolean
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  isStandalone: false,
-})
+import CustomButton from '../common/CustomButton.vue'
+import CustomNavCard from '../common/CustomNavCard.vue'
+import CustomSwitch from '../common/CustomSwitch.vue'
+import SettingCard from '../common/SettingCard.vue'
+import SettingSection from '../common/SettingSection.vue'
 
 const { t } = useTranslation()
 const appStore = useAppStore()
-
-const isStandalone = computed(() => props.isStandalone)
 
 const currentVersion = ref('')
 const updateCheck = ref<UpdateCheck | null>(null)

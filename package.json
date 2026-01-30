@@ -55,6 +55,7 @@
     "@tauri-apps/plugin-store": "^2.4.2",
     "chrono-node": "^2.9.0",
     "lucide-vue-next": "^0.563.0",
+    "marked": "^17.0.1",
     "pinia": "^3.0.4",
     "vue": "^3.5.27",
     "vue-i18n": "11.2.8",
