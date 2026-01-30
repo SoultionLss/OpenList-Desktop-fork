@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 import CoreMonitorCard from '../components/dashboard/CoreMonitorCard.vue'
 import DocumentationCard from '../components/dashboard/DocumentationCard.vue'
@@ -15,12 +15,6 @@ const serviceStatus = ref({
   isRunning: false,
 })
 
-const layoutClass = computed(() => ({
-  'dashboard-loading': isLoading.value,
-  'dashboard-ready': !isLoading.value,
-  'service-running': serviceStatus.value.isRunning,
-}))
-
 onMounted(async () => {
   serviceStatus.value.isRunning = appStore.isCoreRunning
   isLoading.value = false
@@ -28,9 +22,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="dashboard-container" :class="layoutClass">
-    <div class="dashboard-grid" :class="{ 'three-column': !isLoading }">
-      <div class="dashboard-card-wrapper">
+  <div class="relative flex h-full w-full items-center justify-center">
+    <div class="relative z-1 flex h-full w-full flex-col items-center justify-start gap-4 rounded-xl border-none p-4">
+      <div class="flex w-full items-center justify-center border border-border rounded-xl gap-2 shadow-md">
         <QuickActionsCard />
       </div>
       <div class="dashboard-card-wrapper">
