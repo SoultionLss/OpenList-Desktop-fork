@@ -1,330 +1,3 @@
-<script setup lang="ts">
-import { disable, enable, isEnabled } from '@tauri-apps/plugin-autostart'
-import { open } from '@tauri-apps/plugin-dialog'
-import {
-  AlertCircle,
-  CheckCircle,
-  ExternalLink,
-  FolderOpen,
-  HardDrive,
-  RotateCcw,
-  Save,
-  Server,
-  Settings,
-} from 'lucide-vue-next'
-import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
-
-import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
-import { useTranslation } from '../composables/useI18n'
-import { useAppStore } from '../stores/app'
-
-const appStore = useAppStore()
-const route = useRoute()
-const { t } = useTranslation()
-const isSaving = ref(false)
-const message = ref('')
-const messageType = ref<'success' | 'error' | 'info'>('info')
-const activeTab = ref('openlist')
-const rcloneConfigJson = ref('')
-const autoStartApp = ref(false)
-const isResettingPassword = ref(false)
-const showConfirmDialog = ref(false)
-const confirmDialogConfig = ref({
-  title: '',
-  message: '',
-  onConfirm: () => {},
-  onCancel: () => {},
-})
-
-const openlistCoreSettings = reactive({ ...appStore.settings.openlist })
-const rcloneSettings = reactive({ ...appStore.settings.rclone })
-const appSettings = reactive({ ...appStore.settings.app })
-let originalOpenlistPort = openlistCoreSettings.port || 5244
-let originalDataDir = openlistCoreSettings.data_dir
-let originalRcloneApiPort = rcloneSettings.api_port || 45572
-let originalAdminPassword = appStore.settings.app.admin_password || ''
-
-watch(autoStartApp, async newValue => {
-  if (newValue) {
-    await enable()
-  } else {
-    await disable()
-  }
-})
-
-const tabs = computed(() => [
-  {
-    id: 'openlist',
-    label: t('settings.tabs.openlist'),
-    icon: Server,
-    description: t('settings.service.subtitle'),
-  },
-  {
-    id: 'rclone',
-    label: t('settings.tabs.rclone'),
-    icon: HardDrive,
-    description: t('settings.rclone.subtitle'),
-  },
-  {
-    id: 'app',
-    label: t('settings.tabs.app'),
-    icon: Settings,
-    description: t('settings.app.subtitle'),
-  },
-])
-
-onMounted(async () => {
-  autoStartApp.value = await isEnabled()
-  const tabParam = route.query.tab as string
-  if (tabParam && ['openlist', 'rclone', 'app'].includes(tabParam)) {
-    activeTab.value = tabParam
-  }
-
-  if (!openlistCoreSettings.port) openlistCoreSettings.port = 5244
-  if (!openlistCoreSettings.data_dir) openlistCoreSettings.data_dir = ''
-  if (openlistCoreSettings.auto_launch === undefined) openlistCoreSettings.auto_launch = false
-  if (openlistCoreSettings.ssl_enabled === undefined) openlistCoreSettings.ssl_enabled = false
-
-  if (!rcloneSettings.config) rcloneSettings.config = {}
-  if (!rcloneSettings.api_port) rcloneSettings.api_port = 45572
-
-  rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
-  if (!appSettings.theme) appSettings.theme = 'light'
-
-  if (appSettings.auto_update_enabled === undefined) appSettings.auto_update_enabled = true
-  if (!appSettings.gh_proxy) appSettings.gh_proxy = ''
-  if (appSettings.gh_proxy_api === undefined) appSettings.gh_proxy_api = false
-  if (appSettings.open_links_in_browser === undefined) appSettings.open_links_in_browser = false
-  if (appSettings.show_window_on_startup === undefined) appSettings.show_window_on_startup = true
-  if (!appSettings.admin_password) appSettings.admin_password = ''
-  originalOpenlistPort = openlistCoreSettings.port || 5244
-  originalDataDir = openlistCoreSettings.data_dir
-  originalRcloneApiPort = rcloneSettings.api_port || 45572
-
-  // Load current admin password
-  await loadCurrentAdminPassword()
-})
-
-const hasUnsavedChanges = computed(() => {
-  let rcloneConfigChanged = false
-  try {
-    const parsedConfig = JSON.parse(rcloneConfigJson.value)
-    rcloneConfigChanged = JSON.stringify(parsedConfig) !== JSON.stringify(appStore.settings.rclone.config)
-  } catch {
-    rcloneConfigChanged = rcloneConfigJson.value !== JSON.stringify(appStore.settings.rclone.config, null, 2)
-  }
-
-  return (
-    JSON.stringify(openlistCoreSettings) !== JSON.stringify(appStore.settings.openlist) ||
-    JSON.stringify(rcloneSettings) !== JSON.stringify(appStore.settings.rclone) ||
-    JSON.stringify(appSettings) !== JSON.stringify(appStore.settings.app) ||
-    rcloneConfigChanged
-  )
-})
-
-const handleSave = async () => {
-  isSaving.value = true
-  message.value = ''
-
-  try {
-    try {
-      rcloneSettings.config = JSON.parse(rcloneConfigJson.value)
-    } catch (_error) {
-      message.value = t('settings.rclone.config.invalidJson')
-      messageType.value = 'error'
-      isSaving.value = false
-      return
-    }
-
-    appStore.settings.openlist = { ...openlistCoreSettings }
-    appStore.settings.rclone = { ...rcloneSettings }
-    appStore.settings.app = { ...appSettings }
-
-    const needsPasswordUpdate = originalAdminPassword !== appSettings.admin_password && appSettings.admin_password
-
-    if (
-      originalOpenlistPort !== openlistCoreSettings.port ||
-      originalDataDir !== openlistCoreSettings.data_dir ||
-      originalRcloneApiPort !== rcloneSettings.api_port
-    ) {
-      await appStore.saveSettingsWithCoreUpdate()
-    } else {
-      await appStore.saveSettings()
-    }
-
-    if (needsPasswordUpdate) {
-      try {
-        await appStore.setAdminPassword(appSettings.admin_password!)
-        message.value = t('settings.service.admin.passwordUpdated')
-        messageType.value = 'success'
-      } catch (error) {
-        console.error('Failed to update admin password:', error)
-        message.value = t('settings.service.admin.passwordUpdateFailed')
-        messageType.value = 'error'
-      }
-    } else {
-      message.value = t('settings.saved')
-      messageType.value = 'success'
-    }
-
-    originalOpenlistPort = openlistCoreSettings.port || 5244
-    originalRcloneApiPort = rcloneSettings.api_port || 45572
-    originalDataDir = openlistCoreSettings.data_dir
-  } catch (error) {
-    message.value = t('settings.saveFailed')
-    messageType.value = 'error'
-    console.error('Save settings error:', error)
-  } finally {
-    isSaving.value = false
-
-    setTimeout(() => {
-      message.value = ''
-    }, 3000)
-  }
-}
-
-const handleReset = async () => {
-  confirmDialogConfig.value = {
-    title: t('settings.confirmReset.title'),
-    message: t('settings.confirmReset.message'),
-    onConfirm: async () => {
-      showConfirmDialog.value = false
-
-      try {
-        await appStore.resetSettings()
-        Object.assign(openlistCoreSettings, appStore.settings.openlist)
-        Object.assign(rcloneSettings, appStore.settings.rclone)
-        Object.assign(appSettings, appStore.settings.app)
-
-        rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
-
-        message.value = t('settings.resetSuccess')
-        messageType.value = 'info'
-      } catch (_error) {
-        message.value = t('settings.resetFailed')
-        messageType.value = 'error'
-      }
-    },
-    onCancel: () => {
-      showConfirmDialog.value = false
-    },
-  }
-
-  showConfirmDialog.value = true
-}
-
-const handleSelectDataDir = async () => {
-  try {
-    const selected = await open({
-      directory: true,
-      multiple: false,
-      title: t('settings.service.network.dataDir.selectTitle'),
-      defaultPath: openlistCoreSettings.data_dir || undefined,
-    })
-
-    if (selected && typeof selected === 'string') {
-      openlistCoreSettings.data_dir = selected
-    }
-  } catch (error) {
-    console.error('Failed to select directory:', error)
-    message.value = t('settings.service.network.dataDir.selectError')
-    messageType.value = 'error'
-    setTimeout(() => {
-      message.value = ''
-    }, 3000)
-  }
-}
-
-const handleOpenDataDir = async () => {
-  try {
-    if (openlistCoreSettings.data_dir) {
-      await appStore.openFolder(openlistCoreSettings.data_dir)
-    } else {
-      await appStore.openOpenListDataDir()
-    }
-    message.value = t('settings.service.network.dataDir.openSuccess')
-    messageType.value = 'success'
-  } catch (error) {
-    console.error('Failed to open data directory:', error)
-    message.value = t('settings.service.network.dataDir.openError')
-    messageType.value = 'error'
-  } finally {
-    setTimeout(() => {
-      message.value = ''
-    }, 3000)
-  }
-}
-
-const handleResetAdminPassword = async () => {
-  isResettingPassword.value = true
-  try {
-    const newPassword = await appStore.resetAdminPassword()
-    if (newPassword) {
-      appSettings.admin_password = newPassword
-      message.value = t('settings.service.admin.resetSuccess')
-      messageType.value = 'success'
-    } else {
-      message.value = t('settings.service.admin.resetFailed')
-      messageType.value = 'error'
-    }
-  } catch (error) {
-    console.error('Failed to reset admin password:', error)
-    message.value = t('settings.service.admin.resetFailed')
-    messageType.value = 'error'
-  } finally {
-    isResettingPassword.value = false
-    setTimeout(() => {
-      message.value = ''
-    }, 3000)
-  }
-}
-
-const handleOpenRcloneConfig = async () => {
-  try {
-    await appStore.openRcloneConfigFile()
-    message.value = t('settings.rclone.config.openSuccess')
-    messageType.value = 'success'
-  } catch (error) {
-    console.error('Failed to open rclone config file:', error)
-    message.value = t('settings.rclone.config.openError')
-    messageType.value = 'error'
-  } finally {
-    setTimeout(() => {
-      message.value = ''
-    }, 3000)
-  }
-}
-
-const handleOpenSettingsFile = async () => {
-  try {
-    await appStore.openSettingsFile()
-    message.value = t('settings.app.config.openSuccess')
-    messageType.value = 'success'
-  } catch (error) {
-    console.error('Failed to open settings file:', error)
-    message.value = t('settings.app.config.openError')
-    messageType.value = 'error'
-  } finally {
-    setTimeout(() => {
-      message.value = ''
-    }, 3000)
-  }
-}
-
-const loadCurrentAdminPassword = async () => {
-  try {
-    const password = await appStore.getAdminPassword()
-    if (password) {
-      appSettings.admin_password = password
-      originalAdminPassword = password
-    }
-  } catch (error) {
-    console.error('Failed to load admin password:', error)
-  }
-}
-</script>
-
 <template>
   <div class="settings-container">
     <div class="settings-header">
@@ -668,5 +341,332 @@ const loadCurrentAdminPassword = async () => {
     />
   </div>
 </template>
+
+<script setup lang="ts">
+import { disable, enable, isEnabled } from '@tauri-apps/plugin-autostart'
+import { open } from '@tauri-apps/plugin-dialog'
+import {
+  AlertCircle,
+  CheckCircle,
+  ExternalLink,
+  FolderOpen,
+  HardDrive,
+  RotateCcw,
+  Save,
+  Server,
+  Settings,
+} from 'lucide-vue-next'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+
+import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
+import { useTranslation } from '../composables/useI18n'
+import { useAppStore } from '../stores/app'
+
+const appStore = useAppStore()
+const route = useRoute()
+const { t } = useTranslation()
+const isSaving = ref(false)
+const message = ref('')
+const messageType = ref<'success' | 'error' | 'info'>('info')
+const activeTab = ref('openlist')
+const rcloneConfigJson = ref('')
+const autoStartApp = ref(false)
+const isResettingPassword = ref(false)
+const showConfirmDialog = ref(false)
+const confirmDialogConfig = ref({
+  title: '',
+  message: '',
+  onConfirm: () => {},
+  onCancel: () => {},
+})
+
+const openlistCoreSettings = reactive({ ...appStore.settings.openlist })
+const rcloneSettings = reactive({ ...appStore.settings.rclone })
+const appSettings = reactive({ ...appStore.settings.app })
+let originalOpenlistPort = openlistCoreSettings.port || 5244
+let originalDataDir = openlistCoreSettings.data_dir
+let originalRcloneApiPort = rcloneSettings.api_port || 45572
+let originalAdminPassword = appStore.settings.app.admin_password || ''
+
+watch(autoStartApp, async newValue => {
+  if (newValue) {
+    await enable()
+  } else {
+    await disable()
+  }
+})
+
+const tabs = computed(() => [
+  {
+    id: 'openlist',
+    label: t('settings.tabs.openlist'),
+    icon: Server,
+    description: t('settings.service.subtitle'),
+  },
+  {
+    id: 'rclone',
+    label: t('settings.tabs.rclone'),
+    icon: HardDrive,
+    description: t('settings.rclone.subtitle'),
+  },
+  {
+    id: 'app',
+    label: t('settings.tabs.app'),
+    icon: Settings,
+    description: t('settings.app.subtitle'),
+  },
+])
+
+onMounted(async () => {
+  autoStartApp.value = await isEnabled()
+  const tabParam = route.query.tab as string
+  if (tabParam && ['openlist', 'rclone', 'app'].includes(tabParam)) {
+    activeTab.value = tabParam
+  }
+
+  if (!openlistCoreSettings.port) openlistCoreSettings.port = 5244
+  if (!openlistCoreSettings.data_dir) openlistCoreSettings.data_dir = ''
+  if (openlistCoreSettings.auto_launch === undefined) openlistCoreSettings.auto_launch = false
+  if (openlistCoreSettings.ssl_enabled === undefined) openlistCoreSettings.ssl_enabled = false
+
+  if (!rcloneSettings.config) rcloneSettings.config = {}
+  if (!rcloneSettings.api_port) rcloneSettings.api_port = 45572
+
+  rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
+  if (!appSettings.theme) appSettings.theme = 'light'
+
+  if (appSettings.auto_update_enabled === undefined) appSettings.auto_update_enabled = true
+  if (!appSettings.gh_proxy) appSettings.gh_proxy = ''
+  if (appSettings.gh_proxy_api === undefined) appSettings.gh_proxy_api = false
+  if (appSettings.open_links_in_browser === undefined) appSettings.open_links_in_browser = false
+  if (appSettings.show_window_on_startup === undefined) appSettings.show_window_on_startup = true
+  if (!appSettings.admin_password) appSettings.admin_password = ''
+  originalOpenlistPort = openlistCoreSettings.port || 5244
+  originalDataDir = openlistCoreSettings.data_dir
+  originalRcloneApiPort = rcloneSettings.api_port || 45572
+
+  // Load current admin password
+  await loadCurrentAdminPassword()
+})
+
+const hasUnsavedChanges = computed(() => {
+  let rcloneConfigChanged = false
+  try {
+    const parsedConfig = JSON.parse(rcloneConfigJson.value)
+    rcloneConfigChanged = JSON.stringify(parsedConfig) !== JSON.stringify(appStore.settings.rclone.config)
+  } catch {
+    rcloneConfigChanged = rcloneConfigJson.value !== JSON.stringify(appStore.settings.rclone.config, null, 2)
+  }
+
+  return (
+    JSON.stringify(openlistCoreSettings) !== JSON.stringify(appStore.settings.openlist) ||
+    JSON.stringify(rcloneSettings) !== JSON.stringify(appStore.settings.rclone) ||
+    JSON.stringify(appSettings) !== JSON.stringify(appStore.settings.app) ||
+    rcloneConfigChanged
+  )
+})
+
+const handleSave = async () => {
+  isSaving.value = true
+  message.value = ''
+
+  try {
+    try {
+      rcloneSettings.config = JSON.parse(rcloneConfigJson.value)
+    } catch (_error) {
+      message.value = t('settings.rclone.config.invalidJson')
+      messageType.value = 'error'
+      isSaving.value = false
+      return
+    }
+
+    appStore.settings.openlist = { ...openlistCoreSettings }
+    appStore.settings.rclone = { ...rcloneSettings }
+    appStore.settings.app = { ...appSettings }
+
+    const needsPasswordUpdate = originalAdminPassword !== appSettings.admin_password && appSettings.admin_password
+
+    if (
+      originalOpenlistPort !== openlistCoreSettings.port ||
+      originalDataDir !== openlistCoreSettings.data_dir ||
+      originalRcloneApiPort !== rcloneSettings.api_port
+    ) {
+      await appStore.saveSettingsWithCoreUpdate()
+    } else {
+      await appStore.saveSettings()
+    }
+
+    if (needsPasswordUpdate) {
+      try {
+        await appStore.setAdminPassword(appSettings.admin_password!)
+        message.value = t('settings.service.admin.passwordUpdated')
+        messageType.value = 'success'
+      } catch (error) {
+        console.error('Failed to update admin password:', error)
+        message.value = t('settings.service.admin.passwordUpdateFailed')
+        messageType.value = 'error'
+      }
+    } else {
+      message.value = t('settings.saved')
+      messageType.value = 'success'
+    }
+
+    originalOpenlistPort = openlistCoreSettings.port || 5244
+    originalRcloneApiPort = rcloneSettings.api_port || 45572
+    originalDataDir = openlistCoreSettings.data_dir
+  } catch (error) {
+    message.value = t('settings.saveFailed')
+    messageType.value = 'error'
+    console.error('Save settings error:', error)
+  } finally {
+    isSaving.value = false
+
+    setTimeout(() => {
+      message.value = ''
+    }, 3000)
+  }
+}
+
+const handleReset = async () => {
+  confirmDialogConfig.value = {
+    title: t('settings.confirmReset.title'),
+    message: t('settings.confirmReset.message'),
+    onConfirm: async () => {
+      showConfirmDialog.value = false
+
+      try {
+        await appStore.resetSettings()
+        Object.assign(openlistCoreSettings, appStore.settings.openlist)
+        Object.assign(rcloneSettings, appStore.settings.rclone)
+        Object.assign(appSettings, appStore.settings.app)
+
+        rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
+
+        message.value = t('settings.resetSuccess')
+        messageType.value = 'info'
+      } catch (_error) {
+        message.value = t('settings.resetFailed')
+        messageType.value = 'error'
+      }
+    },
+    onCancel: () => {
+      showConfirmDialog.value = false
+    },
+  }
+
+  showConfirmDialog.value = true
+}
+
+const handleSelectDataDir = async () => {
+  try {
+    const selected = await open({
+      directory: true,
+      multiple: false,
+      title: t('settings.service.network.dataDir.selectTitle'),
+      defaultPath: openlistCoreSettings.data_dir || undefined,
+    })
+
+    if (selected && typeof selected === 'string') {
+      openlistCoreSettings.data_dir = selected
+    }
+  } catch (error) {
+    console.error('Failed to select directory:', error)
+    message.value = t('settings.service.network.dataDir.selectError')
+    messageType.value = 'error'
+    setTimeout(() => {
+      message.value = ''
+    }, 3000)
+  }
+}
+
+const handleOpenDataDir = async () => {
+  try {
+    if (openlistCoreSettings.data_dir) {
+      await appStore.openFolder(openlistCoreSettings.data_dir)
+    } else {
+      await appStore.openOpenListDataDir()
+    }
+    message.value = t('settings.service.network.dataDir.openSuccess')
+    messageType.value = 'success'
+  } catch (error) {
+    console.error('Failed to open data directory:', error)
+    message.value = t('settings.service.network.dataDir.openError')
+    messageType.value = 'error'
+  } finally {
+    setTimeout(() => {
+      message.value = ''
+    }, 3000)
+  }
+}
+
+const handleResetAdminPassword = async () => {
+  isResettingPassword.value = true
+  try {
+    const newPassword = await appStore.resetAdminPassword()
+    if (newPassword) {
+      appSettings.admin_password = newPassword
+      message.value = t('settings.service.admin.resetSuccess')
+      messageType.value = 'success'
+    } else {
+      message.value = t('settings.service.admin.resetFailed')
+      messageType.value = 'error'
+    }
+  } catch (error) {
+    console.error('Failed to reset admin password:', error)
+    message.value = t('settings.service.admin.resetFailed')
+    messageType.value = 'error'
+  } finally {
+    isResettingPassword.value = false
+    setTimeout(() => {
+      message.value = ''
+    }, 3000)
+  }
+}
+
+const handleOpenRcloneConfig = async () => {
+  try {
+    await appStore.openRcloneConfigFile()
+    message.value = t('settings.rclone.config.openSuccess')
+    messageType.value = 'success'
+  } catch (error) {
+    console.error('Failed to open rclone config file:', error)
+    message.value = t('settings.rclone.config.openError')
+    messageType.value = 'error'
+  } finally {
+    setTimeout(() => {
+      message.value = ''
+    }, 3000)
+  }
+}
+
+const handleOpenSettingsFile = async () => {
+  try {
+    await appStore.openSettingsFile()
+    message.value = t('settings.app.config.openSuccess')
+    messageType.value = 'success'
+  } catch (error) {
+    console.error('Failed to open settings file:', error)
+    message.value = t('settings.app.config.openError')
+    messageType.value = 'error'
+  } finally {
+    setTimeout(() => {
+      message.value = ''
+    }, 3000)
+  }
+}
+
+const loadCurrentAdminPassword = async () => {
+  try {
+    const password = await appStore.getAdminPassword()
+    if (password) {
+      appSettings.admin_password = password
+      originalAdminPassword = password
+    }
+  } catch (error) {
+    console.error('Failed to load admin password:', error)
+  }
+}
+</script>
 
 <style scoped src="./css/SettingsView.css"></style>

@@ -319,7 +319,7 @@ pub async fn get_mount_info_list(
         if process.name.starts_with("rclone_mount_") {
             let args = &process.config.args;
 
-            if args.len() >= 3 && args[0] == "mount" {
+            if args.len() >= 5 && args[0] == "mount" {
                 let remote_path = args[3].clone();
                 let mount_point = args[4].clone();
 
