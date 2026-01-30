@@ -377,6 +377,7 @@
         "title": "更新"
       }
     },
+    "common": "常规设置",
     "confirmReset": {
       "message": "您确定要将所有设置重置为默认值吗？此操作无法撤消。",
       "title": "重置设置"
@@ -397,7 +398,7 @@
       },
       "config": {
         "invalidJson": "无效的 JSON 配置。请检查您的语法。",
-        "label": "Rclone 配置 (JSON)",
+        "label": "Rclone 配置",
         "openError": "打开 Rclone 配置文件失败",
         "openFile": "打开 rclone.conf",
         "openSuccess": "Rclone 配置文件打开成功",

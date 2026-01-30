@@ -8,12 +8,12 @@
       <slot name="title-extra"></slot>
       <div v-if="tips" class="group relative inline-block">
         <div
-          class="flex h-[20px] w-[20px] cursor-pointer items-center justify-center rounded-full p-[2px] text-secondary hover:bg-bg-secondary hover:text-accent"
+          class="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full p-0.5 text-secondary hover:bg-bg-secondary hover:text-accent"
         >
           <Info :size="16" />
         </div>
         <div
-          class="invisible absolute top-[125%] left-1/2 z-1000 w-max max-w-[200px] translate-x-[-50%] rounded-md border border-border bg-bg-tertiary p-2 text-center text-xs text-main opacity-0 shadow-md transition-opacity duration-300 group-hover:visible group-hover:opacity-100"
+          class="invisible absolute top-[125%] left-1/2 z-1000 w-max max-w-50 translate-x-[-50%] rounded-md border border-border bg-bg-tertiary p-2 text-center text-xs text-main opacity-0 shadow-md transition-opacity duration-300 group-hover:visible group-hover:opacity-100"
           v-html="transformMarkdownToHTML(tips)"
         />
       </div>
