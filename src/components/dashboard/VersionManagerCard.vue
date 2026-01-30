@@ -1,8 +1,12 @@
 <template>
-  <Card :title="t('dashboard.versionManager.title')" variant="elevated" hover class="version-manager-card">
-    <div class="version-sections">
-      <div class="versions-row">
-        <div class="version-item">
+  <div class="flex flex-col gap-4 w-full justify-center p-4">
+    <div class="flex gap-2 justify-start items-center">
+      <ImportIcon class="text-accent" />
+      <h4 class="font-semibold text-main">{{ t('dashboard.versionManager.title') }}</h4>
+    </div>
+    <div class="flex flex-1 items-center justify-center min-h-0">
+      <div class="flex flex-row gap-3 w-full">
+        <div class="flex flex-col bg-surface rounded-md border border-border-secondary p-4 shadow-sm flex-1">
           <div class="version-header">
             <div class="version-title">
               <h4>{{ t('dashboard.versionManager.openlist') }}</h4>
@@ -37,7 +41,7 @@
             </button>
           </div>
         </div>
-        <div class="version-item">
+        <div class="flex flex-col bg-surface rounded-md border border-border-secondary p-4 shadow-sm flex-1">
           <div class="version-header">
             <div class="version-title">
               <h4>{{ t('dashboard.versionManager.rclone') }}</h4>
@@ -47,7 +51,7 @@
               <component
                 :is="refreshing ? Loader : RefreshCw"
                 :size="16"
-                :class="{ 'rotate-animation': refreshing && !loading.rclone }"
+                :class="{ 'animate-spin': refreshing && !loading.rclone }"
               />
             </button>
           </div>
@@ -74,16 +78,15 @@
         </div>
       </div>
     </div>
-  </Card>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { Download, Loader, RefreshCw } from 'lucide-vue-next'
+import { Download, ImportIcon, Loader, RefreshCw } from 'lucide-vue-next'
 import { onMounted, ref } from 'vue'
 
 import { TauriAPI } from '../../api/tauri'
 import { useTranslation } from '../../composables/useI18n'
-import Card from '../ui/CardPage.vue'
 
 const { t } = useTranslation()
 

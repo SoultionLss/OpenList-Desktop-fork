@@ -61,7 +61,7 @@
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
 
-          <path :d="heartbeatPath" fill="none" :stroke="lineColor" stroke-width="2" class="heartbeat-line" />
+          <path :d="heartbeatPath" fill="none" :stroke="lineColor" stroke-width="2" class="drop-shadow" />
 
           <circle
             v-for="(point, index) in visibleDataPoints"
@@ -70,17 +70,28 @@
             :cy="point.y"
             :r="point.isHealthy ? 3 : 4"
             :fill="point.isHealthy ? lineColor : '#ef4444'"
-            class="data-point"
+            class="cursor-pointer transition-[r] duration-200 ease-in-out hover:r-[5px]"
             @mouseover="showTooltip(point, $event)"
             @mouseleave="hideTooltip"
           />
         </svg>
 
-        <div v-if="tooltip.show" class="tooltip" :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }">
-          <div class="tooltip-content">
-            <div class="tooltip-time">{{ tooltip.time }}</div>
-            <div class="tooltip-value">{{ tooltip.value }}ms</div>
-            <div class="tooltip-status" :class="tooltip.status">{{ tooltip.statusText }}</div>
+        <div
+          v-if="tooltip.show"
+          class="absolute z-10 pointer-events-none"
+          :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }"
+        >
+          <div class="bg-black/80 text-white p-2 rounded-sm text-xs shadow-sm">
+            <div class="font-medium mb-1">{{ tooltip.time }}</div>
+            <div class="text-accent">{{ tooltip.value }}ms</div>
+            <div
+              :class="{
+                'text-success': tooltip.status === 'healthy',
+                'text-error': tooltip.status === 'unhealthy',
+              }"
+            >
+              {{ tooltip.statusText }}
+            </div>
           </div>
         </div>
       </div>
@@ -266,246 +277,3 @@ watch(isCoreRunning, (newValue: boolean, oldValue: boolean) => {
   }
 })
 </script>
-
-<style scoped>
-.status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  padding: 0.5rem 0.875rem;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(226, 232, 240, 0.6);
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
-}
-
-@media (prefers-color-scheme: dark) {
-  .status-indicator {
-    background: rgba(30, 41, 59, 0.8);
-    border-color: rgba(100, 116, 139, 0.3);
-  }
-}
-
-.status-indicator.online {
-  color: rgb(16, 185, 129);
-  background: rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.2);
-}
-
-.status-indicator.offline {
-  color: rgb(239, 68, 68);
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.2);
-}
-
-.pulse-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.heartbeat-section {
-  margin-bottom: 2rem;
-}
-
-.heartbeat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid rgba(226, 232, 240, 0.6);
-}
-
-@media (prefers-color-scheme: dark) {
-  .heartbeat-header {
-    border-color: rgba(100, 116, 139, 0.3);
-  }
-}
-
-.heartbeat-header h4 {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: rgb(51, 65, 85);
-  letter-spacing: -0.025em;
-}
-
-@media (prefers-color-scheme: dark) {
-  .heartbeat-header h4 {
-    color: rgb(226, 232, 240);
-  }
-}
-
-.metrics {
-  display: flex;
-  gap: 1.25rem;
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
-.metric {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.875rem;
-  border-radius: 20px;
-  font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.metric:hover {
-  transform: translateY(-1px);
-}
-
-.metric.info {
-  background: rgba(100, 116, 139, 0.15);
-  color: rgb(71, 85, 105);
-  border-color: rgba(100, 116, 139, 0.3);
-}
-
-.metric.healthy {
-  background: rgba(16, 185, 129, 0.15);
-  color: rgb(5, 150, 105);
-  border-color: rgba(16, 185, 129, 0.3);
-}
-
-.metric.warning {
-  background: rgba(251, 191, 36, 0.15);
-  color: rgb(217, 119, 6);
-  border-color: rgba(251, 191, 36, 0.3);
-}
-
-.metric.error {
-  background: rgba(239, 68, 68, 0.15);
-  color: rgb(220, 38, 38);
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.metric.success {
-  background: rgba(59, 130, 246, 0.15);
-  color: rgb(37, 99, 235);
-  border-color: rgba(59, 130, 246, 0.3);
-}
-
-@media (prefers-color-scheme: dark) {
-  .metric.info {
-    background: rgba(100, 116, 139, 0.2);
-    color: rgb(203, 213, 225);
-  }
-
-  .metric.healthy {
-    background: rgba(16, 185, 129, 0.2);
-    color: rgb(110, 231, 183);
-  }
-
-  .metric.warning {
-    background: rgba(251, 191, 36, 0.2);
-    color: rgb(252, 211, 77);
-  }
-
-  .metric.error {
-    background: rgba(239, 68, 68, 0.2);
-    color: rgb(252, 165, 165);
-  }
-
-  .metric.success {
-    background: rgba(59, 130, 246, 0.2);
-    color: rgb(147, 197, 253);
-  }
-}
-
-.heartbeat-chart {
-  position: relative;
-  width: 100%;
-  height: 140px;
-  background: linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.9) 100%);
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(226, 232, 240, 0.6);
-}
-
-@media (prefers-color-scheme: dark) {
-  .heartbeat-chart {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.9) 100%);
-    border-color: rgba(100, 116, 139, 0.3);
-  }
-}
-
-.heartbeat-svg {
-  width: 100%;
-  height: 100%;
-}
-
-.heartbeat-line {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-}
-
-.data-point {
-  cursor: pointer;
-  transition: r 0.2s ease;
-}
-
-.data-point:hover {
-  r: 5;
-}
-
-.tooltip {
-  position: absolute;
-  z-index: 10;
-  pointer-events: none;
-}
-
-.tooltip-content {
-  background: #111827;
-  color: white;
-  padding: 0.5rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.tooltip-time {
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-}
-
-.tooltip-value {
-  color: #93c5fd;
-}
-
-.tooltip-status.healthy {
-  color: #6ee7b7;
-}
-
-.tooltip-status.unhealthy {
-  color: #fca5a5;
-}
-
-@media (max-width: 768px) {
-  .heartbeat-chart {
-    height: 100px;
-  }
-
-  .heartbeat-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
-  .metrics {
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .metric {
-    padding: 0.375rem 0.625rem;
-    font-size: 0.75rem;
-  }
-}
-</style>
