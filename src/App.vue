@@ -31,8 +31,13 @@
     </div>
   </div>
   <div v-else id="app" class="relative h-full min-h-screen w-full select-none bg-transparent">
-    <div class="relative flex h-screen overflow-hidden bg-bg pt-8">
-      <TitleBar />
+    <div
+      class="relative flex h-screen overflow-hidden bg-bg"
+      :class="{
+        'pt-8': !isMacOs,
+      }"
+    >
+      <TitleBar v-if="!isMacOs" />
       <div
         class="pointer-events-none absolute inset-0 -z-1 bg-custom bg-cover bg-fixed bg-center bg-no-repeat opacity-custom blur-custom"
       />
@@ -46,12 +51,15 @@
         </router-view>
       </main>
     </div>
+    <UIServiceProvider />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+
+import UIServiceProvider from '@/components/ui/UIServiceProvider.vue'
 
 import { TauriAPI } from './api/tauri'
 import Navigation from './components/NavigationPage.vue'
@@ -67,6 +75,10 @@ const router = useRouter()
 const isLoading = ref(true)
 
 let updateUnlisten: (() => void) | null = null
+
+const isMacOs = computed(() => {
+  return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'darwin'
+})
 
 const handleKeydown = (event: KeyboardEvent) => {
   const { ctrlKey, key } = event

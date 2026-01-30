@@ -13,7 +13,7 @@
         <CustomNavCard noarrow :icon="RefreshCw" :title="t('update.currentVersion')">
           <template #description>
             <div class="flex items-center gap-2">
-              <span class="rounded-md bg-accent/30 px-2 py-1 text-sm font-semibold text-secondary"
+              <span class="rounded-md bg-accent/30 px-2 py-0.5 text-sm font-semibold text-white"
                 >v{{ currentVersion }}</span
               >
             </div>
@@ -116,14 +116,6 @@
           </button>
         </div>
       </div>
-
-      <div v-if="installationStatus" class="status-message" :class="installationStatusType">
-        <div class="status-content">
-          <component :is="getStatusIcon()" :size="16" />
-          <span>{{ installationStatus }}</span>
-        </div>
-      </div>
-
       <div v-if="backgroundUpdateAvailable" class="background-update-notification">
         <div class="notification-content">
           <Info :size="20" class="notification-icon" />
@@ -140,9 +132,10 @@
 </template>
 
 <script setup lang="ts">
-import { AlertCircle, ArrowRight, CheckCircle, CheckCircle2, Download, Info, RefreshCw } from 'lucide-vue-next'
+import { AlertCircle, ArrowRight, CheckCircle, Download, Info, RefreshCw } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
+import useMessage from '@/hooks/useMessage'
 import { formatBytes } from '@/utils/formatters'
 
 import { TauriAPI } from '../../api/tauri'
@@ -156,6 +149,7 @@ import SettingSection from '../common/SettingSection.vue'
 
 const { t } = useTranslation()
 const appStore = useAppStore()
+const message = useMessage()
 
 const currentVersion = ref('')
 const updateCheck = ref<UpdateCheck | null>(null)
@@ -168,8 +162,6 @@ const lastChecked = ref<string | null>(null)
 const error = ref<string | null>(null)
 const autoCheckEnabled = ref(true)
 const settingsLoading = ref(false)
-const installationStatus = ref<string | null>(null)
-const installationStatusType = ref<'info' | 'success' | 'error'>('info')
 const selectedAsset = ref<UpdateAsset | null>(null)
 
 const backgroundUpdateAvailable = computed(() => backgroundUpdateCheck.value && !updateCheck.value?.hasUpdate)
@@ -197,11 +189,7 @@ const checkForUpdates = async () => {
     lastChecked.value = new Date().toISOString()
 
     if (!result.hasUpdate) {
-      installationStatus.value = t('update.noUpdatesFound')
-      installationStatusType.value = 'success'
-      setTimeout(() => {
-        installationStatus.value = null
-      }, 3000)
+      message.info(t('update.noUpdatesFound'))
     }
   } catch (err: any) {
     console.error('Failed to check for updates:', err)
@@ -220,16 +208,13 @@ const downloadAndInstall = async () => {
 
   try {
     downloading.value = true
-    installationStatus.value = t('update.startingDownload')
-    installationStatusType.value = 'info'
+    message.info(t('update.startingDownload'))
 
     const filePath = await TauriAPI.updater.download(selectedAsset.value.url, selectedAsset.value.name)
 
     downloading.value = false
     installing.value = true
-
-    installationStatus.value = t('update.installingUpdate')
-    installationStatusType.value = 'info'
+    message.info(t('update.installingUpdate'))
 
     await TauriAPI.updater.installAndRestart(filePath)
   } catch (err: any) {
@@ -237,8 +222,7 @@ const downloadAndInstall = async () => {
     downloading.value = false
     installing.value = false
     error.value = err.message || t('update.installError')
-    installationStatus.value = t('update.installError')
-    installationStatusType.value = 'error'
+    message.error(t('update.installError'))
   }
 }
 
@@ -268,17 +252,6 @@ const showBackgroundUpdate = () => {
 
 const clearError = () => {
   error.value = null
-}
-
-const getStatusIcon = () => {
-  switch (installationStatusType.value) {
-    case 'success':
-      return CheckCircle2
-    case 'error':
-      return AlertCircle
-    default:
-      return Info
-  }
 }
 
 const formatDate = (dateString: string) => {
@@ -338,8 +311,7 @@ onMounted(async () => {
     try {
       installStartedUnlisten = await TauriAPI.updater.onInstallStarted(() => {
         installing.value = true
-        installationStatus.value = t('update.installingUpdate')
-        installationStatusType.value = 'info'
+        message.info(t('update.installingUpdate'))
       })
     } catch (err) {
       console.warn('Install started listener not available:', err)
@@ -350,8 +322,7 @@ onMounted(async () => {
       installErrorUnlisten = await TauriAPI.updater.onInstallError(errorMsg => {
         installing.value = false
         error.value = errorMsg
-        installationStatus.value = t('update.installError')
-        installationStatusType.value = 'error'
+        message.error(t('update.installError'))
       })
     } catch (err) {
       console.warn('Install error listener not available:', err)
@@ -360,8 +331,7 @@ onMounted(async () => {
 
     try {
       appQuitEventUnsubscriber = await TauriAPI.updater.onAppQuit(() => {
-        installationStatus.value = t('update.quitApp')
-        installationStatusType.value = 'success'
+        message.success(t('update.quitApp'))
       })
     } catch (err) {
       console.warn('App restarting listener not available:', err)

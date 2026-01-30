@@ -19,7 +19,7 @@
       <div
         class="relative flex h-full w-full flex-1 items-center justify-center overflow-hidden rounded-2xl border border-border-secondary p-4 shadow-md"
       >
-        <UpdateManagerCard :is-standalone="true" />
+        <UpdateManagerCard />
       </div>
     </div>
   </div>
