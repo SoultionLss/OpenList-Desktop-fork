@@ -78,6 +78,8 @@
 import { BookOpen, Cloud, Code, ExternalLink, Github, HelpCircle, MessageCircle, Terminal } from 'lucide-vue-next'
 import { computed } from 'vue'
 
+import { createNewWindow } from '@/utils/common'
+
 import { TauriAPI } from '../../api/tauri'
 import { useTranslation } from '../../composables/useI18n'
 import { useAppStore } from '../../stores/app'
@@ -115,9 +117,7 @@ const openLink = async (url: string) => {
   } catch (error) {
     console.error('Failed to open link:', error)
   }
-  setTimeout(() => {
-    window.open(url, '_blank')
-  })
+  createNewWindow(url, `webview-${Date.now()}`, 'External Link')
 }
 </script>
 

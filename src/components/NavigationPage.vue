@@ -47,6 +47,7 @@ import { computed } from 'vue'
 
 import { TauriAPI } from '@/api/tauri'
 import BaseSvg from '@/assets/svg/BaseSvg.vue'
+import { createNewWindow } from '@/utils/common'
 
 import { useTranslation } from '../composables/useI18n'
 import { useAppStore } from '../stores/app'
@@ -82,8 +83,6 @@ const openLink = async (url: string) => {
   } catch (error) {
     console.error('Failed to open link:', error)
   }
-  setTimeout(() => {
-    window.open(url, '_blank')
-  })
+  createNewWindow(url, `webview-${Date.now()}`, 'External Link')
 }
 </script>
