@@ -1,106 +1,108 @@
 <template>
-  <div :title="t('dashboard.quickActions.title')" class="flex flex-row gap-2 w-full items-center justify-center p-4">
-    <div class="flex flex-col flex-1 gap-2">
-      <div class="flex flex-wrap gap-2 items-center">
-        <h4 class="text-main font-semibold text-sm">{{ t('dashboard.quickActions.openlistService') }}</h4>
-        <div v-if="isCoreLoading" class="flex items-center">
-          <div class="border-3 border-border w-4 h-4 rounded-full border-t-3 border-t-accent animate-spin"></div>
-        </div>
-      </div>
-      <div class="flex flex-wrap gap-2 items-center w-full">
-        <div>
-          <CustomButton
-            v-if="isCoreLoading"
-            :icon="Loader"
-            :text="t('dashboard.quickActions.processing')"
-            type="secondary"
-            disabled
-          />
-          <CustomButton
-            v-else-if="isCoreRunning"
-            type="custom"
-            class="bg-danger/80! hover:bg-danger!"
-            text-class="text-white"
-            icon-class="text-white"
-            :icon="Square"
-            :text="t('dashboard.quickActions.stopOpenListCore')"
-            @click="toggleCore"
-          />
-          <CustomButton
-            v-else
-            type="primary"
-            :icon="Play"
-            :text="t('dashboard.quickActions.startOpenListCore')"
-            @click="toggleCore"
-          />
-        </div>
-
-        <CustomButton
-          type="secondary"
-          :disabled="!isCoreRunning || isCoreLoading"
-          :icon="isCoreLoading ? Loader : RotateCcw"
-          :text="t('dashboard.quickActions.restart')"
-          @click="restartCore"
-        />
-
-        <CustomButton
-          type="secondary"
-          :disabled="!isCoreRunning || isCoreLoading"
-          :icon="ExternalLink"
-          :text="t('dashboard.quickActions.openWeb')"
-          @click="openWebUI"
-        />
-
-        <CustomButton
-          type="secondary"
-          :icon="Key"
-          text=""
-          :title="t('dashboard.quickActions.copyAdminPassword')"
-          @click="copyAdminPassword"
-        />
-        <CustomButton
-          type="secondary"
-          :icon="RotateCcw"
-          text=""
-          :title="t('dashboard.quickActions.resetAdminPassword')"
-          @click="resetAdminPassword"
-        />
-        <CustomButton
-          v-if="isWindows"
-          type="custom"
-          :class="{
-            'bg-success/80 hover:bg-success! text-white': !firewallEnabled,
-            'bg-danger/80 hover:bg-danger! text-white': firewallEnabled,
-          }"
-          text-class="text-white"
-          :disabled="firewallLoading"
-          :icon="firewallLoading ? Loader : Shield"
-          :text="
-            firewallEnabled ? t('dashboard.quickActions.firewall.disable') : t('dashboard.quickActions.firewall.enable')
-          "
-          @click="toggleFirewallRule"
-        />
-      </div>
+  <div class="flex flex-col gap-4 w-full justify-center p-4">
+    <div class="flex gap-2 justify-start items-center">
+      <Settings class="text-accent" />
+      <h4 class="font-semibold text-main">{{ t('dashboard.quickActions.title') }}</h4>
     </div>
-    <div class="flex flex-col flex-1 gap-2">
-      <div class="flex flex-wrap gap-2 items-center">
-        <h4 class="text-main font-semibold text-sm">{{ t('dashboard.quickActions.rclone') }}</h4>
+    <div class="flex flex-row w-full gap-4">
+      <div class="flex flex-col flex-1 gap-2 border p-2 rounded-md border-border-secondary shadow-sm">
+        <div class="flex flex-wrap gap-2 items-center">
+          <h4 class="text-main font-semibold text-sm">{{ t('dashboard.quickActions.openlistService') }}</h4>
+          <div v-if="isCoreLoading" class="flex items-center">
+            <div class="border-3 border-border w-4 h-4 rounded-full border-t-3 border-t-accent animate-spin"></div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center w-full">
+          <div>
+            <CustomButton v-if="isCoreLoading" :icon="Loader" text="" type="secondary" disabled />
+            <CustomButton
+              v-else-if="isCoreRunning"
+              type="custom"
+              class="bg-danger/80! hover:bg-danger!"
+              text-class="text-white"
+              icon-class="text-white"
+              :icon="Square"
+              :text="t('dashboard.quickActions.stopOpenListCore')"
+              @click="toggleCore"
+            />
+            <CustomButton
+              v-else
+              type="primary"
+              :icon="Play"
+              :text="t('dashboard.quickActions.startOpenListCore')"
+              @click="toggleCore"
+            />
+          </div>
+
+          <CustomButton
+            type="secondary"
+            :disabled="!isCoreRunning || isCoreLoading"
+            :icon="isCoreLoading ? Loader : RotateCcw"
+            :text="t('dashboard.quickActions.restart')"
+            @click="restartCore"
+          />
+
+          <CustomButton
+            type="secondary"
+            :disabled="!isCoreRunning || isCoreLoading"
+            :icon="ExternalLink"
+            :text="t('dashboard.quickActions.openWeb')"
+            @click="openWebUI"
+          />
+
+          <CustomButton
+            type="secondary"
+            :icon="Key"
+            text=""
+            :title="t('dashboard.quickActions.copyAdminPassword')"
+            @click="copyAdminPassword"
+          />
+          <CustomButton
+            type="secondary"
+            :icon="RotateCcw"
+            text=""
+            :title="t('dashboard.quickActions.resetAdminPassword')"
+            @click="resetAdminPassword"
+          />
+          <CustomButton
+            v-if="isWindows"
+            type="custom"
+            :class="{
+              'bg-success/80 hover:bg-success! text-white': !firewallEnabled,
+              'bg-danger/80 hover:bg-danger! text-white': firewallEnabled,
+            }"
+            text-class="text-white"
+            :disabled="firewallLoading"
+            :icon="firewallLoading ? Loader : Shield"
+            :text="
+              firewallEnabled
+                ? t('dashboard.quickActions.firewall.disable')
+                : t('dashboard.quickActions.firewall.enable')
+            "
+            @click="toggleFirewallRule"
+          />
+        </div>
       </div>
-      <div class="flex flex-wrap gap-2 items-center w-full">
-        <CustomButton
-          type="secondary"
-          :icon="Settings"
-          class="flex-1!"
-          :text="t('dashboard.quickActions.configRclone')"
-          @click="openRcloneConfig"
-        />
-        <CustomButton
-          type="secondary"
-          :icon="HardDrive"
-          class="flex-1!"
-          :text="t('dashboard.quickActions.manageMounts')"
-          @click="viewMounts"
-        />
+      <div class="flex flex-wrap flex-col flex-1 gap-2 border p-2 rounded-md border-border-secondary shadow-sm">
+        <div class="flex flex-wrap gap-2 items-center">
+          <h4 class="text-main font-semibold text-sm">{{ t('dashboard.quickActions.rclone') }}</h4>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center w-full">
+          <CustomButton
+            type="secondary"
+            :icon="Settings"
+            class="flex-1!"
+            :text="t('dashboard.quickActions.configRclone')"
+            @click="openRcloneConfig"
+          />
+          <CustomButton
+            type="secondary"
+            :icon="HardDrive"
+            class="flex-1!"
+            :text="t('dashboard.quickActions.manageMounts')"
+            @click="viewMounts"
+          />
+        </div>
       </div>
     </div>
   </div>

@@ -23,18 +23,24 @@ onMounted(async () => {
 
 <template>
   <div class="relative flex h-full w-full items-center justify-center">
-    <div class="relative z-1 flex h-full w-full flex-col items-center justify-start gap-4 rounded-xl border-none p-4">
-      <div class="flex w-full items-center justify-center border border-border rounded-xl gap-2 shadow-md">
-        <QuickActionsCard />
-      </div>
-      <div class="dashboard-card-wrapper">
-        <CoreMonitorCard />
-      </div>
-      <div class="dashboard-card-wrapper">
-        <VersionManagerCard />
-      </div>
-      <div class="dashboard-card-wrapper">
-        <DocumentationCard />
+    <div class="relative z-1 flex h-full w-full items-center justify-start rounded-xl border-none p-4 overflow-hidden">
+      <div class="w-full h-full overflow-auto rounded-xl flex flex-col gap-4">
+        <div class="flex flex-1 w-full items-center justify-center border border-border rounded-xl gap-2 shadow-md">
+          <QuickActionsCard />
+        </div>
+        <div class="flex w-full gap-3">
+          <div class="flex w-full items-center justify-center border border-border rounded-xl gap-2 shadow-md">
+            <CoreMonitorCard />
+          </div>
+          <div class="flex w-full items-center justify-center border border-border rounded-xl gap-2 shadow-md">
+            <VersionManagerCard />
+          </div>
+        </div>
+        <div
+          class="flex overflow-auto no-scrollbar w-full items-center justify-center border border-border rounded-xl gap-2 shadow-md"
+        >
+          <DocumentationCard />
+        </div>
       </div>
     </div>
   </div>

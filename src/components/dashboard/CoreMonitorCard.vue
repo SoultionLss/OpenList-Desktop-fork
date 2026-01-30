@@ -1,43 +1,62 @@
 <template>
-  <Card variant="elevated" hover class="service-monitor-card">
-    <template #header>
-      <h3>{{ t('dashboard.coreMonitor.title') }}</h3>
-      <div class="status-indicator" :class="{ online: isCoreRunning, offline: !isCoreRunning }">
-        <div class="pulse-dot"></div>
-        <span>{{ isCoreRunning ? t('dashboard.coreMonitor.online') : t('dashboard.coreMonitor.offline') }}</span>
+  <div class="flex flex-col gap-4 w-full justify-center p-4">
+    <div class="flex gap-2 justify-start items-center">
+      <Eye class="text-accent" />
+      <h4 class="font-semibold text-main">{{ t('dashboard.coreMonitor.title') }}</h4>
+      <div
+        class="flex items-center gap-2.5 text-xs font-medium py-0.5 px-1.5 rounded-2xl"
+        :class="{
+          'bg-success/70 ': isCoreRunning,
+          'bg-danger/50  text-white': !isCoreRunning,
+        }"
+      >
+        <span class="text-xs">{{
+          isCoreRunning ? t('dashboard.coreMonitor.online') : t('dashboard.coreMonitor.offline')
+        }}</span>
       </div>
-    </template>
-    <div class="heartbeat-section">
-      <div class="heartbeat-header">
-        <h4></h4>
-        <div v-if="isCoreRunning" class="metrics">
-          <span class="metric info">
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <div class="flex justify-between items-center p=1">
+        <div v-if="isCoreRunning" class="flex gap-4 text-xs font-medium">
+          <span class="flex items-center gap-1 py-2 px-3.5 rounded-2xl bg-accent/10 border border-border-secondary">
             <Globe :size="14" />
             Port: {{ openlistCoreStatus.port || 5244 }}
           </span>
-          <span class="metric info">
+          <span class="flex items-center gap-1 py-2 px-3.5 rounded-2xl bg-accent/10 border border-border-secondary">
             <Activity :size="14" />
             {{ t('dashboard.coreMonitor.responseTime') }}: {{ responseTime }}ms
           </span>
           <span
-            class="metric"
+            class="flex items-center gap-1 py-2 px-3.5 rounded-2xl bg-accent/10 border border-border-secondary"
             :class="{
-              healthy: avgResponseTime < 100,
-              warning: avgResponseTime >= 100 && avgResponseTime < 500,
-              error: avgResponseTime >= 500,
+              'bg-success/10': avgResponseTime < 100,
+              'bg-warning/10': avgResponseTime >= 100 && avgResponseTime < 500,
+              'bg-error/10': avgResponseTime >= 500,
             }"
           >
             {{ avgResponseTime }}ms avg
           </span>
-          <span class="metric success">{{ successRate }}% uptime</span>
+          <span
+            class="flex items-center gap-1 py-2 px-3.5 rounded-2xl border border-border-secondary"
+            :class="{
+              'bg-success/10': successRate >= 99,
+              'bg-warning/10': successRate >= 95 && successRate < 99,
+              'bg-error/10': successRate < 95,
+            }"
+            >{{ successRate }}% uptime</span
+          >
         </div>
       </div>
 
-      <div ref="chartContainer" class="heartbeat-chart">
+      <div
+        ref="chartContainer"
+        class="relative w-full min-h-25 bg-bg-secondary overflow-visible rounded-md border border-border"
+      >
         <svg :width="chartWidth" :height="chartHeight" class="heartbeat-svg">
           <defs>
             <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-              <path d="M 20 0 L 0 0 0 20" fill="none" :stroke="gridColor" stroke-width="0.5" opacity="0.3" />
+              <path d="M 20 0 L 0 0 0 20" fill="none" :stroke="gridColor" stroke-width="1" opacity="0.5" />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
@@ -66,16 +85,15 @@
         </div>
       </div>
     </div>
-  </Card>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { Activity, Globe } from 'lucide-vue-next'
+import { Activity, Eye, Globe } from 'lucide-vue-next'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import { useTranslation } from '../../composables/useI18n'
 import { useAppStore } from '../../stores/app'
-import Card from '../ui/CardPage.vue'
 
 const { t } = useTranslation()
 const appStore = useAppStore()
@@ -155,7 +173,7 @@ const lineColor = computed(() => {
 })
 
 const gridColor = computed(() => {
-  return document.documentElement.classList.contains('dark') ? '#374151' : '#e5e7eb'
+  return document.documentElement.classList.contains('dark') ? '#64748b' : '#9ca3af'
 })
 
 const checkCoreHealth = async () => {
@@ -218,6 +236,7 @@ const hideTooltip = () => {
 const updateChartSize = () => {
   if (chartContainer.value) {
     chartWidth.value = chartContainer.value.clientWidth
+    chartHeight.value = chartContainer.value.clientHeight
   }
 }
 
