@@ -24,8 +24,8 @@ onMounted(async () => {
 <template>
   <div class="relative flex h-full w-full items-center justify-center">
     <div class="relative z-1 flex h-full w-full items-center justify-start rounded-xl border-none p-4 overflow-hidden">
-      <div class="w-full h-full overflow-auto rounded-xl flex flex-col gap-4">
-        <div class="flex flex-1 w-full items-center justify-center border border-border rounded-xl gap-2 shadow-md">
+      <div class="w-full h-full overflow-auto rounded-xl flex flex-col gap-8 items-center justify-center">
+        <div class="flex w-full items-center justify-center border border-border rounded-xl gap-2 shadow-md">
           <QuickActionsCard />
         </div>
         <div class="flex w-full gap-3">
@@ -45,5 +45,3 @@ onMounted(async () => {
     </div>
   </div>
 </template>
-
-<style scoped src="./css/HomeView.css"></style>

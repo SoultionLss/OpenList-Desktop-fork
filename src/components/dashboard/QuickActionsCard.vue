@@ -5,7 +5,7 @@
       <h4 class="font-semibold text-main">{{ t('dashboard.quickActions.title') }}</h4>
     </div>
     <div class="flex flex-row w-full gap-4">
-      <div class="flex flex-col flex-1 gap-2 border p-2 rounded-md border-border-secondary shadow-sm">
+      <div class="flex flex-col flex-1 gap-2 border p-2 rounded-md border-border-secondary bg-surface shadow-sm">
         <div class="flex flex-wrap gap-2 items-center">
           <h4 class="text-main font-semibold text-sm">{{ t('dashboard.quickActions.openlistService') }}</h4>
           <div v-if="isCoreLoading" class="flex items-center">
@@ -83,7 +83,9 @@
           />
         </div>
       </div>
-      <div class="flex flex-wrap flex-col flex-1 gap-2 border p-2 rounded-md border-border-secondary shadow-sm">
+      <div
+        class="flex flex-wrap flex-col flex-1 gap-2 border p-2 rounded-md border-border-secondary bg-surface shadow-sm"
+      >
         <div class="flex flex-wrap gap-2 items-center">
           <h4 class="text-main font-semibold text-sm">{{ t('dashboard.quickActions.rclone') }}</h4>
         </div>

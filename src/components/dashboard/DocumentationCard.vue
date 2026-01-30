@@ -1,77 +1,106 @@
 <template>
-  <Card :title="t('dashboard.documentation.title')" variant="elevated" hover class="documentation-card">
-    <div class="doc-sections">
-      <div class="docs-row">
-        <div class="doc-section">
-          <div class="doc-header">
-            <div class="doc-info">
-              <h4>{{ t('dashboard.documentation.openlist') }}</h4>
-              <p class="doc-description">{{ t('dashboard.documentation.openlistDesc') }}</p>
+  <div class="flex flex-col gap-4 w-full justify-center p-4">
+    <div class="flex flex-col gap-5">
+      <div class="flex flex-row gap-2">
+        <div class="flex-1 border border-border-secondary rounded-md p-4 bg-bg-secondary flex flex-col gap-4">
+          <div class="flex justify-between items-start">
+            <div class="flex-1 flex flex-col gap-1">
+              <h4 class="text-sm font-semibold text-main">{{ t('dashboard.documentation.openlist') }}</h4>
+              <p class="text-secondary font-medium leading-[1.4] text-xs">
+                {{ t('dashboard.documentation.openlistDesc') }}
+              </p>
             </div>
-            <div class="doc-icon openlist-icon">
+            <div
+              class="flex items-center justify-center w-8 h-8 border-none rounded-md shrink-0 bg-[linear-gradient(135deg,rgba(99,102,241,1),rgba(139,92,246,1))] text-white"
+            >
               <BookOpen :size="20" />
             </div>
           </div>
-          <div class="doc-actions">
-            <button class="doc-btn primary" @click="openOpenListDocs">
-              <ExternalLink :size="14" />
-              <span>{{ t('dashboard.documentation.openDocs') }}</span>
-            </button>
-            <button class="doc-btn secondary" @click="openOpenListGitHub">
-              <Github :size="14" />
-              <span>{{ t('dashboard.documentation.github') }}</span>
-            </button>
+          <div class="flex gap-2 flex-wrap">
+            <CustomButton
+              type="primary"
+              :icon="ExternalLink"
+              class="flex-1!"
+              :text="t('dashboard.documentation.openDocs')"
+              @click="openLink(urlMap.openlistDocs)"
+            />
+            <CustomButton
+              type="secondary"
+              :icon="Github"
+              class="flex-1!"
+              :text="t('dashboard.documentation.github')"
+              @click="openLink(urlMap.openlistGitHub)"
+            />
           </div>
         </div>
 
-        <div class="doc-section">
-          <div class="doc-header">
-            <div class="doc-info">
-              <h4>{{ t('dashboard.documentation.rclone') }}</h4>
-              <p class="doc-description">{{ t('dashboard.documentation.rcloneDesc') }}</p>
+        <div class="flex-1 border border-border-secondary p-4 bg-bg-secondary rounded-md flex flex-col gap-4">
+          <div class="flex justify-between items-start">
+            <div class="flex-1 flex flex-col gap-1">
+              <h4 class="text-sm font-semibold text-main">{{ t('dashboard.documentation.rclone') }}</h4>
+              <p class="text-secondary font-medium leading-[1.4] text-xs">
+                {{ t('dashboard.documentation.rcloneDesc') }}
+              </p>
             </div>
-            <div class="doc-icon rclone-icon">
+            <div
+              class="flex items-center justify-center w-8 h-8 border-none rounded-md shrink-0 bg-[linear-gradient(135deg,rgba(34,197,94,1),rgba(59,130,246,1))] text-white"
+            >
               <Cloud :size="20" />
             </div>
           </div>
-          <div class="doc-actions">
-            <button class="doc-btn primary" @click="openRcloneDocs">
-              <ExternalLink :size="14" />
-              <span>{{ t('dashboard.documentation.openDocs') }}</span>
-            </button>
-            <button class="doc-btn secondary" @click="openRcloneGitHub">
-              <Github :size="14" />
-              <span>{{ t('dashboard.documentation.github') }}</span>
-            </button>
+          <div class="flex gap-2 flex-wrap">
+            <CustomButton
+              type="primary"
+              :icon="ExternalLink"
+              class="flex-1!"
+              :text="t('dashboard.documentation.openDocs')"
+              @click="openLink(urlMap.rcloneDocs)"
+            />
+            <CustomButton
+              type="secondary"
+              :icon="Github"
+              class="flex-1!"
+              :text="t('dashboard.documentation.github')"
+              @click="openLink(urlMap.rcloneGitHub)"
+            />
           </div>
         </div>
       </div>
 
-      <div class="quick-links">
-        <div class="links-header">
-          <h4>{{ t('dashboard.documentation.quickLinks') }}</h4>
-        </div>
-        <div class="links-grid">
-          <button class="link-btn" @click="openLink('https://docs.oplist.org/guide/api')">
-            <Code :size="16" />
-            <span>{{ t('dashboard.documentation.apiDocs') }}</span>
-          </button>
-          <button class="link-btn" @click="openLink('https://rclone.org/commands/')">
-            <Terminal :size="16" />
-            <span>{{ t('dashboard.documentation.commands') }}</span>
-          </button>
-          <button class="link-btn" @click="openLink('https://github.com/OpenListTeam/OpenList-desktop/issues')">
-            <HelpCircle :size="16" />
-            <span>{{ t('dashboard.documentation.issues') }}</span>
-          </button>
-          <button class="link-btn" @click="openLink('https://docs.oplist.org/faq/')">
-            <MessageCircle :size="16" />
-            <span>{{ t('dashboard.documentation.faq') }}</span>
-          </button>
+      <div class="rounded-md px-4 bg-bg-secondary">
+        <div class="flex items-center justify-between gap-2">
+          <CustomButton
+            type="secondary"
+            :icon="Code"
+            :text="t('dashboard.documentation.apiDocs')"
+            class="flex-1!"
+            @click="openLink(urlMap.openlistAPIDocs)"
+          />
+          <CustomButton
+            type="secondary"
+            :icon="Terminal"
+            :text="t('dashboard.documentation.commands')"
+            class="flex-1!"
+            @click="openLink(urlMap.rcloneCommands)"
+          />
+          <CustomButton
+            type="secondary"
+            :icon="HelpCircle"
+            :text="t('dashboard.documentation.issues')"
+            class="flex-1!"
+            @click="openLink(urlMap.openlistIssues)"
+          />
+          <CustomButton
+            type="secondary"
+            :icon="MessageCircle"
+            :text="t('dashboard.documentation.faq')"
+            class="flex-1!"
+            @click="openLink(urlMap.faq)"
+          />
         </div>
       </div>
     </div>
-  </Card>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -83,25 +112,20 @@ import { createNewWindow } from '@/utils/common'
 import { TauriAPI } from '../../api/tauri'
 import { useTranslation } from '../../composables/useI18n'
 import { useAppStore } from '../../stores/app'
-import Card from '../ui/CardPage.vue'
+import CustomButton from '../common/CustomButton.vue'
 
 const { t } = useTranslation()
 const appStore = useAppStore()
 
-const openOpenListDocs = () => {
-  openLink('https://docs.oplist.org/')
-}
-
-const openOpenListGitHub = () => {
-  openLink('https://github.com/OpenListTeam/OpenList')
-}
-
-const openRcloneDocs = () => {
-  openLink('https://rclone.org/docs/')
-}
-
-const openRcloneGitHub = () => {
-  openLink('https://github.com/rclone/rclone')
+const urlMap = {
+  openlistAPIDocs: 'https://fox.oplist.org.cn/',
+  rcloneCommands: 'https://rclone.org/commands/',
+  openlistDocs: 'https://docs.oplist.org/',
+  openlistGitHub: 'https://github.com/OpenListTeam/OpenList',
+  openlistIssues: 'https://github.com/OpenListTeam/OpenList-desktop/issues',
+  faq: 'https://doc.oplist.org/faq/howto',
+  rcloneDocs: 'https://rclone.org/docs/',
+  rcloneGitHub: 'https://github.com/rclone/rclone',
 }
 
 const isMacOs = computed(() => {
@@ -120,234 +144,3 @@ const openLink = async (url: string) => {
   createNewWindow(url, `webview-${Date.now()}`, 'External Link')
 }
 </script>
-
-<style scoped>
-.doc-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.docs-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-}
-
-.doc-section {
-  border: 1px solid rgb(229 231 235);
-  border-radius: 0.75rem;
-  padding: 1rem;
-  background: rgb(249 250 251);
-}
-
-.doc-section:hover {
-  border-color: rgb(209 213 219);
-  background: rgb(243 244 246);
-}
-
-:root.dark .doc-section,
-:root.auto.dark .doc-section {
-  border-color: rgb(55 65 81);
-  background: rgb(31 41 55);
-}
-
-:root.dark .doc-section:hover,
-:root.auto.dark .doc-section:hover {
-  border-color: rgb(75 85 99);
-  background: rgb(55 65 81);
-}
-
-.doc-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-}
-
-.doc-info {
-  flex: 1;
-}
-
-.doc-info h4 {
-  margin: 0 0 0.5rem 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: rgb(17 24 39);
-}
-
-:root.dark .doc-info h4,
-:root.auto.dark .doc-info h4 {
-  color: rgb(243 244 246);
-}
-
-.doc-description {
-  margin: 0;
-  font-size: 0.8125rem;
-  color: rgb(107 114 128);
-  line-height: 1.4;
-}
-
-:root.dark .doc-description,
-:root.auto.dark .doc-description {
-  color: rgb(156 163 175);
-}
-
-.doc-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.75rem;
-  margin-left: 0.75rem;
-  flex-shrink: 0;
-}
-
-.openlist-icon {
-  background: linear-gradient(135deg, rgb(99 102 241), rgb(139 92 246));
-  color: white;
-}
-
-.rclone-icon {
-  background: linear-gradient(135deg, rgb(34 197 94), rgb(59 130 246));
-  color: white;
-}
-
-.doc-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.doc-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  text-decoration: none;
-  flex: 1;
-  justify-content: center;
-}
-
-.doc-btn.primary {
-  background: rgb(99 102 241);
-  color: white;
-}
-
-.doc-btn.primary:hover {
-  background: rgb(79 70 229);
-}
-
-.doc-btn.secondary {
-  background: rgb(243 244 246);
-  color: rgb(55 65 81);
-  border: 1px solid rgb(209 213 219);
-}
-
-.doc-btn.secondary:hover {
-  background: rgb(229 231 235);
-}
-
-:root.dark .doc-btn.secondary,
-:root.auto.dark .doc-btn.secondary {
-  background: rgb(55 65 81);
-  color: rgb(209 213 219);
-  border-color: rgb(75 85 99);
-}
-
-:root.dark .doc-btn.secondary:hover,
-:root.auto.dark .doc-btn.secondary:hover {
-  background: rgb(75 85 99);
-}
-
-.quick-links {
-  border-top: 1px solid rgb(229 231 235);
-  padding-top: 1.25rem;
-}
-
-:root.dark .quick-links,
-:root.auto.dark .quick-links {
-  border-top-color: rgb(55 65 81);
-}
-
-.links-header h4 {
-  margin: 0 0 1rem 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: rgb(17 24 39);
-}
-
-:root.dark .links-header h4,
-:root.auto.dark .links-header h4 {
-  color: rgb(243 244 246);
-}
-
-.links-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
-  gap: 0.5rem;
-}
-
-.link-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem 0.5rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  background: white;
-  color: rgb(55 65 81);
-  border: 1px solid rgb(209 213 219);
-  border-radius: 0.5rem;
-  cursor: pointer;
-  text-align: center;
-}
-
-.link-btn:hover {
-  background: rgb(249 250 251);
-  border-color: rgb(99 102 241);
-  color: rgb(99 102 241);
-}
-
-:root.dark .link-btn,
-:root.auto.dark .link-btn {
-  background: rgb(17 24 39);
-  color: rgb(209 213 219);
-  border-color: rgb(55 65 81);
-}
-
-:root.dark .link-btn:hover,
-:root.auto.dark .link-btn:hover {
-  background: rgb(31 41 55);
-  border-color: rgb(99 102 241);
-  color: rgb(129 140 248);
-}
-
-.link-btn span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Responsive design for smaller screens */
-@media (max-width: 768px) {
-  .docs-row {
-    grid-template-columns: 1fr;
-  }
-
-  .doc-actions {
-    flex-direction: column;
-  }
-
-  .doc-btn {
-    flex: none;
-  }
-}
-</style>
