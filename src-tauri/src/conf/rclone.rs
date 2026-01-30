@@ -1,45 +1,22 @@
-use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
 
+/// Rclone configuration stored in settings (mainly for api_port which is no
+/// longer needed) Kept for backward compatibility with existing settings files
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RcloneConfig {
     pub config: serde_json::Value,
+    #[serde(default = "default_api_port")]
     pub api_port: u16,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct RcloneWebdavConfig {
-    pub url: String,
-    pub vendor: Option<String>,
-    pub user: String,
-    pub pass: String,
+fn default_api_port() -> u16 {
+    45572
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct RcloneCreateRemoteRequest {
-    pub name: String,
-    pub r#type: String,
-    pub parameters: RcloneWebdavConfig,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct RcloneMountRequest {
-    pub fs: String,
-    pub mount_point: String,
-    pub mount_type: Option<String>,
-    pub vfs_opt: Option<HashMap<String, String>>,
-    pub mount_opt: Option<RcloneMountOptions>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct RcloneMountOptions {
-    #[serde(rename = "ExtraFlags")]
-    pub extra_flags: Option<Vec<String>>,
-    #[serde(rename = "ExtraOptions")]
-    pub extra_options: Option<Vec<String>>,
-    #[serde(rename = "VolumeName")]
-    pub volume_name: Option<String>,
+impl Default for RcloneConfig {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl RcloneConfig {

@@ -41,7 +41,7 @@ fn get_app_dir() -> Result<PathBuf, String> {
     Ok(app_dir)
 }
 
-fn get_user_data_dir() -> Result<PathBuf, String> {
+pub fn get_user_data_dir() -> Result<PathBuf, String> {
     let data_dir = {
         #[cfg(target_os = "macos")]
         {
@@ -154,7 +154,17 @@ pub fn get_app_logs_dir() -> Result<PathBuf, String> {
 }
 
 pub fn get_rclone_config_path() -> Result<PathBuf, String> {
-    Ok(get_user_data_dir()?.join("rclone.conf"))
+    let rclone_config_path = (get_user_data_dir()?).join("rclone.conf");
+    let _ = fs::create_dir_all(
+        rclone_config_path
+            .parent()
+            .ok_or("Failed to get rclone config parent directory")?,
+    );
+    if !rclone_config_path.exists() {
+        fs::File::create(&rclone_config_path)
+            .map_err(|e| format!("Failed to create rclone config file: {e}"))?;
+    }
+    Ok(rclone_config_path)
 }
 
 pub fn get_default_openlist_data_dir() -> Result<PathBuf, String> {

@@ -32,23 +32,6 @@ pub struct RcloneMountInfo {
     pub status: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RcloneRemoteListResponse {
-    pub remotes: Vec<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RcloneMountListResponse {
-    pub mounts: Vec<RcloneMountStatus>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RcloneMountStatus {
-    pub mount_point: String,
-    pub fs: String,
-    pub mounted: bool,
-}
-
 pub struct AppState {
     pub app_settings: Arc<RwLock<Option<MergedSettings>>>,
     pub app_handle: Arc<RwLock<Option<AppHandle>>>,

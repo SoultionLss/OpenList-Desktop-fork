@@ -1,6 +1,11 @@
 import { ref } from 'vue'
 
-import type { MessageOptions } from '@/components/ui/MessageToast.vue'
+export interface MessageOptions {
+  message: string
+  type?: 'success' | 'warning' | 'info' | 'error'
+  duration?: number
+  showClose?: boolean
+}
 
 interface MessageService {
   success: (message: string, options?: Partial<MessageOptions>) => string

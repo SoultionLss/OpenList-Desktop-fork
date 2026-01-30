@@ -3,13 +3,16 @@ use std::path::{Path, PathBuf};
 
 use tauri::{AppHandle, State};
 
-use crate::cmd::http_api::{get_process_list, start_process, stop_process};
+use crate::core::process_manager::PROCESS_MANAGER;
 use crate::object::structs::{AppState, FileItem};
 use crate::utils::github_proxy::apply_github_proxy;
 use crate::utils::path::{
     app_config_file_path, get_app_logs_dir, get_default_openlist_data_dir,
     get_openlist_binary_path, get_rclone_binary_path, get_rclone_config_path,
 };
+
+const OPENLIST_CORE_PROCESS_ID: &str = "openlist_core";
+const RCLONE_BACKEND_PROCESS_ID: &str = "rclone_backend";
 
 fn normalize_path(path: &str) -> String {
     #[cfg(target_os = "windows")]
@@ -195,39 +198,19 @@ pub async fn update_tool_version(
 ) -> Result<String, String> {
     log::info!("Updating {tool} to version {version}");
 
-    let process_list_result = get_process_list(state.clone()).await;
-
-    let (was_running, process_id) = match process_list_result {
-        Ok(process_list) => {
-            let process_name = match tool.as_str() {
-                "openlist" => "single_openlist_core_process",
-                "rclone" => "single_rclone_backend_process",
-                _ => return Err("Unsupported tool".to_string()),
-            };
-
-            let running_process = process_list.iter().find(|p| p.config.name == process_name);
-            let was_running = running_process.map(|p| p.is_running).unwrap_or(false);
-            let process_id = running_process.map(|p| p.config.id.clone());
-
-            (was_running, process_id)
-        }
-        Err(e) => {
-            log::warn!("Failed to get process list (service may not be installed): {e}");
-            log::info!("Proceeding with update without stopping processes");
-            (false, None)
-        }
+    let process_id = match tool.as_str() {
+        "openlist" => OPENLIST_CORE_PROCESS_ID,
+        "rclone" => RCLONE_BACKEND_PROCESS_ID,
+        _ => return Err("Unsupported tool".to_string()),
     };
 
-    if was_running && let Some(pid) = &process_id {
-        log::info!("Stopping {tool} process with ID: {pid}");
-        match tool.as_str() {
-            "openlist" | "rclone" => {
-                stop_process(pid.clone(), state.clone())
-                    .await
-                    .map_err(|e| format!("Failed to stop process: {e}"))?;
-            }
-            _ => return Err("Unsupported tool".to_string()),
-        }
+    let was_running = PROCESS_MANAGER.is_running(process_id);
+
+    if was_running {
+        log::info!("Stopping {tool} process");
+        PROCESS_MANAGER
+            .stop(process_id)
+            .map_err(|e| format!("Failed to stop process: {e}"))?;
         log::info!("Successfully stopped {tool} process");
     }
 
@@ -245,21 +228,12 @@ pub async fn update_tool_version(
         Ok(_) => {
             log::info!("Successfully downloaded and replaced {tool} binary");
 
-            if was_running && let Some(pid) = &process_id {
-                log::info!("Starting {tool} process with ID: {pid}");
-                match tool.as_str() {
-                    "openlist" | "rclone" => {
-                        start_process(pid.clone(), state.clone())
-                            .await
-                            .map_err(|e| format!("Failed to start {tool} process: {e}"))?;
-                    }
-                    _ => return Err("Unsupported tool".to_string()),
-                }
+            if was_running {
+                log::info!("Starting {tool} process");
+                PROCESS_MANAGER
+                    .start(process_id)
+                    .map_err(|e| format!("Failed to start {tool} process: {e}"))?;
                 log::info!("Successfully restarted {tool} process");
-            } else if process_id.is_none() {
-                log::info!(
-                    "Update completed successfully. Service is not currently installed or running."
-                );
             }
 
             Ok(format!("Successfully updated {tool} to {version}"))
@@ -267,16 +241,11 @@ pub async fn update_tool_version(
         Err(e) => {
             log::error!("Failed to update {tool} binary: {e}");
 
-            if was_running && let Some(pid) = &process_id {
+            if was_running {
                 log::info!(
                     "Attempting to restart {tool} with previous binary after update failure"
                 );
-                match tool.as_str() {
-                    "openlist" | "rclone" => {
-                        let _ = start_process(pid.clone(), state.clone()).await;
-                    }
-                    _ => {}
-                }
+                let _ = PROCESS_MANAGER.start(process_id);
             }
 
             Err(format!("Failed to update {tool} to {version}: {e}"))

@@ -5,40 +5,23 @@ import { appDataDir, join } from '@tauri-apps/api/path'
 const call = <T>(cmd: string, args?: any): Promise<T> => invoke(cmd, args)
 
 export class TauriAPI {
-  // --- service management ---
-  static service = {
-    status: (): Promise<string> => call('check_service_status'),
-    install: (): Promise<boolean> => call('install_service'),
-    uninstall: (): Promise<boolean> => call('uninstall_service'),
-    start: (): Promise<boolean> => call('start_service'),
-    stop: (): Promise<boolean> => call('stop_service'),
-  }
-
-  // --- process management ---
-  static process = {
-    list: (): Promise<ProcessStatus[]> => call('get_process_list'),
-    start: (id: string): Promise<boolean> => call('start_process', { id }),
-    stop: (id: string): Promise<boolean> => call('stop_process', { id }),
-    restart: (id: string): Promise<boolean> => call('restart_process', { id }),
-    update: (id: string, cfg: Partial<ProcessConfig>): Promise<boolean> =>
-      call('update_process', { id, updateConfig: cfg }),
-    delete: (id: string): Promise<boolean> => call('delete_process', { id }),
-  }
-
   // --- OpenList Core management ---
   static core = {
-    create: (autoStart: boolean): Promise<ProcessConfig> => call('create_openlist_core_process', { autoStart }),
+    create: (): Promise<ProcessInfo> => call('create_openlist_core_process'),
+    start: (): Promise<ProcessInfo> => call('start_openlist_core'),
+    stop: (): Promise<ProcessInfo> => call('stop_openlist_core'),
+    restart: (): Promise<ProcessInfo> => call('restart_openlist_core'),
     getStatus: (): Promise<OpenListCoreStatus> => call('get_openlist_core_status'),
+    getProcessStatus: (): Promise<ProcessInfo> => call('get_openlist_core_process_status'),
+    getLogs: (lines?: number): Promise<string[]> => call('get_openlist_core_logs', { lines }),
   }
 
   // --- Rclone management ---
   static rclone = {
-    backend: {
-      create: (): Promise<boolean> => call('create_rclone_backend_process'),
-      createAndStart: (): Promise<ProcessConfig> => call('create_and_start_rclone_backend'),
-      isRunning: (): Promise<boolean> => call('get_rclone_backend_status'),
-      isAvailable: (): Promise<boolean> => call('check_rclone_available'),
-    },
+    // Check if rclone binary is available
+    isAvailable: (): Promise<boolean> => call('check_rclone_available'),
+
+    // Remote configuration management (direct file-based)
     remotes: {
       list: (): Promise<string[]> => call('rclone_list_remotes'),
       create: (name: string, type: string, config: RcloneWebdavConfig): Promise<boolean> =>
@@ -48,11 +31,18 @@ export class TauriAPI {
       delete: (name: string): Promise<boolean> => call('rclone_delete_remote', { name }),
       listConfig: (t: string): Promise<IRemoteConfig> => call('rclone_list_config', { remoteType: t }),
     },
+
+    // Mount process management
     mounts: {
       list: (): Promise<RcloneMountInfo[]> => call('get_mount_info_list'),
       check: (mp: string): Promise<boolean> => call('check_mount_status', { mountPoint: mp }),
-      createProcess: (cfg: ProcessConfig): Promise<ProcessConfig> =>
+      createProcess: (cfg: MountProcessInput): Promise<ProcessInfo> =>
         call('create_rclone_mount_remote_process', { config: cfg }),
+      startProcess: (processId: string): Promise<ProcessInfo> => call('start_mount_process', { processId }),
+      stopProcess: (processId: string): Promise<ProcessInfo> => call('stop_mount_process', { processId }),
+      unmount: (name: string): Promise<boolean> => call('unmount_remote', { name }),
+      getLogs: (processId: string, lines?: number): Promise<string[]> =>
+        call('get_mount_process_logs', { processId, lines }),
     },
   }
 

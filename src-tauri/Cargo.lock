@@ -2949,6 +2949,7 @@ dependencies = [
  "dirs 6.0.0",
  "flate2",
  "lazy_static",
+ "libc",
  "log",
  "log4rs",
  "once_cell",
@@ -2975,6 +2976,7 @@ dependencies = [
  "url",
  "uzers",
  "windows-service",
+ "windows-sys 0.59.0",
  "zip",
 ]
 

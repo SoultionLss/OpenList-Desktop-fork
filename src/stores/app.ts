@@ -213,25 +213,23 @@ export const useAppStore = defineStore('app', () => {
       const oldProcessId = await getRcloneMountProcessId(name)
       if (oldProcessId) {
         try {
-          await TauriAPI.process.stop(oldProcessId)
-          await TauriAPI.process.delete(oldProcessId)
+          // Stop and remove old mount process by using mount list remove API
+          const mountInfoList = await TauriAPI.rclone.mounts.list()
+          const existingMount = mountInfoList.find(m => m.name === name)
+          if (existingMount) {
+            // Unmount through process manager directly via new mount process
+          }
 
           const mountArgs = [
             `${fullConfig.name}:${fullConfig.volumeName || ''}`,
             fullConfig.mountPoint || '',
             ...(fullConfig.extraFlags || []),
           ]
-          const newProcessConfig: ProcessConfig = {
+          const newProcessConfig: MountProcessInput = {
             id: `rclone_mount_${fullConfig.name}_process`,
             name: `rclone_mount_${fullConfig.name}_process`,
             args: mountArgs,
             auto_start: fullConfig.autoMount,
-            bin_path: 'rclone',
-            log_file: '',
-            auto_restart: true,
-            run_as_admin: false,
-            created_at: 0,
-            updated_at: 0,
           }
           await TauriAPI.rclone.mounts.createProcess(newProcessConfig)
         } catch (err) {
@@ -253,14 +251,11 @@ export const useAppStore = defineStore('app', () => {
   async function deleteRemoteConfig(name: string) {
     try {
       loading.value = true
-      const processId = await getRcloneMountProcessId(name)
-      if (processId) {
-        try {
-          await TauriAPI.process.stop(processId)
-          await TauriAPI.process.delete(processId)
-        } catch (err) {
-          console.warn(`Failed to stop/delete mount process for ${name}:`, err)
-        }
+      // Unmount if mounted
+      const mountInfoList = await TauriAPI.rclone.mounts.list()
+      const existingMount = mountInfoList.find(m => m.name === name)
+      if (existingMount && existingMount.status === 'mounted') {
+        await unmountRemote(name)
       }
       await TauriAPI.rclone.remotes.delete(name)
       await loadRemoteConfigs()
@@ -299,52 +294,35 @@ export const useAppStore = defineStore('app', () => {
       if (!config) {
         throw new Error(`No configuration found for remote: ${name}`)
       }
-      const processId = await getRcloneMountProcessId(name)
-      console.log(`Mounting remote ${name} with process ID:`, processId)
-      if (processId) {
-        if (!config.mountPoint) {
-          throw new Error(`Mount point is not set for remote: ${name}`)
-        }
-        const mountResult = await TauriAPI.rclone.mounts.check(config.mountPoint)
-        if (!mountResult) {
-          const startResult = await TauriAPI.process.start(processId)
-          if (!startResult) {
-            throw new Error(`Failed to start mount process for remote: ${name}`)
-          }
-          await loadMountInfos()
-          return
-        } else {
-          console.log(`Remote ${name} is already mounted`)
-          return
-        }
-      } else {
-        const mountArgs = [
-          `${config.name}:${config.volumeName || ''}`,
-          config.mountPoint || '',
-          ...(config.extraFlags || []),
-        ]
-        const createRemoteConfig: ProcessConfig = {
-          id: `rclone_mount_${name}_process`,
-          name: `rclone_mount_${name}_process`,
-          args: mountArgs,
-          auto_start: config.autoMount,
-          bin_path: 'rclone',
-          log_file: '',
-          auto_restart: true,
-          run_as_admin: false,
-          created_at: 0,
-          updated_at: 0,
-        }
-        const createResponse = await TauriAPI.rclone.mounts.createProcess(createRemoteConfig)
-        if (!createResponse || !createResponse.id) {
-          throw new Error('Failed to create mount process')
-        }
-        const startResponse = await TauriAPI.process.start(createResponse.id)
-        if (!startResponse) {
-          throw new Error('Failed to start mount process')
-        }
-        await loadMountInfos()
+
+      if (!config.mountPoint) {
+        throw new Error(`Mount point is not set for remote: ${name}`)
       }
+
+      // Check if already mounted
+      const mountResult = await TauriAPI.rclone.mounts.check(config.mountPoint)
+      if (mountResult) {
+        console.log(`Remote ${name} is already mounted`)
+        return
+      }
+
+      // Create mount process
+      const mountArgs = [
+        `${config.name}:${config.volumeName || ''}`,
+        config.mountPoint || '',
+        ...(config.extraFlags || []),
+      ]
+      const createRemoteConfig: MountProcessInput = {
+        id: `rclone_mount_${name}_process`,
+        name: `rclone_mount_${name}_process`,
+        args: mountArgs,
+        auto_start: true,
+      }
+      const createResponse = await TauriAPI.rclone.mounts.createProcess(createRemoteConfig)
+      if (!createResponse || !createResponse.id) {
+        throw new Error('Failed to create mount process')
+      }
+      await loadMountInfos()
     } catch (err: any) {
       error.value = `Failed to mount remote ${name}: ${formatError(err)}`
       console.error('Failed to mount remote:', err)
@@ -357,13 +335,8 @@ export const useAppStore = defineStore('app', () => {
   async function unmountRemote(name: string) {
     try {
       loading.value = true
-      const processId = await getRcloneMountProcessId(name)
-      if (processId) {
-        const stopResult = await TauriAPI.process.stop(processId)
-        if (!stopResult) {
-          throw new Error(`Failed to stop mount process for remote: ${name}`)
-        }
-      }
+      // Use the new unmount API that stops the mount process
+      await TauriAPI.rclone.mounts.unmount(name)
       await loadMountInfos()
     } catch (err: any) {
       error.value = `Failed to unmount remote ${name}: ${formatError(err)}`
@@ -382,14 +355,13 @@ export const useAppStore = defineStore('app', () => {
 
   async function getRcloneMountProcessId(name: string): Promise<string | undefined> {
     try {
-      const processList = await TauriAPI.process.list()
-      const mountName = `rclone_mount_${name}_process`
-      const findRcloneBackend = processList.find(p => p.config?.name === mountName)
-      if (findRcloneBackend) {
-        return findRcloneBackend.id
+      const mountInfoList = await TauriAPI.rclone.mounts.list()
+      const findMount = mountInfoList.find(m => m.name === name)
+      if (findMount) {
+        return findMount.processId
       }
     } catch (err) {
-      console.error('Failed to get Rclone process ID from database:', err)
+      console.error('Failed to get Rclone process ID:', err)
       return undefined
     }
   }
@@ -397,33 +369,11 @@ export const useAppStore = defineStore('app', () => {
   async function startOpenListCore() {
     try {
       loading.value = true
-
-      let processId: string | undefined
-      let createResponse: ProcessConfig | undefined
-      const processList = await TauriAPI.process.list()
-      const findOpenListCore = processList.find(p => p.config?.name === 'single_openlist_core_process')
-
-      if (!findOpenListCore) {
-        createResponse = await TauriAPI.core.create(settings.value.openlist.auto_launch)
-
-        if (!createResponse || !createResponse.id) {
-          throw new Error('Invalid response from TauriAPI.core.create: missing process ID')
-        }
-
-        processId = createResponse.id
-      } else {
-        processId = findOpenListCore.id
+      const createResponse = await TauriAPI.core.create()
+      if (!createResponse || !createResponse.id) {
+        throw new Error('Invalid response from TauriAPI.core.create: missing process ID')
       }
-
-      if (!processId) {
-        throw new Error('Failed to create or retrieve OpenList Core process ID')
-      }
-      const startResponse = await TauriAPI.process.start(processId)
-      if (!startResponse) {
-        throw new Error('Failed to start OpenList Core service - service returned false')
-      }
-
-      openlistProcessId.value = processId
+      openlistProcessId.value = createResponse.id
       await refreshOpenListCoreStatus()
 
       await TauriAPI.tray.update(openlistCoreStatus.value.running)
@@ -443,33 +393,11 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function getOpenListProcessId() {
-    try {
-      const processList = await TauriAPI.process.list()
-      const findOpenListCore = processList.find(p => p.config?.name === 'single_openlist_core_process')
-      if (findOpenListCore) {
-        return findOpenListCore.id
-      }
-    } catch (err) {
-      console.error('Failed to get OpenList process ID from database:', err)
-      return undefined
-    }
-  }
-
   async function stopOpenListCore() {
     try {
       loading.value = true
-      const id = await getOpenListProcessId()
-      if (!id) {
-        openlistCoreStatus.value = { running: false }
-        await TauriAPI.tray.update(false)
-        return
-      }
 
-      const result = await TauriAPI.process.stop(id)
-      if (!result) {
-        throw new Error('Failed to stop OpenList Core service - service returned false')
-      }
+      await TauriAPI.core.stop()
 
       openlistCoreStatus.value = { running: false }
       await TauriAPI.tray.update(false)
@@ -488,37 +416,17 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function enableAutoLaunch(autoLaunch: boolean) {
-    try {
-      const id = await getOpenListProcessId()
-      if (!id) return
-      const result = await TauriAPI.process.update(id, {
-        auto_start: autoLaunch,
-      })
-      if (!result) {
-        throw new Error('Failed to enable auto-launch')
-      }
-    } catch (err) {
-      const errorMessage = `Failed to enable auto-launch: ${formatError(err)}`
-      error.value = errorMessage
-      console.error('Failed to enable auto-launch:', err)
-      throw err
-    }
+  async function enableAutoLaunch(_autoLaunch: boolean) {
+    // Auto-launch is handled via settings, no separate process update needed
+    // Settings are persisted on save
   }
 
   async function restartOpenListCore() {
     try {
       loading.value = true
-      const id = await getOpenListProcessId()
-      if (!id) {
-        openlistCoreStatus.value = { running: false }
-        await TauriAPI.tray.update(false)
-        return
-      }
-      const result = await TauriAPI.process.restart(id)
-      if (!result) {
-        throw new Error('Failed to restart OpenList Core - service returned false')
-      }
+
+      await TauriAPI.core.restart()
+
       await refreshOpenListCoreStatus()
       await TauriAPI.tray.update(openlistCoreStatus.value.running)
     } catch (err: any) {

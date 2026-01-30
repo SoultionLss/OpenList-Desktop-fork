@@ -42,7 +42,6 @@ const confirmDialogConfig = ref({
 })
 
 let mountRefreshInterval: NodeJS.Timeout | null = null
-let backendStatusCheckInterval: NodeJS.Timeout | null = null
 
 const configForm = ref({
   name: '',
@@ -293,26 +292,12 @@ const cancelDelete = () => {
   confirmDialogConfig.value.configToDelete = null
 }
 
-const startBackend = async () => {
+const refreshData = async () => {
   try {
-    await rcloneStore.startRcloneBackend()
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    await rcloneStore.checkRcloneBackendStatus()
     await appStore.loadRemoteConfigs()
     await appStore.loadMountInfos()
   } catch (error: any) {
-    console.error(error.message || t('mount.messages.failedToStartService'))
-  }
-}
-
-const stopBackend = async () => {
-  try {
-    const stopped = await rcloneStore.stopRcloneBackend()
-    if (!stopped) {
-      throw new Error(t('mount.messages.failedToStopService'))
-    }
-  } catch (error: any) {
-    console.error(error.message || t('mount.messages.failedToStopService'))
+    console.error(error.message || t('mount.messages.failedToLoadConfigs'))
   }
 }
 
@@ -487,13 +472,9 @@ const shouldShowWebdavTip = computed(() => {
 
 onMounted(async () => {
   document.addEventListener('keydown', handleKeydown)
-  rcloneStore.checkRcloneBackendStatus()
   appStore.loadRemoteConfigs()
   appStore.loadMountInfos()
   mountRefreshInterval = setInterval(appStore.loadMountInfos, 15 * 1000)
-  backendStatusCheckInterval = setInterval(() => {
-    rcloneStore.checkRcloneBackendStatus()
-  }, 15 * 1000)
   rcloneStore.init()
 
   // Check rclone availability on Linux
@@ -507,9 +488,6 @@ onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
   if (mountRefreshInterval) {
     clearInterval(mountRefreshInterval)
-  }
-  if (backendStatusCheckInterval) {
-    clearInterval(backendStatusCheckInterval)
   }
 })
 </script>
@@ -548,19 +526,9 @@ onUnmounted(() => {
         </div>
 
         <div class="header-actions">
-          <div class="service-indicator" :class="{ active: rcloneStore.serviceRunning }">
-            <div class="indicator-dot"></div>
-            <span class="indicator-text">
-              {{ rcloneStore.serviceRunning ? t('mount.service.running') : t('mount.service.stopped') }}
-            </span>
-            <button
-              :class="['service-toggle', { active: rcloneStore.serviceRunning }]"
-              :disabled="rcloneStore.loading"
-              @click="rcloneStore.serviceRunning ? stopBackend() : startBackend()"
-            >
-              <component :is="rcloneStore.serviceRunning ? Square : Play" class="btn-icon" />
-            </button>
-          </div>
+          <button class="secondary-btn" :title="t('mount.actions.refresh')" @click="refreshData">
+            <RefreshCw class="btn-icon" />
+          </button>
           <button class="primary-btn" @click="addNewConfig">
             <Plus class="btn-icon" />
             <span>{{ t('mount.actions.addRemote') }}</span>

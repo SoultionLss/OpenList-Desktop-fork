@@ -4,7 +4,6 @@ import { computed, onMounted, ref } from 'vue'
 import CoreMonitorCard from '../components/dashboard/CoreMonitorCard.vue'
 import DocumentationCard from '../components/dashboard/DocumentationCard.vue'
 import QuickActionsCard from '../components/dashboard/QuickActionsCard.vue'
-import ServiceManagementCard from '../components/dashboard/ServiceManagementCard.vue'
 import VersionManagerCard from '../components/dashboard/VersionManagerCard.vue'
 import { useAppStore } from '../stores/app'
 
@@ -36,9 +35,6 @@ onMounted(async () => {
       </div>
       <div class="dashboard-card-wrapper">
         <CoreMonitorCard />
-      </div>
-      <div class="dashboard-card-wrapper">
-        <ServiceManagementCard />
       </div>
       <div class="dashboard-card-wrapper">
         <VersionManagerCard />

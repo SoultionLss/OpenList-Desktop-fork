@@ -80,6 +80,7 @@ interface FileItem {
   type?: string
 }
 
+// ProcessConfig for creating/registering processes
 interface ProcessConfig {
   id: string
   name: string
@@ -89,21 +90,24 @@ interface ProcessConfig {
   working_dir?: string
   env_vars?: Record<string, string>
   auto_restart: boolean
-  auto_start: boolean
-  run_as_admin: boolean
-  created_at: number
-  updated_at: number
 }
 
-interface ProcessStatus {
+// ProcessInfo returned from process manager operations
+interface ProcessInfo {
   id: string
   name: string
   is_running: boolean
   pid?: number
   started_at?: number
-  restart_count: number
-  last_exit_code?: number
   config: ProcessConfig
+}
+
+// Input for creating mount processes
+interface MountProcessInput {
+  id: string
+  name: string
+  args: string[]
+  auto_start?: boolean
 }
 
 interface UpdateAsset {

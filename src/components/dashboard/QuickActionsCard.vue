@@ -60,31 +60,8 @@
       <div class="action-section">
         <div class="section-header">
           <h4>{{ t('dashboard.quickActions.rclone') }}</h4>
-          <div v-if="isRcloneLoading" class="section-loading-indicator">
-            <Loader :size="12" class="loading-icon" />
-          </div>
         </div>
         <div class="action-buttons">
-          <button
-            :disabled="isRcloneLoading"
-            :class="[
-              'action-btn',
-              'service-indicator-btn',
-              { active: rcloneStore.serviceRunning, loading: isRcloneLoading },
-            ]"
-            @click="rcloneStore.serviceRunning ? stopBackend() : startBackend()"
-          >
-            <component :is="rcloneStore.serviceRunning ? Square : Play" v-if="!isRcloneLoading" :size="18" />
-            <Loader v-else :size="18" class="loading-icon" />
-            <span>{{
-              isRcloneLoading
-                ? t('dashboard.quickActions.processing')
-                : rcloneStore.serviceRunning
-                  ? t('dashboard.quickActions.stopRclone')
-                  : t('dashboard.quickActions.startRclone')
-            }}</span>
-          </button>
-
           <button class="action-btn config-btn" @click="openRcloneConfig">
             <Settings :size="18" />
             <span>{{ t('dashboard.quickActions.configRclone') }}</span>
@@ -145,19 +122,16 @@ import { createNewWindow } from '@/utils/common'
 
 import { useTranslation } from '../../composables/useI18n'
 import { useAppStore } from '../../stores/app'
-import { useRcloneStore } from '../../stores/rclone'
 import Card from '../ui/CardPage.vue'
 
 const { t } = useTranslation()
 const router = useRouter()
 const appStore = useAppStore()
-const rcloneStore = useRcloneStore()
 
 const isCoreRunning = computed(() => appStore.isCoreRunning)
 const isCoreLoading = computed(() => appStore.loading)
-const isRcloneLoading = computed(() => rcloneStore.loading)
 const settings = computed(() => appStore.settings)
-let statusCheckInterval: number | null = null
+const statusCheckInterval: number | null = null
 
 const firewallEnabled = ref(false)
 const firewallLoading = ref(false)
@@ -334,27 +308,6 @@ const saveSettings = async () => {
   await appStore.saveSettings()
 }
 
-const startBackend = async () => {
-  try {
-    await rcloneStore.startRcloneBackend()
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    await rcloneStore.checkRcloneBackendStatus()
-  } catch (error: any) {
-    console.error(error.message || t('mount.messages.failedToStartService'))
-  }
-}
-
-const stopBackend = async () => {
-  try {
-    const stopped = await rcloneStore.stopRcloneBackend()
-    if (!stopped) {
-      throw new Error(t('mount.messages.failedToStopService'))
-    }
-  } catch (error: any) {
-    console.error(error.message || t('mount.messages.failedToStopService'))
-  }
-}
-
 const checkFirewallStatus = async () => {
   if (!isWindows.value) return
 
@@ -446,9 +399,6 @@ const openLink = async (url: string) => {
 }
 
 onMounted(async () => {
-  await rcloneStore.checkRcloneBackendStatus()
-  statusCheckInterval = window.setInterval(rcloneStore.checkRcloneBackendStatus, 15 * 1000)
-
   await checkFirewallStatus()
 })
 

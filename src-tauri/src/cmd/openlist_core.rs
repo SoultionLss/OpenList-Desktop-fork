@@ -1,34 +1,20 @@
-use reqwest;
 use tauri::State;
 use url::Url;
 
+use crate::core::process_manager::{PROCESS_MANAGER, ProcessConfig, ProcessInfo};
 use crate::object::structs::{AppState, ServiceStatus};
-use crate::utils::api::{CreateProcessResponse, ProcessConfig, get_api_key, get_server_port};
 use crate::utils::path::{
     get_app_logs_dir, get_default_openlist_data_dir, get_openlist_binary_path,
 };
 
-#[tauri::command]
-pub async fn create_openlist_core_process(
-    auto_start: bool,
-    state: State<'_, AppState>,
-) -> Result<ProcessConfig, String> {
-    let data_dir = state
-        .app_settings
-        .read()
-        .clone()
-        .ok_or("Failed to read app settings")?
-        .openlist
-        .data_dir;
+const OPENLIST_CORE_PROCESS_ID: &str = "openlist_core";
+
+fn build_openlist_config(data_dir: String) -> Result<ProcessConfig, String> {
     let binary_path = get_openlist_binary_path()
         .map_err(|e| format!("Failed to get OpenList binary path: {e}"))?;
     let log_file_path =
         get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {e}"))?;
     let log_file_path = log_file_path.join("process_openlist_core.log");
-
-    let api_key = get_api_key();
-    let port = get_server_port();
-    let mut args = vec!["server".into()];
 
     // Use custom data dir if set, otherwise use platform-specific default
     let effective_data_dir = if !data_dir.is_empty() {
@@ -40,52 +26,79 @@ pub async fn create_openlist_core_process(
             .to_string()
     };
 
-    args.push("--data".into());
-    args.push(effective_data_dir);
-    let config = ProcessConfig {
-        id: "openlist_core".into(),
-        name: "single_openlist_core_process".into(),
+    Ok(ProcessConfig {
+        id: OPENLIST_CORE_PROCESS_ID.into(),
+        name: "openlist_core_process".into(),
         bin_path: binary_path.to_string_lossy().into_owned(),
-        args,
+        args: vec!["server".into(), "--data".into(), effective_data_dir],
         log_file: log_file_path.to_string_lossy().into_owned(),
         working_dir: binary_path
             .parent()
             .map(|p| p.to_string_lossy().into_owned()),
         env_vars: None,
         auto_restart: true,
-        auto_start,
-        run_as_admin: false,
-        created_at: 0,
-        updated_at: 0,
-    };
-    let client = reqwest::Client::new();
-    let response = client
-        .post(format!("http://127.0.0.1:{port}/api/v1/processes"))
-        .json(&config)
-        .header("Authorization", format!("Bearer {api_key}"))
-        .send()
-        .await
-        .map_err(|e| format!("Failed to send request: {e}"))?;
-    if response.status().is_success() {
-        let response_text = response
-            .text()
-            .await
-            .map_err(|e| format!("Failed to read response text: {e}"))?;
-        let process_config = match serde_json::from_str::<CreateProcessResponse>(&response_text) {
-            Ok(process_config) => process_config,
-            Err(e) => {
-                return Err(format!(
-                    "Failed to parse response: {e}, response: {response_text}"
-                ));
-            }
-        };
-        Ok(process_config.data)
-    } else {
-        Err(format!(
-            "Failed to create OpenList Core process: {}",
-            response.status()
-        ))
+    })
+}
+
+#[tauri::command]
+pub async fn create_openlist_core_process(
+    state: State<'_, AppState>,
+) -> Result<ProcessInfo, String> {
+    let data_dir = state
+        .app_settings
+        .read()
+        .clone()
+        .ok_or("Failed to read app settings")?
+        .openlist
+        .data_dir;
+
+    let config = build_openlist_config(data_dir)?;
+
+    if PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
+        let info = PROCESS_MANAGER.get_status(OPENLIST_CORE_PROCESS_ID)?;
+        if !info.is_running {
+            return PROCESS_MANAGER.start(OPENLIST_CORE_PROCESS_ID);
+        }
+        return Ok(info);
     }
+
+    PROCESS_MANAGER.register_and_start(config)
+}
+
+#[tauri::command]
+pub async fn start_openlist_core(_state: State<'_, AppState>) -> Result<ProcessInfo, String> {
+    if !PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
+        return Err(
+            "OpenList Core process not registered. Call create_openlist_core_process first.".into(),
+        );
+    }
+    PROCESS_MANAGER.start(OPENLIST_CORE_PROCESS_ID)
+}
+
+#[tauri::command]
+pub async fn stop_openlist_core(_state: State<'_, AppState>) -> Result<ProcessInfo, String> {
+    if !PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
+        return Err("OpenList Core process not registered.".into());
+    }
+    PROCESS_MANAGER.stop(OPENLIST_CORE_PROCESS_ID)
+}
+
+#[tauri::command]
+pub async fn restart_openlist_core(state: State<'_, AppState>) -> Result<ProcessInfo, String> {
+    if !PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
+        return create_openlist_core_process(state).await;
+    }
+    PROCESS_MANAGER.restart(OPENLIST_CORE_PROCESS_ID)
+}
+
+#[tauri::command]
+pub async fn get_openlist_core_process_status(
+    _state: State<'_, AppState>,
+) -> Result<ProcessInfo, String> {
+    if !PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
+        return Err("OpenList Core process not registered.".into());
+    }
+    PROCESS_MANAGER.get_status(OPENLIST_CORE_PROCESS_ID)
 }
 
 #[tauri::command]
@@ -109,7 +122,12 @@ pub async fn get_openlist_core_status(state: State<'_, AppState>) -> Result<Serv
     let port = url.port_or_known_default();
 
     let health_url = format!("{health_check_url}/ping");
-    let local_pid = None;
+
+    // Get PID from process manager if available
+    let local_pid = PROCESS_MANAGER
+        .get_status(OPENLIST_CORE_PROCESS_ID)
+        .ok()
+        .and_then(|info| info.pid);
 
     match reqwest::get(&health_url).await {
         Ok(response) => {
@@ -126,4 +144,9 @@ pub async fn get_openlist_core_status(state: State<'_, AppState>) -> Result<Serv
             port,
         }),
     }
+}
+
+#[tauri::command]
+pub async fn get_openlist_core_logs(lines: Option<usize>) -> Result<Vec<String>, String> {
+    PROCESS_MANAGER.read_logs(OPENLIST_CORE_PROCESS_ID, lines.unwrap_or(100))
 }

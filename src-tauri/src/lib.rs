@@ -14,29 +14,24 @@ use cmd::custom_updater::{
     is_auto_check_enabled, set_auto_check_enabled,
 };
 use cmd::firewall::{add_firewall_rule, check_firewall_rule, remove_firewall_rule};
-use cmd::http_api::{
-    delete_process, get_process_list, restart_process, start_process, stop_process, update_process,
-};
 use cmd::logs::{
     clear_logs, get_admin_password, get_logs, reset_admin_password, set_admin_password,
 };
-use cmd::openlist_core::{create_openlist_core_process, get_openlist_core_status};
+use cmd::openlist_core::{
+    create_openlist_core_process, get_openlist_core_logs, get_openlist_core_process_status,
+    get_openlist_core_status, restart_openlist_core, start_openlist_core, stop_openlist_core,
+};
 use cmd::os_operate::{
     get_available_versions, list_files, open_file, open_folder, open_logs_directory,
     open_openlist_data_dir, open_rclone_config_file, open_settings_file, open_url,
     open_url_in_browser, select_directory, update_tool_version,
 };
-use cmd::rclone_core::{
-    check_rclone_available, create_and_start_rclone_backend, create_rclone_backend_process,
-    get_rclone_backend_status,
-};
+use cmd::rclone_core::check_rclone_available;
 use cmd::rclone_mount::{
     check_mount_status, create_rclone_mount_remote_process, get_mount_info_list,
-    rclone_create_remote, rclone_delete_remote, rclone_list_config, rclone_list_mounts,
-    rclone_list_remotes, rclone_mount_remote, rclone_unmount_remote, rclone_update_remote,
-};
-use cmd::service::{
-    check_service_status, install_service, start_service, stop_service, uninstall_service,
+    get_mount_process_logs, rclone_create_remote, rclone_delete_remote, rclone_list_config,
+    rclone_list_remotes, rclone_update_remote, start_mount_process, stop_mount_process,
+    unmount_remote,
 };
 use object::structs::*;
 
@@ -118,29 +113,31 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
-            get_process_list,
-            start_process,
-            stop_process,
-            restart_process,
-            update_process,
-            delete_process,
+            // OpenList Core management
             create_openlist_core_process,
+            start_openlist_core,
+            stop_openlist_core,
+            restart_openlist_core,
             get_openlist_core_status,
-            get_rclone_backend_status,
+            get_openlist_core_process_status,
+            get_openlist_core_logs,
+            // Rclone availability check
             check_rclone_available,
-            create_rclone_backend_process,
-            create_and_start_rclone_backend,
+            // Rclone remotes configuration (direct file management)
             rclone_list_config,
             rclone_list_remotes,
-            rclone_list_mounts,
-            rclone_update_remote,
             rclone_create_remote,
+            rclone_update_remote,
             rclone_delete_remote,
-            rclone_mount_remote,
-            rclone_unmount_remote,
+            // Rclone mount process management
             create_rclone_mount_remote_process,
+            start_mount_process,
+            stop_mount_process,
+            unmount_remote,
             check_mount_status,
             get_mount_info_list,
+            get_mount_process_logs,
+            // File operations
             list_files,
             open_file,
             open_folder,
@@ -150,30 +147,31 @@ pub fn run() {
             open_settings_file,
             open_url,
             open_url_in_browser,
+            // Settings
             save_settings,
             save_settings_with_update_port,
             load_settings,
             reset_settings,
+            // Logs
             get_logs,
             clear_logs,
             get_admin_password,
             reset_admin_password,
             set_admin_password,
+            // Binary management
             get_binary_version,
             select_directory,
             get_available_versions,
             update_tool_version,
+            // Tray
             update_tray_menu,
             update_tray_menu_delayed,
             force_update_tray_menu,
-            install_service,
-            uninstall_service,
-            check_service_status,
-            stop_service,
-            start_service,
+            // Firewall
             check_firewall_rule,
             add_firewall_rule,
             remove_firewall_rule,
+            // Updates
             check_for_updates,
             download_update,
             install_update_and_restart,

@@ -146,26 +146,6 @@
 
       <div v-if="activeTab === 'rclone'" class="tab-content">
         <div class="settings-section">
-          <h2>{{ t('settings.rclone.api.title') }}</h2>
-          <p>{{ t('settings.rclone.api.subtitle') }}</p>
-
-          <div class="form-grid">
-            <div class="form-group">
-              <label>{{ t('settings.rclone.api.port.label') }}</label>
-              <input
-                v-model.number="rcloneSettings.api_port"
-                type="number"
-                class="form-input"
-                :placeholder="t('settings.rclone.api.port.placeholder')"
-                min="1"
-                max="65535"
-              />
-              <small>{{ t('settings.rclone.api.port.help') }}</small>
-            </div>
-          </div>
-        </div>
-
-        <div class="settings-section">
           <h2>{{ t('settings.rclone.config.title') }}</h2>
           <p>{{ t('settings.rclone.config.subtitle') }}</p>
 
@@ -386,7 +366,6 @@ const rcloneSettings = reactive({ ...appStore.settings.rclone })
 const appSettings = reactive({ ...appStore.settings.app })
 let originalOpenlistPort = openlistCoreSettings.port || 5244
 let originalDataDir = openlistCoreSettings.data_dir
-let originalRcloneApiPort = rcloneSettings.api_port || 45572
 let originalAdminPassword = appStore.settings.app.admin_password || ''
 
 watch(autoStartApp, async newValue => {
@@ -431,7 +410,6 @@ onMounted(async () => {
   if (openlistCoreSettings.ssl_enabled === undefined) openlistCoreSettings.ssl_enabled = false
 
   if (!rcloneSettings.config) rcloneSettings.config = {}
-  if (!rcloneSettings.api_port) rcloneSettings.api_port = 45572
 
   rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
   if (!appSettings.theme) appSettings.theme = 'light'
@@ -444,7 +422,6 @@ onMounted(async () => {
   if (!appSettings.admin_password) appSettings.admin_password = ''
   originalOpenlistPort = openlistCoreSettings.port || 5244
   originalDataDir = openlistCoreSettings.data_dir
-  originalRcloneApiPort = rcloneSettings.api_port || 45572
 
   // Load current admin password
   await loadCurrentAdminPassword()
@@ -487,11 +464,7 @@ const handleSave = async () => {
 
     const needsPasswordUpdate = originalAdminPassword !== appSettings.admin_password && appSettings.admin_password
 
-    if (
-      originalOpenlistPort !== openlistCoreSettings.port ||
-      originalDataDir !== openlistCoreSettings.data_dir ||
-      originalRcloneApiPort !== rcloneSettings.api_port
-    ) {
+    if (originalOpenlistPort !== openlistCoreSettings.port || originalDataDir !== openlistCoreSettings.data_dir) {
       await appStore.saveSettingsWithCoreUpdate()
     } else {
       await appStore.saveSettings()
@@ -513,7 +486,6 @@ const handleSave = async () => {
     }
 
     originalOpenlistPort = openlistCoreSettings.port || 5244
-    originalRcloneApiPort = rcloneSettings.api_port || 45572
     originalDataDir = openlistCoreSettings.data_dir
   } catch (error) {
     message.value = t('settings.saveFailed')

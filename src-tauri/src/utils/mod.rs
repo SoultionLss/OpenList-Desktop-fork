@@ -1,4 +1,3 @@
-pub mod api;
 pub mod args;
 pub mod github_proxy;
 pub mod init_log;
