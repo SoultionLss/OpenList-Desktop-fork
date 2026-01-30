@@ -95,10 +95,11 @@ fn filter_assets_for_platform(assets: &[GitHubAsset]) -> Vec<UpdateAsset> {
 
             let is_for_platform = match os {
                 "windows" => {
-                    name.contains("windows")
+                    (name.contains("windows")
                         || name.contains("win")
                         || name.contains("msvc")
-                        || name.contains("exe")
+                        || name.contains("exe"))
+                        && !name.contains("dmg")
                 }
                 "macos" => {
                     name.contains("darwin")
