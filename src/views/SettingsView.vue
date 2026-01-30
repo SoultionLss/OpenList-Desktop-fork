@@ -144,7 +144,12 @@
                 @click="handleOpenRcloneConfig"
               />
 
-              <textarea v-model="rcloneConfigJson" class="form-textarea" placeholder="" rows="10"></textarea>
+              <textarea
+                v-model="rcloneConfigJson"
+                class="p-3 border border-border rounded-md text-sm bg-surface text-main resize-y min-h-50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                placeholder=""
+                rows="10"
+              ></textarea>
             </div>
           </SettingSection>
         </div>
@@ -494,5 +499,3 @@ const loadCurrentAdminPassword = async () => {
   }
 }
 </script>
-
-<style scoped src="./css/SettingsView.css"></style>
