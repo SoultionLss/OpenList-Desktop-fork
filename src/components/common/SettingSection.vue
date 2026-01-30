@@ -3,7 +3,7 @@
     <div class="mb-2 flex items-start gap-3">
       <div
         v-if="icon"
-        class="mb-2 flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg bg-accent text-white"
+        class="mb-2 flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-lg bg-accent text-white"
       >
         <slot name="icon">
           <component :is="icon" :size="iconSize" />
