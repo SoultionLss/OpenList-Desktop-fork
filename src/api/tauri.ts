@@ -101,6 +101,11 @@ export class TauriAPI {
     listen: (cb: (action: string) => void) => listen('tray-core-action', e => cb(e.payload as string)),
   }
 
+  // --- macOS Dock management ---
+  static dock = {
+    setVisibility: (visible: boolean): Promise<boolean> => call('set_dock_icon_visibility', { visible }),
+  }
+
   // --- Firewall management ---
   static firewall = {
     check: (): Promise<boolean> => call('check_firewall_rule'),

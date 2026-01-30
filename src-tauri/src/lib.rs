@@ -17,6 +17,7 @@ use cmd::firewall::{add_firewall_rule, check_firewall_rule, remove_firewall_rule
 use cmd::logs::{
     clear_logs, get_admin_password, get_logs, reset_admin_password, set_admin_password,
 };
+use cmd::macos_dock::set_dock_icon_visibility;
 use cmd::openlist_core::{
     create_openlist_core_process, get_openlist_core_logs, get_openlist_core_process_status,
     get_openlist_core_status, restart_openlist_core, start_openlist_core, stop_openlist_core,
@@ -167,6 +168,8 @@ pub fn run() {
             update_tray_menu,
             update_tray_menu_delayed,
             force_update_tray_menu,
+            // macOS dock
+            set_dock_icon_visibility,
             // Firewall
             check_firewall_rule,
             add_firewall_rule,
@@ -187,6 +190,21 @@ pub fn run() {
             utils::path::get_app_config_dir()?;
             let settings = conf::config::MergedSettings::load().unwrap_or_default();
             let show_window = settings.app.show_window_on_startup.unwrap_or(true);
+
+            // Apply macOS dock icon visibility setting
+            #[cfg(target_os = "macos")]
+            {
+                let hide_dock_icon = settings.app.hide_dock_icon.unwrap_or(false);
+                if hide_dock_icon {
+                    if let Err(e) =
+                        app_handle.set_activation_policy(tauri::ActivationPolicy::Accessory)
+                    {
+                        log::error!("Failed to set activation policy: {e}");
+                    } else {
+                        log::info!("macOS dock icon hidden on startup (tray-only mode)");
+                    }
+                }
+            }
 
             let app_state = app.state::<AppState>();
             if let Err(e) = app_state.init(app_handle) {

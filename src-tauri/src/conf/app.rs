@@ -15,6 +15,7 @@ pub struct AppConfig {
     pub custom_openlist_binary_path: Option<String>,
     pub custom_rclone_binary_path: Option<String>,
     pub custom_rclone_config_path: Option<String>,
+    pub hide_dock_icon: Option<bool>,
 }
 
 impl AppConfig {
@@ -32,6 +33,7 @@ impl AppConfig {
             custom_openlist_binary_path: None,
             custom_rclone_binary_path: None,
             custom_rclone_config_path: None,
+            hide_dock_icon: Some(false),
         }
     }
 }

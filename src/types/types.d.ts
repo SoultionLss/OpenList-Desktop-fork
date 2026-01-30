@@ -56,6 +56,7 @@ interface AppConfig {
   custom_openlist_binary_path?: string
   custom_rclone_binary_path?: string
   custom_rclone_config_path?: string
+  hide_dock_icon?: boolean
 }
 
 interface MergedSettings {

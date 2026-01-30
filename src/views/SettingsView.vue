@@ -257,6 +257,16 @@
                 :tips="t('settings.app.showWindowOnStartup.description')"
               />
             </SettingCard>
+            <SettingCard v-if="isMacOs" p1>
+              <CustomSwitch
+                v-model="appSettings.hide_dock_icon"
+                :title="t('settings.app.hideDockIcon.title')"
+                no-border
+                small
+                class="w-full"
+                :tips="t('settings.app.hideDockIcon.description')"
+              />
+            </SettingCard>
           </SettingSection>
 
           <SettingSection :icon="Github" :title="t('settings.app.ghProxy.title')">
@@ -387,6 +397,7 @@ onMounted(async () => {
   if (appSettings.gh_proxy_api === undefined) appSettings.gh_proxy_api = false
   if (appSettings.open_links_in_browser === undefined) appSettings.open_links_in_browser = false
   if (appSettings.show_window_on_startup === undefined) appSettings.show_window_on_startup = true
+  if (appSettings.hide_dock_icon === undefined) appSettings.hide_dock_icon = false
   if (!appSettings.admin_password) appSettings.admin_password = ''
   if (!appSettings.custom_openlist_binary_path) appSettings.custom_openlist_binary_path = ''
   if (!appSettings.custom_rclone_binary_path) appSettings.custom_rclone_binary_path = ''
@@ -413,6 +424,10 @@ const hasUnsavedChanges = computed(() => {
     JSON.stringify(appSettings) !== JSON.stringify(appStore.settings.app) ||
     rcloneConfigChanged
   )
+})
+
+const isMacOs = computed(() => {
+  return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'darwin'
 })
 
 const handleSave = async () => {

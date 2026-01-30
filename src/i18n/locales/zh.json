@@ -347,6 +347,10 @@
         "subtitle": "使用代理服务加速 GitHub",
         "title": "GitHub 代理"
       },
+      "hideDockIcon": {
+        "description": "隐藏程序坞图标，仅在菜单栏托盘显示（仅限 macOS，需要重启应用生效）",
+        "title": "隐藏程序坞图标（仅托盘）"
+      },
       "links": {
         "openInBrowser": {
           "description": "使用系统默认浏览器而不是内置窗口",

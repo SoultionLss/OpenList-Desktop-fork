@@ -347,6 +347,10 @@
         "subtitle": "Accelerate GitHub with proxy service",
         "title": "GitHub Proxy"
       },
+      "hideDockIcon": {
+        "description": "Hide the application from the Dock and only show in the menu bar tray (macOS only, requires restart)",
+        "title": "Hide Dock icon (tray only)"
+      },
       "links": {
         "openInBrowser": {
           "description": "Use system default browser instead of built-in window",
