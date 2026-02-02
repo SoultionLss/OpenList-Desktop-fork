@@ -100,6 +100,12 @@ pub async fn save_settings_with_update_port(
     } else {
         false
     };
+    let needs_rclone_recreation = if let Some(old) = &old_settings {
+        old.rclone.binary_path != settings.rclone.binary_path
+            || old.rclone.rclone_conf_path != settings.rclone.rclone_conf_path
+    } else {
+        false
+    };
 
     state.update_settings(settings.clone());
     persist_app_settings(&settings)?;

@@ -25,6 +25,7 @@
       <button
         v-for="key in keyList"
         :key="key"
+        :disabled="disabled"
         class="block min-h-[unset] w-full cursor-pointer border-none bg-bg-tertiary px-2 py-1 text-center text-sm leading-[1.4] text-main transition-all duration-fast ease-apple hover:bg-accent/50"
         @click="selectItem(key)"
       >
@@ -105,6 +106,7 @@ const {
   fronticon = true,
   keyList,
   icon = null,
+  disabled = false,
   tight = true,
   iconSize = 18,
   customFrontIcon = null,
@@ -115,6 +117,7 @@ const {
   iconSize?: number
   tight?: boolean
   placeholder?: string
+  disabled?: boolean
   fronticon?: boolean
   customFrontIcon?: any
   keyList: string[]

@@ -11,8 +11,9 @@ interface OpenListCoreConfig {
 }
 
 interface RcloneConfig {
-  config?: any // Flexible JSON object for rclone configuration
-  api_port: number // Port for the Rclone API server
+  mount_config: Record<string, RcloneFormConfig>
+  binary_path?: string
+  rclone_conf_path?: string
 }
 
 interface RcloneWebdavConfig {
@@ -53,9 +54,6 @@ interface AppConfig {
   show_window_on_startup?: boolean
   log_filter_level?: string
   log_filter_source?: string
-  // Custom binary/config paths
-  custom_rclone_binary_path?: string
-  custom_rclone_config_path?: string
   hide_dock_icon?: boolean
 }
 

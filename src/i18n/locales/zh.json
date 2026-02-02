@@ -51,8 +51,8 @@
         "removed": "端口移除成功"
       },
       "manageMounts": "管理挂载",
-      "openlistService": "OpenList 核心",
       "openWeb": "网页",
+      "openlistService": "OpenList 核心",
       "processing": "处理中...",
       "quickSettings": "快速设置",
       "rclone": "RClone",
@@ -189,6 +189,7 @@
       "edit": "编辑",
       "mount": "挂载",
       "openInExplorer": "在文件管理器中打开",
+      "refresh": "刷新",
       "unmount": "卸载"
     },
     "config": {
@@ -416,15 +417,15 @@
     "resetSuccess": "设置已重置为默认值！",
     "resetToDefaults": "重置为默认值",
     "saveChanges": "保存更改",
-    "saved": "设置保存成功！",
     "saveFailed": "保存设置失败，请重试。",
+    "saved": "设置保存成功！",
     "service": {
       "admin": {
         "currentPassword": "管理员密码",
         "help": "输入自定义管理员密码或点击重置按钮生成新的随机密码。点击'保存更改'将密码应用到 OpenList 核心。",
         "passwordPlaceholder": "输入管理员密码或点击重置生成",
-        "passwordUpdated": "管理员密码更新成功！",
         "passwordUpdateFailed": "更新管理员密码失败。请查看日志了解详细信息。",
+        "passwordUpdated": "管理员密码更新成功！",
         "resetFailed": "重置管理员密码失败。请查看日志了解详细信息。",
         "resetSuccess": "管理员密码重置成功！已生成新密码并保存。",
         "resetTitle": "重置管理员密码为新的随机值",
@@ -532,7 +533,7 @@
     "startingDownload": "开始下载...",
     "subtitle": "保持应用程序最新，获取最新功能和安全改进",
     "title": "应用更新",
-    "updateAvailable": "发现新版本",
-    "upToDate": "应用已是最新版本"
+    "upToDate": "应用已是最新版本",
+    "updateAvailable": "发现新版本"
   }
 }

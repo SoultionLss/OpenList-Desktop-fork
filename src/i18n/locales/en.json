@@ -51,8 +51,8 @@
         "removed": "Port removed successfully"
       },
       "manageMounts": "Manage Mounts",
-      "openlistService": "OpenList Core",
       "openWeb": "Web",
+      "openlistService": "OpenList Core",
       "processing": "Processing...",
       "quickSettings": "Quick Settings",
       "rclone": "RClone",
@@ -189,6 +189,7 @@
       "edit": "Edit",
       "mount": "Mount",
       "openInExplorer": "Open in Explorer",
+      "refresh": "Refresh",
       "unmount": "Unmount"
     },
     "config": {
@@ -416,15 +417,15 @@
     "resetSuccess": "Settings reset to defaults successfully!",
     "resetToDefaults": "Reset to defaults",
     "saveChanges": "Save Changes",
-    "saved": "Settings saved successfully!",
     "saveFailed": "Failed to save settings. Please try again.",
+    "saved": "Settings saved successfully!",
     "service": {
       "admin": {
         "currentPassword": "Admin Password",
         "help": "Enter a custom admin password or click the reset button to generate a new random password. Click 'Save Changes' to apply the password to OpenList Core.",
         "passwordPlaceholder": "Enter admin password or click reset to generate",
-        "passwordUpdated": "Admin password updated successfully!",
         "passwordUpdateFailed": "Failed to update admin password. Please check the logs for more details.",
+        "passwordUpdated": "Admin password updated successfully!",
         "resetFailed": "Failed to reset admin password. Please check the logs for more details.",
         "resetSuccess": "Admin password reset successfully! New password has been generated and saved.",
         "resetTitle": "Reset admin password to a new random value",
@@ -532,7 +533,7 @@
     "startingDownload": "Starting download...",
     "subtitle": "Keep your application up to date with the latest features and security improvements",
     "title": "App Updates",
-    "updateAvailable": "Update Available",
-    "upToDate": "App is up to date"
+    "upToDate": "App is up to date",
+    "updateAvailable": "Update Available"
   }
 }

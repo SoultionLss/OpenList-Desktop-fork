@@ -42,9 +42,11 @@
 import { XIcon } from 'lucide-vue-next'
 
 const visible = defineModel<boolean>('visible')
+const emit = defineEmits(['close'])
 
 function handleClose() {
   visible.value = false
+  emit('close')
 }
 
 const {

@@ -5,7 +5,7 @@ use std::process::Command;
 use tauri::State;
 
 use crate::object::structs::AppState;
-use crate::utils::path::{get_app_logs_dir, get_default_openlist_data_dir, get_service_log_path};
+use crate::utils::path::{get_app_logs_dir, get_default_openlist_data_dir};
 
 fn generate_random_password() -> String {
     use std::collections::hash_map::DefaultHasher;
@@ -115,7 +115,6 @@ async fn execute_openlist_admin_set(
 
 fn resolve_log_paths(source: Option<&str>, data_dir: Option<&str>) -> Result<Vec<PathBuf>, String> {
     let logs_dir = get_app_logs_dir()?;
-    let service_path = get_service_log_path()?;
 
     let openlist_log_base = if let Some(dir) = data_dir.filter(|d| !d.is_empty()) {
         PathBuf::from(dir)
@@ -129,14 +128,10 @@ fn resolve_log_paths(source: Option<&str>, data_dir: Option<&str>) -> Result<Vec
         Some("openlist") => paths.push(openlist_log_base.join("log/log.log")),
         Some("app") => paths.push(logs_dir.join("app.log")),
         Some("rclone") => paths.push(logs_dir.join("process_rclone.log")),
-        Some("openlist_core") => paths.push(logs_dir.join("process_openlist_core.log")),
-        Some("service") => paths.push(service_path),
         Some("all") => {
             paths.push(openlist_log_base.join("log/log.log"));
             paths.push(logs_dir.join("app.log"));
             paths.push(logs_dir.join("process_rclone.log"));
-            paths.push(logs_dir.join("process_openlist_core.log"));
-            paths.push(service_path);
         }
         _ => return Err("Invalid log source".into()),
     }

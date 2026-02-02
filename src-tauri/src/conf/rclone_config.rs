@@ -2,10 +2,78 @@ use std::collections::HashMap;
 use std::fs;
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
+use std::process::Command;
 
 use serde::{Deserialize, Serialize};
+use tauri::State;
 
-use crate::utils::path::{get_rclone_config_path, get_rclone_config_path_with_custom};
+use crate::object::structs::AppState;
+use crate::utils::path::{
+    get_rclone_binary_path_with_custom, get_rclone_config_path, get_rclone_config_path_with_custom,
+};
+
+pub fn obscure_password(password: &str, state: State<'_, AppState>) -> Result<String, String> {
+    let settings = state
+        .app_settings
+        .read()
+        .clone()
+        .ok_or("Failed to read app settings")?;
+    if password.is_empty() {
+        return Ok(String::new());
+    }
+
+    let rclone_bin = get_rclone_binary_path_with_custom(settings.rclone.binary_path.as_deref())?;
+
+    let mut cmd = Command::new(&rclone_bin);
+    cmd.args(["obscure", password]);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+    let output = cmd
+        .output()
+        .map_err(|e| format!("Failed to run rclone obscure: {e}"))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("rclone obscure failed: {stderr}"));
+    }
+
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
+
+pub fn reveal_password(obscured: &str, state: State<'_, AppState>) -> Result<String, String> {
+    let settings = state
+        .app_settings
+        .read()
+        .clone()
+        .ok_or("Failed to read app settings")?;
+    if obscured.is_empty() {
+        return Ok(String::new());
+    }
+
+    let rclone_bin = get_rclone_binary_path_with_custom(settings.rclone.binary_path.as_deref())?;
+
+    let mut cmd = Command::new(&rclone_bin);
+
+    cmd.args(["reveal", obscured]);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+    let output = cmd
+        .output()
+        .map_err(|e| format!("Failed to run rclone reveal: {e}"))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("rclone reveal failed: {stderr}"));
+    }
+
+    Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+}
 
 /// Represents a remote configuration entry in rclone.conf
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -24,13 +92,13 @@ pub struct RcloneConfigFile {
 }
 
 impl RcloneConfigFile {
-    pub fn load() -> Result<Self, String> {
-        let config_path =
-            get_rclone_config_path().map_err(|e| format!("Failed to get config path: {e}"))?;
-        Self::load_from_path(&config_path)
-    }
-
-    pub fn load_with_custom(custom_path: Option<&str>) -> Result<Self, String> {
+    pub fn load_with_custom(state: State<'_, AppState>) -> Result<Self, String> {
+        let settings = state
+            .app_settings
+            .read()
+            .clone()
+            .ok_or("Failed to read app settings")?;
+        let custom_path = settings.rclone.rclone_conf_path.as_deref();
         let config_path = get_rclone_config_path_with_custom(custom_path)
             .map_err(|e| format!("Failed to get config path: {e}"))?;
         let mut config = Self::load_from_path(&config_path)?;
@@ -136,10 +204,6 @@ impl RcloneConfigFile {
         Ok(())
     }
 
-    pub fn get_remote(&self, name: &str) -> Option<&RcloneRemoteConfig> {
-        self.remotes.get(name)
-    }
-
     pub fn set_remote(&mut self, remote: RcloneRemoteConfig) {
         self.remotes.insert(remote.name.clone(), remote);
     }
@@ -168,12 +232,16 @@ pub struct WebDavRemoteConfig {
 }
 
 impl WebDavRemoteConfig {
-    /// Convert to generic RcloneRemoteConfig
-    pub fn to_rclone_config(&self) -> RcloneRemoteConfig {
+    pub fn to_rclone_config_with_obscured_pass(
+        &self,
+        state: State<'_, AppState>,
+    ) -> Result<RcloneRemoteConfig, String> {
+        let obscured_pass = obscure_password(&self.pass, state)?;
+
         let mut options = HashMap::new();
         options.insert("url".to_string(), self.url.clone());
         options.insert("user".to_string(), self.user.clone());
-        options.insert("pass".to_string(), self.pass.clone());
+        options.insert("pass".to_string(), obscured_pass);
 
         if let Some(vendor) = &self.vendor {
             if !vendor.is_empty() {
@@ -181,59 +249,10 @@ impl WebDavRemoteConfig {
             }
         }
 
-        RcloneRemoteConfig {
+        Ok(RcloneRemoteConfig {
             name: self.name.clone(),
             remote_type: "webdav".to_string(),
             options,
-        }
-    }
-
-    /// Create from generic RcloneRemoteConfig
-    pub fn from_rclone_config(config: &RcloneRemoteConfig) -> Option<Self> {
-        if config.remote_type != "webdav" {
-            return None;
-        }
-
-        Some(Self {
-            name: config.name.clone(),
-            url: config.options.get("url").cloned().unwrap_or_default(),
-            vendor: config.options.get("vendor").cloned(),
-            user: config.options.get("user").cloned().unwrap_or_default(),
-            pass: config.options.get("pass").cloned().unwrap_or_default(),
         })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_empty_config() {
-        let config = RcloneConfigFile::default();
-        assert!(config.remotes.is_empty());
-    }
-
-    #[test]
-    fn test_webdav_conversion() {
-        let webdav = WebDavRemoteConfig {
-            name: "test".to_string(),
-            url: "https://example.com/webdav".to_string(),
-            vendor: Some("other".to_string()),
-            user: "user".to_string(),
-            pass: "pass".to_string(),
-        };
-
-        let rclone = webdav.to_rclone_config();
-        assert_eq!(rclone.name, "test");
-        assert_eq!(rclone.remote_type, "webdav");
-        assert_eq!(
-            rclone.options.get("url").unwrap(),
-            "https://example.com/webdav"
-        );
-
-        let converted_back = WebDavRemoteConfig::from_rclone_config(&rclone).unwrap();
-        assert_eq!(converted_back.name, webdav.name);
-        assert_eq!(converted_back.url, webdav.url);
     }
 }

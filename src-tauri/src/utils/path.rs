@@ -164,11 +164,9 @@ pub fn get_rclone_config_path() -> Result<PathBuf, String> {
     Ok(rclone_config_path)
 }
 
-/// Get Rclone config path, with optional custom path override
 pub fn get_rclone_config_path_with_custom(custom_path: Option<&str>) -> Result<PathBuf, String> {
     if let Some(path) = custom_path.filter(|p| !p.is_empty()) {
         let custom = PathBuf::from(path);
-        // Create the config file if it doesn't exist
         if !custom.exists() {
             if let Some(parent) = custom.parent() {
                 let _ = fs::create_dir_all(parent);
@@ -183,22 +181,4 @@ pub fn get_rclone_config_path_with_custom(custom_path: Option<&str>) -> Result<P
 
 pub fn get_default_openlist_data_dir() -> Result<PathBuf, String> {
     Ok(get_user_data_dir()?.join("data"))
-}
-
-pub fn get_service_log_path() -> Result<PathBuf, String> {
-    #[cfg(target_os = "macos")]
-    {
-        let home = env::var("HOME").map_err(|_| "Failed to get HOME environment variable")?;
-        let logs = PathBuf::from(home)
-            .join("Library")
-            .join("Logs")
-            .join("OpenList Desktop")
-            .join("openlist-desktop-service.log");
-        Ok(logs)
-    }
-
-    #[cfg(not(target_os = "macos"))]
-    {
-        Ok(get_app_logs_dir()?.join("openlist-desktop-service.log"))
-    }
 }

@@ -1,3 +1,298 @@
+<template>
+  <div
+    class="relative flex h-full w-full items-center justify-center"
+    :class="{ fullscreen: isFullscreen, compact: isCompactMode }"
+  >
+    <div class="relative z-1 flex h-full w-full flex-col items-center justify-start gap-2 rounded-xl border-none p-2">
+      <div
+        class="flex w-full items-center justify-between gap-4 rounded-2xl border border-border-secondary px-2 py-1 shadow-sm"
+      >
+        <div class="flex flex-wrap items-center gap-1">
+          <CustomButton
+            :icon="isPaused ? Play : Pause"
+            :title="isPaused ? t('logs.toolbar.resume') : t('logs.toolbar.pause')"
+            :type="isPaused ? 'primary' : 'secondary'"
+            :class="'border-none'"
+            text=""
+            @click="togglePause"
+          />
+          <CustomButton
+            :icon="RotateCcw"
+            :title="t('logs.toolbar.refresh')"
+            type="secondary"
+            :class="'border-none'"
+            text=""
+            @click="refreshLogs"
+          />
+
+          <div class="toolbar-separator"></div>
+          <CustomButton
+            :icon="Filter"
+            :title="t('logs.toolbar.showFilters')"
+            :type="showFilters ? 'primary' : 'secondary'"
+            :class="'border-none'"
+            text=""
+            @click="showFilters = !showFilters"
+          />
+
+          <CustomButton
+            :icon="Settings"
+            :title="t('logs.toolbar.settings')"
+            :type="showSettings ? 'primary' : 'secondary'"
+            :class="'border-none'"
+            text=""
+            @click="showSettings = !showSettings"
+          />
+        </div>
+
+        <div class="flex flex-1 items-center justify-center">
+          <div class="relative flex max-w-100 w-full items-center">
+            <input
+              ref="searchInputRef"
+              v-model="searchQuery"
+              type="text"
+              :placeholder="t('logs.search.placeholder')"
+              class="w-full rounded-lg border border-border-secondary bg-bg-secondary px-8 py-1 text-sm text-main placeholder:text-secondary focus:border-accent focus:outline-none placeholder:text-xs"
+              @keydown.escape="searchQuery = ''"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-0.5">
+          <div
+            class="flex items-center gap-3 text-xs text-secondary font-['SF_Mono,monospace'] border-r border-r-border-secondary pr-3"
+          >
+            <span class="">{{
+              t('logs.stats.logsCount', { filtered: filteredLogs.length, total: appStore.logs.length })
+            }}</span>
+            <span v-if="selectedEntries.size > 0" class="bg-accent text-white px-2 py-1 rounded-md">
+              {{ t('logs.stats.selected', { count: selectedEntries.size }) }}
+            </span>
+          </div>
+
+          <CustomButton
+            :icon="Copy"
+            :title="t('logs.toolbar.copyToClipboard')"
+            :type="'secondary'"
+            :class="'border-none'"
+            :disabled="filteredLogs.length === 0"
+            text=""
+            @click="copyLogsToClipboard"
+          />
+
+          <CustomButton
+            :icon="Download"
+            :title="t('logs.toolbar.exportLogs')"
+            :type="'secondary'"
+            :class="'border-none'"
+            :disabled="filteredLogs.length === 0"
+            text=""
+            @click="exportLogs"
+          />
+
+          <CustomButton
+            :icon="Trash2"
+            :title="t('logs.toolbar.clearLogs')"
+            :type="'danger'"
+            :class="'border-none'"
+            :disabled="filteredLogs.length === 0 || filterSource === 'all'"
+            text=""
+            @click="clearLogs"
+          />
+
+          <CustomButton
+            :icon="FolderOpen"
+            :title="t('logs.toolbar.openLogsDirectory')"
+            :type="'secondary'"
+            :class="'border-none'"
+            text=""
+            @click="openLogsDirectory"
+          />
+
+          <CustomButton
+            :icon="isFullscreen ? Minimize2 : Maximize2"
+            :title="t('logs.toolbar.toggleFullscreen')"
+            :type="'secondary'"
+            :class="'border-none'"
+            text=""
+            @click="toggleFullscreen"
+          />
+        </div>
+      </div>
+
+      <div
+        v-if="showFilters"
+        class="flex w-full items-center justify-between gap-4 rounded-2xl border border-border-secondary px-4 py-2 shadow-sm"
+      >
+        <SingleSelect
+          v-model="filterLevel"
+          :key-list="logLevelList.map(item => item.key)"
+          :label="t('logs.filters.labels.level')"
+          title=""
+          :fronticon="false"
+          :placeholder="logLevelList.find(level => level.key === filterLevel)?.label || filterLevel"
+        >
+          <template #item="{ item }">
+            {{ logLevelList.find(level => level.key === item)?.label || item }}
+          </template>
+        </SingleSelect>
+        <div class="filter-group">
+          <label>{{ t('logs.filters.labels.level') }}</label>
+          <select v-model="filterLevel" class="filter-select">
+            <option value="all">{{ t('logs.filters.levels.all') }}</option>
+            <option value="debug">{{ t('logs.filters.levels.debug') }}</option>
+            <option value="info">{{ t('logs.filters.levels.info') }}</option>
+            <option value="warn">{{ t('logs.filters.levels.warn') }}</option>
+            <option value="error">{{ t('logs.filters.levels.error') }}</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>{{ t('logs.filters.labels.source') }}</label>
+          <select v-model="filterSource" class="filter-select">
+            <option value="all">{{ t('logs.filters.sources.all') }}</option>
+            <option value="openlist">{{ t('logs.filters.sources.openlist') }}</option>
+            <option value="rclone">{{ t('logs.filters.sources.rclone') }}</option>
+            <option value="app">{{ t('logs.filters.app') }}</option>
+          </select>
+        </div>
+
+        <div class="filter-actions">
+          <button class="filter-btn" :disabled="filteredLogs.length === 0" @click="selectAllVisible">
+            {{ t('logs.filters.actions.selectAll') }}
+          </button>
+
+          <button class="filter-btn" :disabled="selectedEntries.size === 0" @click="clearSelection">
+            {{ t('logs.filters.actions.clearSelection') }}
+          </button>
+
+          <label class="checkbox-label">
+            <input v-model="autoScroll" type="checkbox" class="checkbox" />
+            {{ t('logs.filters.actions.autoScroll') }}
+          </label>
+        </div>
+      </div>
+
+      <div v-if="showSettings" class="settings-panel">
+        <div class="setting-group">
+          <label>{{ t('logs.settings.fontSize') }}</label>
+          <input v-model="fontSize" type="range" min="10" max="20" class="range-input" />
+          <span class="setting-value">{{ fontSize }}px</span>
+        </div>
+
+        <div class="setting-group">
+          <label>{{ t('logs.settings.maxLines') }}</label>
+          <input v-model="maxLines" type="number" min="100" max="10000" step="100" class="number-input" />
+        </div>
+        <div class="setting-group">
+          <label class="checkbox-label">
+            <input v-model="isCompactMode" type="checkbox" class="checkbox" />
+            {{ t('logs.settings.compactMode') }}
+          </label>
+
+          <label class="checkbox-label">
+            <input v-model="stripAnsiColors" type="checkbox" class="checkbox" />
+            {{ t('logs.settings.stripAnsiColors') }}
+          </label>
+        </div>
+      </div>
+      <div class="log-container">
+        <div class="log-header">
+          <div class="log-col timestamp">{{ t('logs.headers.timestamp') }}</div>
+          <div class="log-col level">{{ t('logs.headers.level') }}</div>
+          <div class="log-col source">{{ t('logs.headers.source') }}</div>
+          <div class="log-col message">{{ t('logs.headers.message') }}</div>
+          <div class="log-col actions">
+            <button class="scroll-btn" :title="t('logs.toolbar.scrollToTop')" @click="scrollToTop">
+              <ArrowUp :size="14" />
+            </button>
+            <button class="scroll-btn" :title="t('logs.toolbar.scrollToBottom')" @click="scrollToBottom">
+              <ArrowDown :size="14" />
+            </button>
+          </div>
+        </div>
+
+        <div ref="logContainer" class="log-content" :style="{ fontSize: fontSize + 'px' }">
+          <div v-if="filteredLogs.length === 0" class="empty-state">
+            <div class="empty-icon">📄</div>
+            <h3>{{ t('logs.viewer.noLogsFound') }}</h3>
+            <p v-if="searchQuery">{{ t('logs.viewer.noLogsMatch') }}</p>
+            <p v-else>{{ t('logs.viewer.logsWillAppear') }}</p>
+          </div>
+          <div
+            v-for="(log, index) in filteredLogs"
+            :key="index"
+            class="log-entry"
+            :class="[
+              logLevelClass(log.level),
+              {
+                selected: selectedEntries.has(index),
+                compact: isCompactMode,
+              },
+            ]"
+            @click="toggleSelectEntry(index)"
+          >
+            <div class="log-col timestamp">
+              {{ log.timestamp || '--:--:--' }}
+            </div>
+            <div class="log-col level">
+              <span class="level-badge" :class="log.level">
+                {{ log.level.toUpperCase() }}
+              </span>
+            </div>
+            <div class="log-col source" :data-source="log.source">
+              {{ log.source }}
+            </div>
+            <div class="log-col message">
+              {{ log.message }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-left">
+          <span class="status-item">
+            {{ t('logs.status.autoScroll') }} {{ autoScroll ? t('logs.status.on') : t('logs.status.off') }}
+          </span>
+          <span class="status-item">
+            {{ t('logs.status.updates') }} {{ isPaused ? t('logs.status.paused') : t('logs.status.live') }}
+          </span>
+        </div>
+
+        <div class="status-right">
+          <span class="status-item">
+            {{ t('logs.status.showing', { filtered: filteredLogs.length, total: appStore.logs.length }) }}
+          </span>
+        </div>
+      </div>
+    </div>
+    <Transition name="notification">
+      <div v-if="showNotification" class="notification-toast" :class="[`notification-${notificationType}`]">
+        <div class="notification-content">
+          <div class="notification-icon">
+            <Copy v-if="notificationType === 'success'" :size="20" />
+            <AlertCircle v-else-if="notificationType === 'error'" :size="20" />
+            <Info v-else-if="notificationType === 'info'" :size="20" />
+            <AlertTriangle v-else-if="notificationType === 'warning'" :size="20" />
+          </div>
+          <span class="notification-message">{{ notificationMessage }}</span>
+        </div>
+      </div>
+    </Transition>
+
+    <ConfirmDialog
+      :is-open="showConfirmDialog"
+      :title="confirmDialogConfig.title"
+      :message="confirmDialogConfig.message"
+      :confirm-text="t('common.confirm')"
+      :cancel-text="t('common.cancel')"
+      variant="danger"
+      @confirm="confirmDialogConfig.onConfirm"
+      @cancel="confirmDialogConfig.onCancel"
+    />
+  </div>
+</template>
+
 <script setup lang="ts">
 import * as chrono from 'chrono-node'
 import {
@@ -15,17 +310,19 @@ import {
   Pause,
   Play,
   RotateCcw,
-  Search,
   Settings,
   Trash2,
 } from 'lucide-vue-next'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
+import CustomButton from '@/components/common/CustomButton.vue'
+import SingleSelect from '@/components/common/SingleSelect.vue'
+
 import ConfirmDialog from '../components/ui/ConfirmDialog.vue'
 import { useTranslation } from '../composables/useI18n'
 import { useAppStore } from '../stores/app'
 
-type filterSourceType = 'openlist' | 'rclone' | 'app' | 'service' | 'all'
+type filterSourceType = 'openlist' | 'rclone' | 'app' | 'all'
 
 const appStore = useAppStore()
 const { t } = useTranslation()
@@ -55,6 +352,15 @@ const confirmDialogConfig = ref({
   onCancel: () => {},
 })
 
+let logRefreshInterval: NodeJS.Timeout | null = null
+const logLevelList = [
+  { key: 'all', label: t('logs.filters.levels.all') },
+  { key: 'debug', label: t('logs.filters.levels.debug') },
+  { key: 'info', label: t('logs.filters.levels.info') },
+  { key: 'warn', label: t('logs.filters.levels.warn') },
+  { key: 'error', label: t('logs.filters.levels.error') },
+]
+
 watch(filterLevel, async newValue => {
   appStore.settings.app.log_filter_level = newValue
   await appStore.saveSettings()
@@ -63,11 +369,9 @@ watch(filterLevel, async newValue => {
 watch(filterSource, async newValue => {
   appStore.settings.app.log_filter_source = newValue
   await appStore.saveSettings()
-  await appStore.loadLogs((newValue !== 'gin' ? newValue : 'openlist') as filterSourceType)
+  await appStore.loadLogs(newValue as filterSourceType)
   await scrollToBottom()
 })
-
-let logRefreshInterval: NodeJS.Timeout | null = null
 
 const showNotificationMessage = (message: string, type: 'success' | 'info' | 'warning' | 'error' = 'success') => {
   notificationMessage.value = message
@@ -114,25 +418,7 @@ const parseLogEntry = (logText: string) => {
     timestamp = chrono.parseDate(cleanText)?.toISOString().replace('T', ' ').substring(0, 19) || ''
   }
 
-  if (cleanText.includes('[GIN]')) {
-    source = 'gin'
-    level = 'info'
-    const ginMatch = cleanText.match(/\[GIN\]\s*(.+)/)
-    if (ginMatch) {
-      message = ginMatch[1]
-      const statusMatch = message.match(/\|\s*(\d{3})\s*\|/)
-      if (statusMatch) {
-        const statusCode = parseInt(statusMatch[1])
-        if (statusCode >= 400 && statusCode < 500) {
-          level = 'warn'
-        } else if (statusCode >= 500) {
-          level = 'error'
-        }
-      }
-    }
-  } else {
-    source = filterSource.value
-  }
+  source = filterSource.value
 
   message = message
     .replace(/^(WARN|ERROR|INFO|DEBUG)\s*/i, '')
@@ -421,270 +707,5 @@ onUnmounted(() => {
   unwatchLogs()
 })
 </script>
-
-<template>
-  <div class="log-view" :class="{ fullscreen: isFullscreen, compact: isCompactMode }">
-    <div class="log-toolbar">
-      <div class="toolbar-section left">
-        <button
-          class="toolbar-btn"
-          :class="{ active: isPaused }"
-          :title="isPaused ? t('logs.toolbar.resume') : t('logs.toolbar.pause')"
-          @click="togglePause"
-        >
-          <Pause v-if="!isPaused" :size="16" />
-          <Play v-else :size="16" />
-        </button>
-
-        <button class="toolbar-btn" :title="t('logs.toolbar.refresh')" @click="refreshLogs">
-          <RotateCcw :size="16" />
-        </button>
-
-        <div class="toolbar-separator"></div>
-
-        <button
-          class="toolbar-btn"
-          :class="{ active: showFilters }"
-          :title="t('logs.toolbar.showFilters')"
-          @click="showFilters = !showFilters"
-        >
-          <Filter :size="16" />
-        </button>
-
-        <button
-          class="toolbar-btn"
-          :class="{ active: showSettings }"
-          :title="t('logs.toolbar.settings')"
-          @click="showSettings = !showSettings"
-        >
-          <Settings :size="16" />
-        </button>
-      </div>
-
-      <div class="toolbar-section center">
-        <div class="search-container">
-          <Search :size="14" class="search-icon" />
-          <input
-            ref="searchInputRef"
-            v-model="searchQuery"
-            type="text"
-            :placeholder="t('logs.search.placeholder')"
-            class="search-input"
-            @keydown.escape="searchQuery = ''"
-          />
-        </div>
-      </div>
-
-      <div class="toolbar-section right">
-        <div class="log-stats">
-          <span class="stat">{{
-            t('logs.stats.logsCount', { filtered: filteredLogs.length, total: appStore.logs.length })
-          }}</span>
-          <span v-if="selectedEntries.size > 0" class="stat selected">
-            {{ t('logs.stats.selected', { count: selectedEntries.size }) }}
-          </span>
-        </div>
-
-        <div class="toolbar-separator"></div>
-
-        <button
-          class="toolbar-btn"
-          :title="t('logs.toolbar.copyToClipboard')"
-          :disabled="filteredLogs.length === 0"
-          @click="copyLogsToClipboard"
-        >
-          <Copy :size="16" />
-        </button>
-
-        <button
-          class="toolbar-btn"
-          :title="t('logs.toolbar.exportLogs')"
-          :disabled="filteredLogs.length === 0"
-          @click="exportLogs"
-        >
-          <Download :size="16" />
-        </button>
-
-        <button
-          class="toolbar-btn danger"
-          :disabled="filteredLogs.length === 0 || filterSource === 'gin' || filterSource === 'all'"
-          :title="t('logs.toolbar.clearLogs')"
-          @click="clearLogs"
-        >
-          <Trash2 :size="16" />
-        </button>
-
-        <button class="toolbar-btn" :title="t('logs.toolbar.openLogsDirectory')" @click="openLogsDirectory">
-          <FolderOpen :size="16" />
-        </button>
-
-        <div class="toolbar-separator"></div>
-
-        <button class="toolbar-btn" :title="t('logs.toolbar.toggleFullscreen')" @click="toggleFullscreen">
-          <Maximize2 v-if="!isFullscreen" :size="16" />
-          <Minimize2 v-else :size="16" />
-        </button>
-      </div>
-    </div>
-
-    <div v-if="showFilters" class="filters-panel">
-      <div class="filter-group">
-        <label>{{ t('logs.filters.labels.level') }}</label>
-        <select v-model="filterLevel" class="filter-select">
-          <option value="all">{{ t('logs.filters.levels.all') }}</option>
-          <option value="debug">{{ t('logs.filters.levels.debug') }}</option>
-          <option value="info">{{ t('logs.filters.levels.info') }}</option>
-          <option value="warn">{{ t('logs.filters.levels.warn') }}</option>
-          <option value="error">{{ t('logs.filters.levels.error') }}</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label>{{ t('logs.filters.labels.source') }}</label>
-        <select v-model="filterSource" class="filter-select">
-          <option value="all">{{ t('logs.filters.sources.all') }}</option>
-          <option value="openlist">{{ t('logs.filters.sources.openlist') }}</option>
-          <option value="gin">GIN Server</option>
-          <option value="rclone">{{ t('logs.filters.sources.rclone') }}</option>
-          <option value="service">{{ t('logs.filters.sources.service') }}</option>
-          <option value="app">{{ t('logs.filters.app') }}</option>
-        </select>
-      </div>
-
-      <div class="filter-actions">
-        <button class="filter-btn" :disabled="filteredLogs.length === 0" @click="selectAllVisible">
-          {{ t('logs.filters.actions.selectAll') }}
-        </button>
-
-        <button class="filter-btn" :disabled="selectedEntries.size === 0" @click="clearSelection">
-          {{ t('logs.filters.actions.clearSelection') }}
-        </button>
-
-        <label class="checkbox-label">
-          <input v-model="autoScroll" type="checkbox" class="checkbox" />
-          {{ t('logs.filters.actions.autoScroll') }}
-        </label>
-      </div>
-    </div>
-
-    <div v-if="showSettings" class="settings-panel">
-      <div class="setting-group">
-        <label>{{ t('logs.settings.fontSize') }}</label>
-        <input v-model="fontSize" type="range" min="10" max="20" class="range-input" />
-        <span class="setting-value">{{ fontSize }}px</span>
-      </div>
-
-      <div class="setting-group">
-        <label>{{ t('logs.settings.maxLines') }}</label>
-        <input v-model="maxLines" type="number" min="100" max="10000" step="100" class="number-input" />
-      </div>
-      <div class="setting-group">
-        <label class="checkbox-label">
-          <input v-model="isCompactMode" type="checkbox" class="checkbox" />
-          {{ t('logs.settings.compactMode') }}
-        </label>
-
-        <label class="checkbox-label">
-          <input v-model="stripAnsiColors" type="checkbox" class="checkbox" />
-          {{ t('logs.settings.stripAnsiColors') }}
-        </label>
-      </div>
-    </div>
-    <div class="log-container">
-      <div class="log-header">
-        <div class="log-col timestamp">{{ t('logs.headers.timestamp') }}</div>
-        <div class="log-col level">{{ t('logs.headers.level') }}</div>
-        <div class="log-col source">{{ t('logs.headers.source') }}</div>
-        <div class="log-col message">{{ t('logs.headers.message') }}</div>
-        <div class="log-col actions">
-          <button class="scroll-btn" :title="t('logs.toolbar.scrollToTop')" @click="scrollToTop">
-            <ArrowUp :size="14" />
-          </button>
-          <button class="scroll-btn" :title="t('logs.toolbar.scrollToBottom')" @click="scrollToBottom">
-            <ArrowDown :size="14" />
-          </button>
-        </div>
-      </div>
-
-      <div ref="logContainer" class="log-content" :style="{ fontSize: fontSize + 'px' }">
-        <div v-if="filteredLogs.length === 0" class="empty-state">
-          <div class="empty-icon">📄</div>
-          <h3>{{ t('logs.viewer.noLogsFound') }}</h3>
-          <p v-if="searchQuery">{{ t('logs.viewer.noLogsMatch') }}</p>
-          <p v-else>{{ t('logs.viewer.logsWillAppear') }}</p>
-        </div>
-        <div
-          v-for="(log, index) in filteredLogs"
-          :key="index"
-          class="log-entry"
-          :class="[
-            logLevelClass(log.level),
-            {
-              selected: selectedEntries.has(index),
-              compact: isCompactMode,
-            },
-          ]"
-          @click="toggleSelectEntry(index)"
-        >
-          <div class="log-col timestamp">
-            {{ log.timestamp || '--:--:--' }}
-          </div>
-          <div class="log-col level">
-            <span class="level-badge" :class="log.level">
-              {{ log.level.toUpperCase() }}
-            </span>
-          </div>
-          <div class="log-col source" :data-source="log.source">
-            {{ log.source }}
-          </div>
-          <div class="log-col message">
-            {{ log.message }}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="status-bar">
-      <div class="status-left">
-        <span class="status-item">
-          {{ t('logs.status.autoScroll') }} {{ autoScroll ? t('logs.status.on') : t('logs.status.off') }}
-        </span>
-        <span class="status-item">
-          {{ t('logs.status.updates') }} {{ isPaused ? t('logs.status.paused') : t('logs.status.live') }}
-        </span>
-      </div>
-
-      <div class="status-right">
-        <span class="status-item">
-          {{ t('logs.status.showing', { filtered: filteredLogs.length, total: appStore.logs.length }) }}
-        </span>
-      </div>
-    </div>
-
-    <Transition name="notification">
-      <div v-if="showNotification" class="notification-toast" :class="[`notification-${notificationType}`]">
-        <div class="notification-content">
-          <div class="notification-icon">
-            <Copy v-if="notificationType === 'success'" :size="20" />
-            <AlertCircle v-else-if="notificationType === 'error'" :size="20" />
-            <Info v-else-if="notificationType === 'info'" :size="20" />
-            <AlertTriangle v-else-if="notificationType === 'warning'" :size="20" />
-          </div>
-          <span class="notification-message">{{ notificationMessage }}</span>
-        </div>
-      </div>
-    </Transition>
-
-    <ConfirmDialog
-      :is-open="showConfirmDialog"
-      :title="confirmDialogConfig.title"
-      :message="confirmDialogConfig.message"
-      :confirm-text="t('common.confirm')"
-      :cancel-text="t('common.cancel')"
-      variant="danger"
-      @confirm="confirmDialogConfig.onConfirm"
-      @cancel="confirmDialogConfig.onCancel"
-    />
-  </div>
-</template>
 
 <style scoped src="./css/LogView.css"></style>

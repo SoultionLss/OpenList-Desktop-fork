@@ -19,7 +19,6 @@ export const useRcloneStore = defineStore('rclone', () => {
   }
 
   const init = () => {
-    console.log('Initializing Rclone store...')
     checkRcloneAvailable()
   }
 

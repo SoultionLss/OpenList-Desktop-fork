@@ -1,17 +1,497 @@
+<template>
+  <div class="relative flex h-full w-full items-center justify-center">
+    <!-- Header Section -->
+    <div class="relative z-1 flex h-full w-full flex-col items-center justify-start gap-4 rounded-xl border-none p-4">
+      <div
+        class="flex w-full items-center justify-between gap-4 rounded-2xl border border-border-secondary px-2 py-1 shadow-sm"
+      >
+        <div class="flex flex-1 flex-wrap items-center gap-4 p-2">
+          <HardDrive class="text-accent" />
+          <div class="flex flex-col gap-0.5">
+            <h1 class="m-0 text-xl font-semibold tracking-tight text-main">{{ t('mount.title') }}</h1>
+            <span class="text-sm text-secondary">{{
+              `${configCounts.mounted} / ${configCounts.total} ${t('mount.stats.mounted')}`
+            }}</span>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <CustomButton type="secondary" :icon="RefreshCw" :text="t('mount.actions.refresh')" @click="refreshData" />
+          <CustomButton type="primary" :icon="Plus" :text="t('mount.actions.addRemote')" @click="addNewConfig" />
+        </div>
+      </div>
+
+      <div
+        v-if="shouldShowWebdavTip"
+        class="flex w-full items-center border border-border-secondary bg-warning/10 p-3 rounded-md gap-3"
+      >
+        <div>
+          <Settings class="text-warning" />
+        </div>
+        <div class="flex flex-1 flex-col gap-0.5">
+          <h4 class="text-main text-sm font-semibold">{{ t('mount.tip.webdavTitle') }}</h4>
+          <p class="text-xs font-medium text-secondary select-text">{{ t('mount.tip.webdavMessage') }}</p>
+        </div>
+        <button
+          class="flex bg-danger/50 rounded-full p-1 hover:bg-danger transition-colors duration-200 ease-apple"
+          :title="t('mount.tip.dismissForever')"
+          @click="dismissWebdavTip"
+        >
+          <X class="text-white" :size="14" />
+        </button>
+      </div>
+
+      <div
+        v-if="showWinfspTip"
+        class="flex w-full items-center border border-border-secondary bg-warning/10 p-3 rounded-md gap-3"
+      >
+        <div>
+          <HardDrive class="text-warning" />
+        </div>
+        <div class="flex flex-1 flex-col gap-0.5">
+          <h4 class="text-main text-sm font-semibold">{{ t('mount.tip.winfspTitle') }}</h4>
+          <p class="text-xs font-medium text-secondary select-text">{{ t('mount.tip.winfspMessage') }}</p>
+        </div>
+        <button
+          class="flex bg-danger/50 rounded-full p-1 hover:bg-danger transition-colors duration-200 ease-apple"
+          :title="t('mount.tip.dismissForever')"
+          @click="dismissWinfspTip"
+        >
+          <X class="text-white" :size="14" />
+        </button>
+      </div>
+
+      <div
+        v-if="showRcloneTip"
+        class="flex w-full items-center border border-border-secondary bg-warning/10 p-3 rounded-md gap-3"
+      >
+        <div>
+          <HardDrive class="text-warning" />
+        </div>
+        <div class="flex flex-1 flex-col gap-0.5">
+          <h4 class="text-main text-sm font-semibold">{{ t('mount.tip.rcloneTitle') }}</h4>
+          <p class="text-xs font-medium text-secondary select-text">{{ t('mount.tip.rcloneMessage') }}</p>
+        </div>
+        <button
+          class="flex bg-danger/50 rounded-full p-1 hover:bg-danger transition-colors duration-200 ease-apple"
+          :title="t('mount.tip.dismissForever')"
+          @click="dismissRcloneTip"
+        >
+          <X class="text-white" :size="14" />
+        </button>
+      </div>
+
+      <!-- Controls Section -->
+      <div class="flex w-full border border-border-secondary shadow-sm p-2 rounded-xl justify-between gap-3">
+        <div class="flex-1 flex items-center">
+          <input
+            v-model="searchQuery"
+            type="text"
+            :placeholder="t('mount.filters.searchPlaceholder')"
+            class="border border-border rounded-md px-2 py-1 w-full text-sm text-main bg-surface focus:outline-none focus:border-accent"
+          />
+        </div>
+        <div class="flex items-center gap-2">
+          <SingleSelect
+            v-model="statusFilter"
+            :key-list="filterList.map(item => item.value)"
+            title=""
+            :fronticon="false"
+            :placeholder="filterList.find(item => item.value === statusFilter)?.label || t('mount.filters.allStatus')"
+          >
+            <template #item="{ item }">
+              {{ filterList.find(filterItem => filterItem.value === item)?.label || item }}
+            </template>
+          </SingleSelect>
+        </div>
+      </div>
+      <!-- Error Display -->
+      <div
+        v-if="rcloneStore.error"
+        class="flex w-full items-center gap-2 p-3 rounded-md bg-danger/10 border border-danger"
+      >
+        <XCircle class="text-danger" />
+        <div class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+          <span class="text-secondary text-xs">{{ rcloneStore.error || '' }}</span>
+        </div>
+        <button
+          class="rounded-full bg-danger/50 p-1 hover:bg-danger transition-colors duration-200 ease-apple"
+          @click="rcloneStore.clearError"
+        >
+          <X class="text-white" :size="14" />
+        </button>
+      </div>
+
+      <!-- Remote Configurations -->
+      <div class="flex h-full w-full flex-1 flex-col gap-4 overflow-hidden rounded-md shadow-md">
+        <div
+          v-if="filteredConfigs.length === 0"
+          class="flex w-full h-full overflow-auto items-center justify-center p-2"
+        >
+          <div class="max-w-80 flex flex-col items-center justify-center gap-2">
+            <Cloud class="text-secondary w-12 h-12" />
+            <h3 class="text-main font-semibold text-xl">{{ t('mount.empty.title') }}</h3>
+            <p class="text-secondary text-sm">{{ t('mount.empty.description') }}</p>
+          </div>
+        </div>
+
+        <div v-else class="w-full h-full overflow-auto no-scrollbar items-center justify-center">
+          <div class="w-full h-auto grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4 p-4">
+            <div
+              v-for="config in filteredConfigs"
+              :key="config.name"
+              class="bg-surface rounded-xl border border-border-secondary p-4 shadow-sm flex flex-col justify-between h-full hover:border-2 hover:border-accent transition-all duration-200 ease-apple gap-2"
+              :class="{
+                'border-success/50! border-2': isConfigMounted(config),
+                'border-danger/50! border-2': getConfigStatus(config) === 'error',
+                'border-warning/50! border-2': isConfigMounting(config),
+              }"
+            >
+              <div class="flex items-start justify-between gap-1">
+                <div class="flex items-start gap-3 flex-1">
+                  <div class="flex items-center justify-center w-8 h-8 rounded-md bg-accent/10 text-accent shrink-0">
+                    <Cloud
+                      :class="{
+                        'text-success': isConfigMounted(config),
+                        'text-danger': getConfigStatus(config) === 'error',
+                        'text-warning': isConfigMounting(config),
+                      }"
+                    />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-semibold text-main/80">{{ config.name }}</h3>
+                    <p
+                      class="text-xs text-secondary whitespace-nowrap overflow-hidden text-ellipsis font-['SF_Mono',monospace] tracking-tighter"
+                    >
+                      {{ config.url }}
+                    </p>
+                  </div>
+                </div>
+                <div class="flex items-center justify-center w-6 h-6 shrink-0 bg-bg-secondary rounded-md">
+                  <component
+                    :is="getStatusIcon(getConfigStatus(config))"
+                    class="w-4 h-4 text-secondary"
+                    :class="{
+                      'text-warning animate-spin': isConfigMounting(config) || appStore.loading,
+                      'text-success': getConfigStatus(config) === 'mounted',
+                      'text-error': getConfigStatus(config) === 'error',
+                    }"
+                  />
+                </div>
+              </div>
+
+              <div class="flex w-full flex-col gap-3 flex-1 justify-between">
+                <div class="flex-1 flex items-center justify-start gap-2 flex-wrap">
+                  <span
+                    class="inline-flex items-center py-1 px-2 bg-bg-secondary rounded-sm text-[0.6rem] font-semibold text-secondary uppercase"
+                    >{{ config.type }}</span
+                  >
+                  <span
+                    v-if="config.volumeName"
+                    class="inline-flex items-center py-1 px-2 bg-bg-secondary rounded-sm text-[0.6rem] font-semibold text-secondary uppercase"
+                    >{{ config.volumeName }}</span
+                  >
+                  <span
+                    v-if="config.autoMount"
+                    class="inline-flex items-center py-1 px-2 bg-success/30 rounded-sm text-[0.6rem] font-semibold text-secondary uppercase"
+                    >{{ t('mount.meta.autoMount') }}</span
+                  >
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between gap-3">
+                <div class="flex-1">
+                  <CustomButton
+                    v-if="!isConfigMounted(config)"
+                    :disabled="isConfigMounting(config) || !config.mountPoint"
+                    :title="!config.mountPoint ? t('mount.messages.mountPointRequired') : ''"
+                    type="primary"
+                    class="flex-1 w-full"
+                    :icon="Play"
+                    :text="t('mount.actions.mount')"
+                    :icon-size="14"
+                    @click="mountConfig(config)"
+                  />
+                  <CustomButton
+                    v-else
+                    type="danger"
+                    class="flex-1 w-full bg-warning/70 hover:bg-warning!"
+                    icon-class="text-white"
+                    text-class="text-white"
+                    :icon="Square"
+                    :disabled="isConfigMounting(config)"
+                    :text="t('mount.actions.unmount')"
+                    :icon-size="14"
+                    @click="unmountConfig(config)"
+                  />
+                </div>
+
+                <div class="flex gap-2">
+                  <CustomButton
+                    :icon="Edit"
+                    :title="t('mount.actions.edit')"
+                    text=""
+                    :icon-size="14"
+                    type="secondary"
+                    @click="editConfig(config)"
+                  />
+                  <CustomButton
+                    :icon="Trash2"
+                    :title="t('mount.actions.delete')"
+                    text=""
+                    :disabled="isConfigMounted(config)"
+                    :icon-size="14"
+                    icon-class="text-white"
+                    class="bg-danger/50 hover:bg-danger!"
+                    type="custom"
+                    @click="deleteConfig(config)"
+                  />
+                  <CustomButton
+                    v-if="isConfigMounted(config)"
+                    :icon="FolderOpen"
+                    :title="t('mount.actions.openInExplorer')"
+                    text=""
+                    :icon-size="14"
+                    type="secondary"
+                    class="border-none!"
+                    @click="openInFileExplorer(config.mountPoint)"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Configuration Modal -->
+    <CustomModal
+      v-show="showAddForm"
+      v-model:visible="showAddForm"
+      :title="editingConfig ? t('mount.config.editTitle') : t('mount.config.addTitle')"
+      @close="resetForm"
+    >
+      <div class="flex-1 w-full overflow-auto no-scrollbar p-4">
+        <div class="flex flex-col gap-6">
+          <SettingSection :icon="Globe2Icon" :title="t('mount.config.basicInfo')">
+            <SettingCard>
+              <CustomInput
+                v-model="configForm.name"
+                :title="t('mount.config.name')"
+                :required="true"
+                :placeholder="t('mount.config.namePlaceholder')"
+              />
+            </SettingCard>
+            <SettingCard>
+              <SingleSelect
+                v-model="configForm.type"
+                :key-list="['webdav']"
+                :title="t('mount.config.type')"
+                :required="true"
+                disabled
+                :tight="false"
+                :fronticon="false"
+                placeholder="WebDAV"
+              >
+                <template #item="{ item }">
+                  <span>
+                    {{ item === 'webdav' ? t('mount.config.types.webdav') : item }}
+                  </span>
+                </template>
+              </SingleSelect>
+            </SettingCard>
+            <SettingCard>
+              <CustomInput
+                v-model="configForm.url"
+                :title="t('mount.config.url')"
+                :required="true"
+                :placeholder="t('mount.config.urlPlaceholder')"
+              />
+            </SettingCard>
+
+            <SettingCard>
+              <CustomInput
+                v-model="configForm.vendor"
+                type="text"
+                :title="t('mount.config.vendor')"
+                :placeholder="t('mount.config.vendorPlaceholder')"
+              />
+            </SettingCard>
+          </SettingSection>
+
+          <SettingSection :icon="ShieldUser" :title="t('mount.config.authentication')">
+            <SettingCard>
+              <CustomInput
+                v-model="configForm.user"
+                :title="t('mount.config.username')"
+                :required="true"
+                :placeholder="t('mount.config.usernamePlaceholder')"
+              />
+            </SettingCard>
+            <SettingCard>
+              <CustomInput
+                v-model="configForm.pass"
+                type="text"
+                :title="t('mount.config.password')"
+                :placeholder="t('mount.config.passwordPlaceholder')"
+              />
+            </SettingCard>
+          </SettingSection>
+
+          <SettingSection :icon="Database" :title="t('mount.config.mountSettings')">
+            <SettingCard>
+              <CustomInput
+                v-model="configForm.mountPoint"
+                type="text"
+                :title="t('mount.config.mountPoint')"
+                :required="true"
+                :placeholder="t('mount.config.mountPointPlaceholder')"
+              />
+            </SettingCard>
+            <SettingCard>
+              <CustomInput
+                v-model="configForm.volumeName"
+                type="text"
+                :title="t('mount.config.volumeName')"
+                :placeholder="t('mount.config.volumeNamePlaceholder')"
+              />
+            </SettingCard>
+            <SettingCard>
+              <CustomSwitch
+                v-model="configForm.autoMount"
+                :title="t('mount.config.autoMount')"
+                class="w-full"
+                no-border
+                small
+              />
+            </SettingCard>
+          </SettingSection>
+
+          <SettingSection :icon="Settings" :title="t('mount.config.extraFlags')" only-one-row>
+            <div class="flex flex-col items-center justify-center w-full gap-4">
+              <div class="flex items-center justify-between w-full gap-3">
+                <CustomButton
+                  type="secondary"
+                  :text="t('mount.config.quickFlags')"
+                  :icon="Settings"
+                  class="flex-1 bg-accent/10! hover:bg-accent/20!"
+                  :title="t('mount.config.quickFlagsTooltip')"
+                  @click="showFlagSelector = !showFlagSelector"
+                />
+                <CustomButton
+                  type="primary"
+                  :text="t('mount.config.addFlag')"
+                  :icon="Plus"
+                  class="flex-1"
+                  @click="addFlag"
+                />
+              </div>
+              <!-- Manual Flags Input -->
+              <div class="flex flex-col w-full gap-2">
+                <div
+                  v-for="(_, index) in configForm.extraFlags || []"
+                  :key="index"
+                  class="flex items-center gap-2 w-full"
+                >
+                  <input
+                    v-model="configForm.extraFlags![index]"
+                    type="text"
+                    class="flex-1 py-2 px-3 border border-border-secondary rounded-md bg-surface text-sm text-main focus:outline-none focus:border-accent"
+                    :placeholder="t('mount.config.flagPlaceholder')"
+                  />
+                  <CustomButton
+                    type="secondary"
+                    :icon="X"
+                    text=""
+                    :title="t('mount.config.removeFlag')"
+                    @click="removeFlag(index)"
+                  />
+                </div>
+              </div>
+              <div v-if="showFlagSelector" class="flex w-full">
+                <div class="flex-1 p-2">
+                  <div class="bg-accent/10 border border-t-2 border-accent border-t-accent rounded-md p-2 text-center">
+                    <p class="text-sm font-semibold text-secondary">{{ t('mount.config.clickToToggleFlags') }}</p>
+                  </div>
+
+                  <div class="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4 mt-4">
+                    <div
+                      v-for="category in commonFlags"
+                      :key="category.category"
+                      class="border border-border-secondary rounded-md p-3 flex-col flex gap-3 shadow-md bg-surface"
+                    >
+                      <div
+                        class="flex items-center justify-center border-b-2 border-b-border bg-accent/10 rounded-sm p-1"
+                      >
+                        <h5 class="text-main text-sm font-semibold">
+                          {{ t(`mount.config.flagCategories.${category.category}`) }}
+                        </h5>
+                      </div>
+
+                      <div
+                        v-for="flag in category.flags"
+                        :key="`${flag.flag}-${flag.value}`"
+                        class="flex items-center rounded-md gap-2 py-2 px-2.5 border-none bg-bg text-main text-left cursor-pointer border-b border-b-border relative last:border-b-0 hover:bg-accent/10"
+                        :class="{
+                          'bg-accent/20!': isFlagInConfig(flag),
+                        }"
+                        :title="getFlagDescription(flag)"
+                        @click="toggleFlag(flag)"
+                      >
+                        <div class="flex items-center shrink-0">
+                          <div
+                            class="w-5.5 h-5.5 border-2 border-border rounded-md bg-bg flex items-center justify-center cursor-pointer relative hover:border-accent"
+                            :class="{ 'bg-success/10! border-success/10!': isFlagInConfig(flag) }"
+                          >
+                            <CheckCircle v-if="isFlagInConfig(flag)" class="w-3.5 h-3.5 text-success stroke-[3px]" />
+                          </div>
+                        </div>
+                        <div class="flex flex-col gap-2 flex-1 min-w-0">
+                          <code
+                            class="font-['SF_Mono',Consolas,Monaco,'Courier_New',monospace] text-xs font-semibold py-1.5 px-2.5 bg-bg-tertiary border border-border rounded-md text-accent inline-block max-w-fit leading-[1.2] tracking-wider"
+                            >{{ flag.flag }}{{ flag.value ? `=${flag.value}` : '' }}</code
+                          >
+                          <span class="text-xs font-medium text-secondary leading-normal m-0">{{
+                            getFlagDescription(flag)
+                          }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </SettingSection>
+        </div>
+      </div>
+
+      <template #footer>
+        <CustomButton :icon="X" :text="t('common.cancel')" type="secondary" @click="cancelForm" />
+        <CustomButton
+          :icon="Save"
+          :text="editingConfig ? t('common.save') : t('common.add')"
+          :disabled="appStore.loading"
+          @click="saveConfig"
+        />
+      </template>
+    </CustomModal>
+  </div>
+</template>
+
 <script setup lang="ts">
 import {
   CheckCircle,
   Cloud,
+  Database,
   Edit,
   FolderOpen,
+  Globe2Icon,
   HardDrive,
   Loader,
   Play,
   Plus,
   RefreshCw,
   Save,
-  Search,
   Settings,
+  ShieldUser,
   Square,
   Trash2,
   X,
@@ -19,7 +499,14 @@ import {
 } from 'lucide-vue-next'
 import { computed, ComputedRef, onMounted, onUnmounted, Ref, ref } from 'vue'
 
-import ConfirmDialog from '@/components/ui/ConfirmDialog.vue'
+import CustomButton from '@/components/common/CustomButton.vue'
+import CustomInput from '@/components/common/CustomInput.vue'
+import CustomModal from '@/components/common/CustomModal.vue'
+import CustomSwitch from '@/components/common/CustomSwitch.vue'
+import SettingCard from '@/components/common/SettingCard.vue'
+import SettingSection from '@/components/common/SettingSection.vue'
+import SingleSelect from '@/components/common/SingleSelect.vue'
+import useConfirm from '@/hooks/useConfirm'
 import { useAppStore } from '@/stores/app'
 
 import { useTranslation } from '../composables/useI18n'
@@ -28,18 +515,13 @@ import { useRcloneStore } from '../stores/rclone'
 const { t } = useTranslation()
 const rcloneStore = useRcloneStore()
 const appStore = useAppStore()
+const confirm = useConfirm()
 
 const showAddForm = ref(false)
 const editingConfig = ref<RcloneFormConfig | null>(null)
 const searchQuery = ref('')
 const statusFilter = ref<'all' | 'mounted' | 'unmounted' | 'error'>('all')
-
-const showConfirmDialog = ref(false)
-const confirmDialogConfig = ref({
-  title: '',
-  message: '',
-  configToDelete: null as RcloneFormConfig | null,
-})
+const showFlagSelector = ref(false)
 
 let mountRefreshInterval: NodeJS.Timeout | null = null
 
@@ -58,8 +540,8 @@ const configForm = ref({
     'vfs-cache-mode': 'full',
   },
 }) as Ref<RcloneFormConfig>
-
-const commonFlags = ref([
+const showWebdavTip = ref(!localStorage.getItem('webdav_tip_dismissed'))
+const commonFlags = [
   {
     category: 'Caching',
     flags: [
@@ -123,9 +605,14 @@ const commonFlags = ref([
       { flag: '--progress', value: '', descriptionKey: 'progress' },
     ],
   },
-])
+]
 
-const showFlagSelector = ref(false)
+const filterList = [
+  { label: t('mount.filters.allStatus'), value: 'all' },
+  { label: t('mount.status.mounted'), value: 'mounted' },
+  { label: t('mount.status.unmounted'), value: 'unmounted' },
+  { label: t('mount.status.error'), value: 'error' },
+]
 
 const filteredConfigs: ComputedRef<RcloneFormConfig[]> = computed(() => {
   const filtered: RcloneFormConfig[] = []
@@ -264,32 +751,27 @@ const unmountConfig = async (config: RcloneFormConfig) => {
 
 const deleteConfig = async (config: RcloneFormConfig) => {
   if (!config.name) return
-
-  confirmDialogConfig.value = {
-    title: t('mount.messages.confirmDeleteTitle'),
+  const result = await confirm.confirm({
     message: t('mount.messages.confirmDelete', { name: config.name }),
-    configToDelete: config,
+    title: t('mount.messages.confirmDeleteTitle'),
+    confirmButtonText: t('common.confirm'),
+    cancelButtonText: t('common.cancel'),
+    type: 'warning',
+  })
+  if (!result) {
+    return
   }
-  showConfirmDialog.value = true
+  confirmDelete(config)
 }
 
-const confirmDelete = async () => {
-  const config = confirmDialogConfig.value.configToDelete
+const confirmDelete = async (config: RcloneFormConfig) => {
   if (!config || !config.name) return
 
   try {
     await appStore.deleteRemoteConfig(config.name)
   } catch (error: any) {
     console.error(error.message || t('mount.messages.failedToDelete'))
-  } finally {
-    showConfirmDialog.value = false
-    confirmDialogConfig.value.configToDelete = null
   }
-}
-
-const cancelDelete = () => {
-  showConfirmDialog.value = false
-  confirmDialogConfig.value.configToDelete = null
 }
 
 const refreshData = async () => {
@@ -297,7 +779,7 @@ const refreshData = async () => {
     await appStore.loadRemoteConfigs()
     await appStore.loadMountInfos()
   } catch (error: any) {
-    console.error(error.message || t('mount.messages.failedToLoadConfigs'))
+    console.error(error.message)
   }
 }
 
@@ -387,31 +869,8 @@ const toggleFlag = (flag: { flag: string; value: string; descriptionKey: string 
   }
 }
 
-const closeFlagSelector = () => {
-  showFlagSelector.value = false
-}
-
 const getFlagDescription = (flag: { flag: string; value: string; descriptionKey: string }) => {
   return t(`mount.config.flagDescriptions.${flag.descriptionKey}`)
-}
-
-const handleKeydown = (event: KeyboardEvent) => {
-  const key = event.key
-  const ctrl = event.ctrlKey
-
-  if (ctrl && key === 'n') {
-    event.preventDefault()
-    addNewConfig()
-  } else if (ctrl && key === 'r') {
-    event.preventDefault()
-    appStore.loadRemoteConfigs()
-    appStore.loadMountInfos()
-  } else if (key === 'Escape') {
-    event.preventDefault()
-    if (showAddForm.value) {
-      cancelForm()
-    }
-  }
 }
 
 const openInFileExplorer = async (path?: string) => {
@@ -433,26 +892,21 @@ const openInFileExplorer = async (path?: string) => {
   }
 }
 
-const showWebdavTip = ref(!localStorage.getItem('webdav_tip_dismissed'))
-
 const dismissWebdavTip = () => {
   showWebdavTip.value = false
   localStorage.setItem('webdav_tip_dismissed', 'true')
 }
 
-const isWindows = computed(() => {
-  return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'win32'
-})
-const showWinfspTip = ref(isWindows.value && !localStorage.getItem('winfsp_tip_dismissed'))
+const isWindows = typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'win32'
+
+const showWinfspTip = ref(isWindows && !localStorage.getItem('winfsp_tip_dismissed'))
 
 const dismissWinfspTip = () => {
   showWinfspTip.value = false
   localStorage.setItem('winfsp_tip_dismissed', 'true')
 }
 
-const isLinux = computed(() => {
-  return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'linux'
-})
+const isLinux = typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'linux'
 const showRcloneTip = ref(false)
 
 const dismissRcloneTip = () => {
@@ -461,505 +915,31 @@ const dismissRcloneTip = () => {
 }
 
 const shouldShowWebdavTip = computed(() => {
-  if (isWindows.value) {
+  if (isWindows) {
     return !showWinfspTip.value && showWebdavTip.value
   }
-  if (isLinux.value && showRcloneTip.value) {
+  if (isLinux && showRcloneTip.value) {
     return false
   }
   return showWebdavTip.value
 })
 
 onMounted(async () => {
-  document.addEventListener('keydown', handleKeydown)
   appStore.loadRemoteConfigs()
   appStore.loadMountInfos()
   mountRefreshInterval = setInterval(appStore.loadMountInfos, 15 * 1000)
   rcloneStore.init()
 
   // Check rclone availability on Linux
-  if (isLinux.value && !localStorage.getItem('rclone_tip_dismissed')) {
+  if (isLinux && !localStorage.getItem('rclone_tip_dismissed')) {
     const available = await rcloneStore.checkRcloneAvailable()
     showRcloneTip.value = !available
   }
 })
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
   if (mountRefreshInterval) {
     clearInterval(mountRefreshInterval)
   }
 })
 </script>
-
-<template>
-  <div class="mount-view">
-    <!-- Header Section -->
-    <div class="mount-header">
-      <div class="header-content">
-        <div class="header-info">
-          <div class="title-section">
-            <HardDrive class="header-icon" />
-            <h1 class="page-title">{{ t('mount.title') }}</h1>
-          </div>
-          <div class="stats-overview">
-            <div class="stat-item">
-              <span class="stat-value">{{ configCounts.total }}</span>
-              <span class="stat-label">{{ t('mount.stats.total') }}</span>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat-item success">
-              <span class="stat-value">{{ configCounts.mounted }}</span>
-              <span class="stat-label">{{ t('mount.stats.mounted') }}</span>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat-item neutral">
-              <span class="stat-value">{{ configCounts.unmounted }}</span>
-              <span class="stat-label">{{ t('mount.stats.unmounted') }}</span>
-            </div>
-            <div v-if="configCounts.error > 0" class="stat-divider"></div>
-            <div v-if="configCounts.error > 0" class="stat-item error">
-              <span class="stat-value">{{ configCounts.error }}</span>
-              <span class="stat-label">{{ t('mount.stats.error') }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="header-actions">
-          <button class="secondary-btn" :title="t('mount.actions.refresh')" @click="refreshData">
-            <RefreshCw class="btn-icon" />
-          </button>
-          <button class="primary-btn" @click="addNewConfig">
-            <Plus class="btn-icon" />
-            <span>{{ t('mount.actions.addRemote') }}</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div v-if="shouldShowWebdavTip" class="webdav-tip">
-      <div class="tip-content">
-        <div class="tip-icon">
-          <Settings class="icon" />
-        </div>
-        <div class="tip-message">
-          <h4 class="tip-title">{{ t('mount.tip.webdavTitle') }}</h4>
-          <p class="tip-description">{{ t('mount.tip.webdavMessage') }}</p>
-        </div>
-        <button class="tip-close" :title="t('mount.tip.dismissForever')" @click="dismissWebdavTip">
-          <X class="close-icon" />
-        </button>
-      </div>
-    </div>
-
-    <div v-if="showWinfspTip" class="winfsp-tip">
-      <div class="tip-content">
-        <div class="tip-icon">
-          <HardDrive class="icon" />
-        </div>
-        <div class="tip-message">
-          <h4 class="tip-title">{{ t('mount.tip.winfspTitle') }}</h4>
-          <p class="tip-description">{{ t('mount.tip.winfspMessage') }}</p>
-        </div>
-        <button class="tip-close" :title="t('mount.tip.dismissForever')" @click="dismissWinfspTip">
-          <X class="close-icon" />
-        </button>
-      </div>
-    </div>
-
-    <div v-if="showRcloneTip" class="rclone-tip">
-      <div class="tip-content">
-        <div class="tip-icon">
-          <HardDrive class="icon" />
-        </div>
-        <div class="tip-message">
-          <h4 class="tip-title">{{ t('mount.tip.rcloneTitle') }}</h4>
-          <p class="tip-description">{{ t('mount.tip.rcloneMessage') }}</p>
-        </div>
-        <button class="tip-close" :title="t('mount.tip.dismissForever')" @click="dismissRcloneTip">
-          <X class="close-icon" />
-        </button>
-      </div>
-    </div>
-
-    <!-- Controls Section -->
-    <div class="controls-section">
-      <div class="search-container">
-        <Search class="search-icon" />
-        <input
-          v-model="searchQuery"
-          type="text"
-          :placeholder="t('mount.filters.searchPlaceholder')"
-          class="search-input"
-        />
-      </div>
-      <div class="filter-controls">
-        <select v-model="statusFilter" class="status-filter">
-          <option value="all">{{ t('mount.filters.allStatus') }}</option>
-          <option value="mounted">{{ t('mount.status.mounted') }}</option>
-          <option value="unmounted">{{ t('mount.status.unmounted') }}</option>
-          <option value="error">{{ t('mount.status.error') }}</option>
-        </select>
-        <button class="refresh-btn" :disabled="rcloneStore.loading" @click="appStore.loadMountInfos">
-          <RefreshCw class="refresh-icon" :class="{ spinning: rcloneStore.loading }" />
-        </button>
-      </div>
-    </div>
-    <!-- Error Display -->
-    <div v-if="rcloneStore.error" class="error-alert">
-      <XCircle class="alert-icon" />
-      <span class="alert-message">{{ rcloneStore.error }}</span>
-      <button class="alert-close" @click="rcloneStore.clearError">
-        <X class="close-icon" />
-      </button>
-    </div>
-
-    <!-- Remote Configurations -->
-    <div class="configs-container">
-      <div v-if="filteredConfigs.length === 0" class="empty-state">
-        <div class="empty-content">
-          <Cloud class="empty-icon" />
-          <h3 class="empty-title">{{ t('mount.empty.title') }}</h3>
-          <p class="empty-description">{{ t('mount.empty.description') }}</p>
-          <button class="empty-action-btn" @click="addNewConfig">
-            <Plus class="btn-icon" />
-            <span>{{ t('mount.actions.addRemote') }}</span>
-          </button>
-        </div>
-      </div>
-
-      <div v-else class="config-grid">
-        <div
-          v-for="config in filteredConfigs"
-          :key="config.name"
-          class="config-card"
-          :class="{
-            mounted: isConfigMounted(config),
-            error: getConfigStatus(config) === 'error',
-            loading: isConfigMounting(config),
-          }"
-        >
-          <div class="card-header">
-            <div class="config-info">
-              <div class="config-icon">
-                <Cloud />
-              </div>
-              <div class="config-details">
-                <h3 class="config-name">{{ config.name }}</h3>
-                <p class="config-url">{{ config.url }}</p>
-              </div>
-            </div>
-            <div class="config-status">
-              <component
-                :is="getStatusIcon(getConfigStatus(config))"
-                class="status-icon"
-                :class="{
-                  spinning: isConfigMounting(config) || appStore.loading,
-                  success: getConfigStatus(config) === 'mounted',
-                  error: getConfigStatus(config) === 'error',
-                }"
-              />
-            </div>
-          </div>
-
-          <div class="card-meta">
-            <div class="meta-tags">
-              <span class="meta-tag">{{ config.type }}</span>
-              <span
-                v-if="config.mountPoint"
-                class="meta-tag clickable-mount-point"
-                :title="t('mount.meta.openInExplorer')"
-                @click="openInFileExplorer(config.mountPoint)"
-              >
-                <FolderOpen class="mount-point-icon" />
-                {{ config.mountPoint }}
-              </span>
-              <span v-if="config.volumeName" class="meta-tag">{{ config.volumeName }}</span>
-              <span v-if="config.autoMount" class="meta-tag auto">{{ t('mount.meta.autoMount') }}</span>
-            </div>
-          </div>
-
-          <div class="card-actions">
-            <div class="action-group">
-              <button
-                v-if="!isConfigMounted(config)"
-                class="action-btn primary"
-                :disabled="isConfigMounting(config) || !config.mountPoint"
-                :title="!config.mountPoint ? t('mount.messages.mountPointRequired') : ''"
-                @click="mountConfig(config)"
-              >
-                <Play class="btn-icon" />
-                <span>{{ t('mount.actions.mount') }}</span>
-              </button>
-              <button
-                v-else
-                class="action-btn warning"
-                :disabled="isConfigMounting(config)"
-                @click="unmountConfig(config)"
-              >
-                <Square class="btn-icon" />
-                <span>{{ t('mount.actions.unmount') }}</span>
-              </button>
-            </div>
-
-            <div class="secondary-actions">
-              <button class="secondary-btn" :title="t('mount.actions.edit')" @click="editConfig(config)">
-                <Edit class="btn-icon" />
-              </button>
-              <button
-                class="secondary-btn danger"
-                :disabled="isConfigMounted(config)"
-                :title="t('mount.actions.delete')"
-                @click="deleteConfig(config)"
-              >
-                <Trash2 class="btn-icon" />
-              </button>
-              <button
-                v-if="isConfigMounted(config)"
-                class="secondary-btn"
-                :title="t('mount.actions.openInExplorer')"
-                @click="openInFileExplorer(config.mountPoint)"
-              >
-                <FolderOpen class="btn-icon" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- Configuration Modal -->
-    <div v-if="showAddForm" class="modal-backdrop">
-      <div class="config-modal" @click.stop>
-        <div class="modal-header">
-          <div class="modal-title-section">
-            <Settings class="modal-icon" />
-            <h2 class="modal-title">
-              {{ editingConfig ? t('mount.config.editTitle') : t('mount.config.addTitle') }}
-            </h2>
-          </div>
-          <button class="modal-close" @click="cancelForm">
-            <X class="close-icon" />
-          </button>
-        </div>
-
-        <div class="modal-content">
-          <div class="config-form">
-            <div class="form-section">
-              <h3 class="section-title">{{ t('mount.config.basicInfo') }}</h3>
-              <div class="form-grid">
-                <div class="form-field">
-                  <label class="field-label">{{ t('mount.config.name') }} *</label>
-                  <input
-                    v-model="configForm.name"
-                    type="text"
-                    class="field-input"
-                    :placeholder="t('mount.config.namePlaceholder')"
-                    required
-                  />
-                </div>
-                <div class="form-field">
-                  <label class="field-label">{{ t('mount.config.type') }} *</label>
-                  <select v-model="configForm.type" class="field-select" required>
-                    <option value="webdav">{{ t('mount.config.types.webdav') }}</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-field">
-                <label class="field-label">{{ t('mount.config.url') }} *</label>
-                <input
-                  v-model="configForm.url"
-                  type="url"
-                  class="field-input"
-                  :placeholder="t('mount.config.urlPlaceholder')"
-                  required
-                />
-              </div>
-
-              <div v-if="configForm.type === 'webdav'" class="form-field">
-                <label class="field-label">{{ t('mount.config.vendor') }}</label>
-                <input
-                  v-model="configForm.vendor"
-                  type="text"
-                  class="field-input"
-                  :placeholder="t('mount.config.vendorPlaceholder')"
-                />
-              </div>
-            </div>
-
-            <div class="form-section">
-              <h3 class="section-title">{{ t('mount.config.authentication') }}</h3>
-              <div class="form-grid">
-                <div class="form-field">
-                  <label class="field-label">{{ t('mount.config.username') }} *</label>
-                  <input
-                    v-model="configForm.user"
-                    type="text"
-                    class="field-input"
-                    :placeholder="t('mount.config.usernamePlaceholder')"
-                    required
-                  />
-                </div>
-                <div class="form-field">
-                  <label class="field-label">{{ t('mount.config.password') }} *</label>
-                  <input
-                    v-model="configForm.pass"
-                    type="text"
-                    class="field-input"
-                    :placeholder="t('mount.config.passwordPlaceholder')"
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div class="form-section">
-              <h3 class="section-title">{{ t('mount.config.mountSettings') }}</h3>
-              <div class="form-grid">
-                <div class="form-field">
-                  <label class="field-label">{{ t('mount.config.mountPoint') }}</label>
-                  <input
-                    v-model="configForm.mountPoint"
-                    type="text"
-                    class="field-input"
-                    :placeholder="t('mount.config.mountPointPlaceholder')"
-                  />
-                </div>
-                <div class="form-field">
-                  <label class="field-label">{{ t('mount.config.volumeName') }}</label>
-                  <input
-                    v-model="configForm.volumeName"
-                    type="text"
-                    class="field-input"
-                    :placeholder="t('mount.config.volumeNamePlaceholder')"
-                  />
-                </div>
-              </div>
-
-              <div class="form-field">
-                <label class="checkbox-field">
-                  <input v-model="configForm.autoMount" type="checkbox" class="checkbox-input" />
-                  <span class="checkbox-label">{{ t('mount.config.autoMount') }}</span>
-                </label>
-              </div>
-            </div>
-
-            <div class="form-section">
-              <h3 class="section-title">{{ t('mount.config.advancedSettings') }}</h3>
-              <div class="form-field">
-                <label class="field-label">{{ t('mount.config.extraFlags') }}</label>
-
-                <div class="flags-header">
-                  <button
-                    type="button"
-                    class="quick-flags-btn"
-                    :title="t('mount.config.quickFlagsTooltip')"
-                    @click="showFlagSelector = !showFlagSelector"
-                  >
-                    <Settings class="btn-icon" />
-                    <span>{{ t('mount.config.quickFlags') }}</span>
-                  </button>
-                </div>
-
-                <div v-if="showFlagSelector" class="flag-selector-backdrop" @click="closeFlagSelector">
-                  <div class="flag-selector-popup" @click.stop>
-                    <div class="flag-selector-header">
-                      <h4>{{ t('mount.config.selectCommonFlags') }}</h4>
-                      <button class="close-selector-btn" @click="closeFlagSelector">
-                        <X class="btn-icon" />
-                      </button>
-                    </div>
-
-                    <div class="flag-selector-content">
-                      <div class="flag-selector-help">
-                        <p>{{ t('mount.config.clickToToggleFlags') }}</p>
-                      </div>
-
-                      <div class="flag-categories">
-                        <div v-for="category in commonFlags" :key="category.category" class="flag-category">
-                          <div class="category-header">
-                            <h5>{{ t(`mount.config.flagCategories.${category.category}`) }}</h5>
-                          </div>
-                          <div class="category-flags">
-                            <div
-                              v-for="flag in category.flags"
-                              :key="`${flag.flag}-${flag.value}`"
-                              class="flag-option"
-                              :class="{
-                                selected: isFlagInConfig(flag),
-                                'in-config': isFlagInConfig(flag),
-                              }"
-                              :title="getFlagDescription(flag)"
-                              @click="toggleFlag(flag)"
-                            >
-                              <div class="flag-checkbox">
-                                <div class="custom-checkbox" :class="{ checked: isFlagInConfig(flag) }">
-                                  <CheckCircle v-if="isFlagInConfig(flag)" class="check-icon" />
-                                </div>
-                              </div>
-                              <div class="flag-content">
-                                <code class="flag-code">{{ flag.flag }}{{ flag.value ? `=${flag.value}` : '' }}</code>
-                                <span class="flag-description">{{ getFlagDescription(flag) }}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Manual Flags Input -->
-                <div class="flags-container">
-                  <div v-for="(_, index) in configForm.extraFlags || []" :key="index" class="flag-item">
-                    <input
-                      v-model="configForm.extraFlags![index]"
-                      type="text"
-                      class="flag-input"
-                      :placeholder="t('mount.config.flagPlaceholder')"
-                    />
-                    <button
-                      type="button"
-                      class="remove-flag-btn"
-                      :title="t('mount.config.removeFlag')"
-                      @click="removeFlag(index)"
-                    >
-                      <X class="btn-icon" />
-                    </button>
-                  </div>
-                  <button type="button" class="add-flag-btn" @click="addFlag">
-                    <Plus class="btn-icon" />
-                    <span>{{ t('mount.config.addFlag') }}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button class="cancel-btn" @click="cancelForm">
-            <X class="btn-icon" />
-            <span>{{ t('common.cancel') }}</span>
-          </button>
-          <button class="save-btn" :disabled="appStore.loading" @click="saveConfig">
-            <Save class="btn-icon" />
-            <span>{{ editingConfig ? t('common.save') : t('common.add') }}</span>
-          </button>
-        </div>
-      </div>
-    </div>
-    <ConfirmDialog
-      :is-open="showConfirmDialog"
-      :title="confirmDialogConfig.title"
-      :message="confirmDialogConfig.message"
-      :confirm-text="t('mount.actions.delete')"
-      :cancel-text="t('common.cancel')"
-      variant="danger"
-      @confirm="confirmDelete"
-      @cancel="cancelDelete"
-    />
-  </div>
-</template>
-
-<style scoped src="./css/MountView.css"></style>

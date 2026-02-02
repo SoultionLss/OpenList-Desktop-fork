@@ -30,7 +30,6 @@
               :key-list="availableVersions.openlist"
               title=""
               :fronticon="false"
-              :disabled="loading.openlist"
               :placeholder="t('dashboard.versionManager.selectVersion')"
             />
             <CustomButton

@@ -14,7 +14,7 @@
         <div class="flex gap-3">
           <CustomButton type="secondary" :icon="RotateCcw" :text="t('common.reset')" @click="handleReset" />
           <CustomButton
-            :disabled="!hasUnsavedChanges || isSaving"
+            :disabled="isSaving"
             type="primary"
             :icon="Save"
             :text="isSaving ? t('common.saving') : t('settings.saveChanges')"
@@ -160,7 +160,7 @@
           <SettingSection :icon="Package" :title="t('settings.service.customPaths.title')">
             <SettingCard>
               <CustomInput
-                v-model="appSettings.custom_rclone_binary_path"
+                v-model="rcloneSettings.binary_path"
                 type="text"
                 :placeholder="t('settings.service.customPaths.rcloneBinary.placeholder')"
                 :tips="t('settings.service.customPaths.rcloneBinary.help')"
@@ -181,7 +181,7 @@
             </SettingCard>
             <SettingCard>
               <CustomInput
-                v-model="appSettings.custom_rclone_config_path"
+                v-model="rcloneSettings.rclone_conf_path"
                 type="text"
                 :placeholder="t('settings.service.customPaths.rcloneConfig.placeholder')"
                 :tips="t('settings.service.customPaths.rcloneConfig.help')"
@@ -209,13 +209,6 @@
                 :text="t('settings.rclone.config.openFile')"
                 @click="handleOpenRcloneConfig"
               />
-
-              <textarea
-                v-model="rcloneConfigJson"
-                class="p-3 border border-border rounded-md text-sm bg-surface text-main resize-y min-h-50 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent"
-                placeholder=""
-                rows="10"
-              ></textarea>
             </div>
           </SettingSection>
         </div>
@@ -336,7 +329,6 @@ const isSaving = ref(false)
 const message = useMessage()
 const confirm = useConfirm()
 const activeTab = ref('openlist')
-const rcloneConfigJson = ref('')
 const autoStartApp = ref(false)
 const isResettingPassword = ref(false)
 
@@ -368,23 +360,6 @@ const tabs = computed(() => [
   },
 ])
 
-const hasUnsavedChanges = computed(() => {
-  let rcloneConfigChanged = false
-  try {
-    const parsedConfig = JSON.parse(rcloneConfigJson.value)
-    rcloneConfigChanged = JSON.stringify(parsedConfig) !== JSON.stringify(appStore.settings.rclone.config)
-  } catch {
-    rcloneConfigChanged = rcloneConfigJson.value !== JSON.stringify(appStore.settings.rclone.config, null, 2)
-  }
-
-  return (
-    JSON.stringify(openlistCoreSettings) !== JSON.stringify(appStore.settings.openlist) ||
-    JSON.stringify(rcloneSettings) !== JSON.stringify(appStore.settings.rclone) ||
-    JSON.stringify(appSettings) !== JSON.stringify(appStore.settings.app) ||
-    rcloneConfigChanged
-  )
-})
-
 const isMacOs = computed(() => {
   return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'darwin'
 })
@@ -401,14 +376,6 @@ const handleSave = async () => {
   isSaving.value = true
 
   try {
-    try {
-      rcloneSettings.config = JSON.parse(rcloneConfigJson.value)
-    } catch (_error) {
-      message.error(t('settings.rclone.config.invalidJson'))
-      isSaving.value = false
-      return
-    }
-
     appStore.settings.openlist = { ...openlistCoreSettings }
     appStore.settings.rclone = { ...rcloneSettings }
     appStore.settings.app = { ...appSettings }
@@ -459,9 +426,6 @@ const handleReset = async () => {
     Object.assign(openlistCoreSettings, appStore.settings.openlist)
     Object.assign(rcloneSettings, appStore.settings.rclone)
     Object.assign(appSettings, appStore.settings.app)
-
-    rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
-
     message.info(t('settings.resetSuccess'))
   } catch (_error) {
     message.error(t('settings.resetFailed'))
@@ -569,7 +533,7 @@ const handleSelectRcloneBinary = async () => {
       directory: false,
       multiple: false,
       title: t('settings.service.customPaths.rcloneBinary.selectTitle'),
-      defaultPath: appSettings.custom_rclone_binary_path || undefined,
+      defaultPath: rcloneSettings.binary_path || undefined,
       filters: [
         {
           name: 'Executable',
@@ -579,7 +543,7 @@ const handleSelectRcloneBinary = async () => {
     })
 
     if (selected && typeof selected === 'string') {
-      appSettings.custom_rclone_binary_path = selected
+      rcloneSettings.binary_path = selected
     }
   } catch (error) {
     console.error('Failed to select Rclone binary:', error)
@@ -593,7 +557,7 @@ const handleSelectRcloneConfig = async () => {
       directory: false,
       multiple: false,
       title: t('settings.service.customPaths.rcloneConfig.selectTitle'),
-      defaultPath: appSettings.custom_rclone_config_path || undefined,
+      defaultPath: rcloneSettings.rclone_conf_path || undefined,
       filters: [
         {
           name: 'Config',
@@ -603,7 +567,7 @@ const handleSelectRcloneConfig = async () => {
     })
 
     if (selected && typeof selected === 'string') {
-      appSettings.custom_rclone_config_path = selected
+      rcloneSettings.rclone_conf_path = selected
     }
   } catch (error) {
     console.error('Failed to select Rclone config:', error)
@@ -633,20 +597,6 @@ async function init() {
   Object.assign(rcloneSettings, { ...DEFAULT_CONFIG.rclone, ...rcloneSettings })
   Object.assign(appSettings, { ...DEFAULT_CONFIG.app, ...appSettings })
 
-  if (!rcloneSettings.config) rcloneSettings.config = {}
-
-  rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
-  if (!appSettings.theme) appSettings.theme = 'light'
-
-  if (appSettings.auto_update_enabled === undefined) appSettings.auto_update_enabled = true
-  if (!appSettings.gh_proxy) appSettings.gh_proxy = ''
-  if (appSettings.gh_proxy_api === undefined) appSettings.gh_proxy_api = false
-  if (appSettings.open_links_in_browser === undefined) appSettings.open_links_in_browser = false
-  if (appSettings.show_window_on_startup === undefined) appSettings.show_window_on_startup = true
-  if (appSettings.hide_dock_icon === undefined) appSettings.hide_dock_icon = false
-  if (!appSettings.admin_password) appSettings.admin_password = ''
-  if (!appSettings.custom_rclone_binary_path) appSettings.custom_rclone_binary_path = ''
-  if (!appSettings.custom_rclone_config_path) appSettings.custom_rclone_config_path = ''
   originalOpenlistPort = openlistCoreSettings.port || 5244
   originalDataDir = openlistCoreSettings.data_dir
 

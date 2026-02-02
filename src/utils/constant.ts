@@ -7,7 +7,7 @@ export const DEFAULT_CONFIG = {
     binary_path: '',
   },
   rclone: {
-    config: {},
+    mount_config: {},
     binary_path: '',
     rclone_conf_path: '',
   },

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RcloneConfig {
-    pub config: serde_json::Value,
+    pub mount_config: serde_json::Value,
     pub binary_path: Option<String>,
     pub rclone_conf_path: Option<String>,
 }
@@ -16,7 +16,7 @@ impl Default for RcloneConfig {
 impl RcloneConfig {
     pub fn new() -> Self {
         Self {
-            config: serde_json::Value::Object(Default::default()),
+            mount_config: serde_json::Value::Object(Default::default()),
             binary_path: None,
             rclone_conf_path: None,
         }

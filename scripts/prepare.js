@@ -265,8 +265,6 @@ async function main() {
   if (isWin) {
     await resolvePlugins()
   }
-  await resolveService(getServiceInfo('install-openlist-service'))
-  await resolveService(getServiceInfo('openlist-desktop-service'))
   await resolveService(getServiceInfo('uninstall-openlist-service'))
 }
 

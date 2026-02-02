@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use tauri::State;
 
-use crate::conf::rclone_config::{RcloneConfigFile, WebDavRemoteConfig};
+use crate::conf::rclone_config::{RcloneConfigFile, WebDavRemoteConfig, reveal_password};
 use crate::core::process_manager::{PROCESS_MANAGER, ProcessConfig, ProcessInfo};
 use crate::object::structs::{AppState, RcloneMountInfo};
 use crate::utils::args::split_args_vec;
@@ -35,8 +35,11 @@ fn get_mount_process_id(remote_name: &str) -> String {
 }
 
 #[tauri::command]
-pub async fn rclone_list_config(remote_type: String) -> Result<Value, String> {
-    let config = RcloneConfigFile::load()?;
+pub async fn rclone_list_config(
+    remote_type: String,
+    state: State<'_, AppState>,
+) -> Result<Value, String> {
+    let config = RcloneConfigFile::load_with_custom(state.clone())?;
 
     let filtered: HashMap<String, Value> = config
         .remotes
@@ -46,6 +49,12 @@ pub async fn rclone_list_config(remote_type: String) -> Result<Value, String> {
             let mut obj = serde_json::Map::new();
             obj.insert("type".to_string(), json!(remote.remote_type));
             for (key, value) in &remote.options {
+                if key == "pass" {
+                    let revealed_pass = reveal_password(value, state.clone())
+                        .unwrap_or_else(|_| "*****".to_string());
+                    obj.insert(key.clone(), json!(revealed_pass));
+                    continue;
+                }
                 obj.insert(key.clone(), json!(value));
             }
             (name.clone(), Value::Object(obj))
@@ -56,8 +65,8 @@ pub async fn rclone_list_config(remote_type: String) -> Result<Value, String> {
 }
 
 #[tauri::command]
-pub async fn rclone_list_remotes() -> Result<Vec<String>, String> {
-    let config = RcloneConfigFile::load()?;
+pub async fn rclone_list_remotes(state: State<'_, AppState>) -> Result<Vec<String>, String> {
+    let config = RcloneConfigFile::load_with_custom(state)?;
     Ok(config.list_remotes())
 }
 
@@ -66,8 +75,9 @@ pub async fn rclone_create_remote(
     name: String,
     r#type: String,
     config: RcloneWebdavConfigInput,
+    state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let mut rclone_config = RcloneConfigFile::load()?;
+    let mut rclone_config = RcloneConfigFile::load_with_custom(state.clone())?;
 
     if rclone_config.has_remote(&name) {
         return Err(format!("Remote '{name}' already exists"));
@@ -81,12 +91,12 @@ pub async fn rclone_create_remote(
         pass: config.pass,
     };
 
-    // For now, we only support webdav type
     if r#type != "webdav" {
         return Err(format!("Unsupported remote type: {}", r#type));
     }
 
-    rclone_config.set_remote(webdav.to_rclone_config());
+    let remote_config = webdav.to_rclone_config_with_obscured_pass(state)?;
+    rclone_config.set_remote(remote_config);
     rclone_config.save()?;
 
     Ok(true)
@@ -97,8 +107,9 @@ pub async fn rclone_update_remote(
     name: String,
     r#type: String,
     config: RcloneWebdavConfigInput,
+    state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let mut rclone_config = RcloneConfigFile::load()?;
+    let mut rclone_config = RcloneConfigFile::load_with_custom(state.clone())?;
 
     if !rclone_config.has_remote(&name) {
         return Err(format!("Remote '{name}' does not exist"));
@@ -116,15 +127,19 @@ pub async fn rclone_update_remote(
         pass: config.pass,
     };
 
-    rclone_config.set_remote(webdav.to_rclone_config());
+    let remote_config = webdav.to_rclone_config_with_obscured_pass(state)?;
+    rclone_config.set_remote(remote_config);
     rclone_config.save()?;
 
     Ok(true)
 }
 
 #[tauri::command]
-pub async fn rclone_delete_remote(name: String) -> Result<bool, String> {
-    let mut rclone_config = RcloneConfigFile::load()?;
+pub async fn rclone_delete_remote(
+    name: String,
+    state: State<'_, AppState>,
+) -> Result<bool, String> {
+    let mut rclone_config = RcloneConfigFile::load_with_custom(state)?;
 
     let process_id = get_mount_process_id(&name);
     if PROCESS_MANAGER.is_registered(&process_id) {
@@ -206,11 +221,7 @@ pub async fn create_rclone_mount_remote_process(
         return Ok(info);
     }
 
-    if config.auto_start.unwrap_or(true) {
-        PROCESS_MANAGER.register_and_start(process_config)
-    } else {
-        PROCESS_MANAGER.register(process_config)
-    }
+    PROCESS_MANAGER.register_and_start(process_config)
 }
 
 #[tauri::command]
@@ -249,6 +260,33 @@ pub async fn unmount_remote(name: String) -> Result<bool, String> {
 
 #[tauri::command]
 pub async fn check_mount_status(mount_point: String) -> Result<bool, String> {
+    let process_list = PROCESS_MANAGER.list();
+    let mut found = false;
+    let mut mount_process_id = String::new();
+    for process in process_list {
+        if !process.name.starts_with("rclone_mount_") {
+            continue;
+        }
+        let args = &process.config.args;
+        let non_flag_args: Vec<&String> = args.iter().filter(|arg| !arg.starts_with('-')).collect();
+        if non_flag_args.len() >= 3 && non_flag_args[0] == "mount" {
+            let mp = non_flag_args[2];
+            if mp == &mount_point {
+                found = true;
+                mount_process_id = process.id.clone();
+                break;
+            }
+        }
+    }
+    if !found {
+        return Ok(false);
+    }
+
+    let process_info = PROCESS_MANAGER.get_status(&mount_process_id)?;
+    if !process_info.is_running {
+        return Ok(false);
+    }
+
     let path = Path::new(&mount_point);
 
     if !path.exists() {

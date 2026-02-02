@@ -8,7 +8,7 @@ type ActionFn<T = any> = () => Promise<T>
 export const useAppStore = defineStore('app', () => {
   const settings = ref<MergedSettings>({
     openlist: { port: 5244, data_dir: '', auto_launch: false, ssl_enabled: false, binary_path: undefined },
-    rclone: { config: {}, api_port: 45572 },
+    rclone: { binary_path: undefined, rclone_conf_path: undefined, mount_config: {} },
     app: {
       theme: 'light',
       auto_update_enabled: true,
@@ -17,8 +17,6 @@ export const useAppStore = defineStore('app', () => {
       open_links_in_browser: false,
       admin_password: undefined,
       show_window_on_startup: true,
-      custom_rclone_binary_path: undefined,
-      custom_rclone_config_path: undefined,
     },
   })
   const openlistCoreStatus = ref<OpenListCoreStatus>({ running: false })
@@ -50,7 +48,7 @@ export const useAppStore = defineStore('app', () => {
     const result: RcloneFormConfig[] = []
     for (const [key, config] of Object.entries(remoteConfigs.value)) {
       let newConfig
-      if (settings.value.rclone.config[key]) {
+      if (settings.value.rclone.mount_config[key]) {
         newConfig = {
           name: key,
           type: 'webdav',
@@ -58,10 +56,10 @@ export const useAppStore = defineStore('app', () => {
           vendor: config.vendor,
           user: config.user,
           pass: config.pass,
-          mountPoint: settings.value.rclone.config[key].mountPoint,
-          volumeName: settings.value.rclone.config[key].volumeName,
-          extraFlags: settings.value.rclone.config[key].extraFlags || [],
-          autoMount: settings.value.rclone.config[key].autoMount ?? false,
+          mountPoint: settings.value.rclone.mount_config[key].mountPoint,
+          volumeName: settings.value.rclone.mount_config[key].volumeName,
+          extraFlags: settings.value.rclone.mount_config[key].extraFlags || [],
+          autoMount: settings.value.rclone.mount_config[key].autoMount ?? false,
         }
       } else {
         newConfig = {
@@ -74,7 +72,7 @@ export const useAppStore = defineStore('app', () => {
         } as RcloneFormConfig
       }
       result.push(newConfig)
-      settings.value.rclone.config[key] = newConfig
+      settings.value.rclone.mount_config[key] = newConfig
     }
     return result
   })
@@ -158,7 +156,7 @@ export const useAppStore = defineStore('app', () => {
       if (!result) {
         throw new Error('Failed to create remote configuration')
       }
-      settings.value.rclone.config[name] = fullConfig
+      settings.value.rclone.mount_config[name] = fullConfig
       await loadRemoteConfigs()
       await saveSettings()
       return true
@@ -206,11 +204,11 @@ export const useAppStore = defineStore('app', () => {
         if (!result) {
           throw new Error('Failed to update remote configuration')
         }
-        settings.value.rclone.config[config.name] = fullConfig
+        settings.value.rclone.mount_config[config.name] = fullConfig
       }
       await loadRemoteConfigs()
-      if (name !== config.name && settings.value.rclone.config[name]) {
-        delete settings.value.rclone.config[name]
+      if (name !== config.name && settings.value.rclone.mount_config[name]) {
+        delete settings.value.rclone.mount_config[name]
       }
       const oldProcessId = await getRcloneMountProcessId(name)
       if (oldProcessId) {
@@ -261,8 +259,8 @@ export const useAppStore = defineStore('app', () => {
       }
       await TauriAPI.rclone.remotes.delete(name)
       await loadRemoteConfigs()
-      if (settings.value.rclone.config[name]) {
-        delete settings.value.rclone.config[name]
+      if (settings.value.rclone.mount_config[name]) {
+        delete settings.value.rclone.mount_config[name]
         await saveSettings()
       }
       await loadMountInfos()
@@ -292,7 +290,7 @@ export const useAppStore = defineStore('app', () => {
   async function mountRemote(name: string) {
     try {
       loading.value = true
-      const config = settings.value.rclone.config[name] as RcloneFormConfig | undefined
+      const config = settings.value.rclone.mount_config[name] as RcloneFormConfig | undefined
       if (!config) {
         throw new Error(`No configuration found for remote: ${name}`)
       }
@@ -464,7 +462,7 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function loadLogs(source?: 'openlist' | 'rclone' | 'app' | 'service' | 'all') {
+  async function loadLogs(source?: 'openlist' | 'rclone' | 'app' | 'all') {
     try {
       source = source || 'openlist'
       const logEntries = await TauriAPI.logs.get(source)
@@ -474,7 +472,7 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function clearLogs(source?: 'openlist' | 'rclone' | 'app' | 'service' | 'all') {
+  async function clearLogs(source?: 'openlist' | 'rclone' | 'app' | 'all') {
     try {
       loading.value = true
       source = source || 'openlist'
