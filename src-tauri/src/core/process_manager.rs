@@ -246,6 +246,64 @@ impl ProcessManager {
             .unwrap_or(0)
     }
 
+    fn rotate_log_if_needed(log_path: &PathBuf) -> Result<(), String> {
+        const MAX_LOG_SIZE: u64 = 10 * 1024 * 1024;
+        const MAX_ARCHIVES: usize = 3;
+
+        if !log_path.exists() {
+            return Ok(());
+        }
+
+        let metadata = std::fs::metadata(log_path)
+            .map_err(|e| format!("Failed to read log file metadata: {e}"))?;
+
+        if metadata.len() < MAX_LOG_SIZE {
+            return Ok(());
+        }
+
+        log::info!(
+            "Rotating log file '{}' (size: {} bytes)",
+            log_path.display(),
+            metadata.len()
+        );
+
+        let log_dir = log_path
+            .parent()
+            .unwrap_or_else(|| std::path::Path::new("."));
+        let log_file_name = log_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("log");
+        let log_extension = log_path
+            .extension()
+            .and_then(|s| s.to_str())
+            .unwrap_or("log");
+
+        let oldest_archive = log_dir.join(format!(
+            "{}.{}.{}",
+            log_file_name, MAX_ARCHIVES, log_extension
+        ));
+        if oldest_archive.exists() {
+            let _ = std::fs::remove_file(&oldest_archive);
+        }
+
+        for i in (1..MAX_ARCHIVES).rev() {
+            let from = log_dir.join(format!("{}.{}.{}", log_file_name, i, log_extension));
+            let to = log_dir.join(format!("{}.{}.{}", log_file_name, i + 1, log_extension));
+            if from.exists() {
+                std::fs::rename(&from, &to)
+                    .map_err(|e| format!("Failed to rotate archive {}: {e}", i))?;
+            }
+        }
+
+        let archive = log_dir.join(format!("{}.1.{}", log_file_name, log_extension));
+        std::fs::rename(log_path, &archive)
+            .map_err(|e| format!("Failed to archive current log: {e}"))?;
+
+        log::info!("Log file rotated successfully");
+        Ok(())
+    }
+
     pub fn register(&self, config: ProcessConfig) -> Result<ProcessInfo, String> {
         let mut processes = self.processes.write();
         log::info!("Registering process '{}'", config.id);
@@ -364,6 +422,8 @@ impl ProcessManager {
             std::fs::create_dir_all(parent)
                 .map_err(|e| format!("Failed to create log directory: {e}"))?;
         }
+
+        Self::rotate_log_if_needed(&log_path)?;
 
         let log_file = OpenOptions::new()
             .create(true)
