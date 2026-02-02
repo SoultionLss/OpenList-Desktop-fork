@@ -9,7 +9,7 @@
   <div ref="dropdownRef" class="sort-dropdown relative">
     <button
       ref="triggerRef"
-      class="flex h-7 w-full cursor-pointer items-center justify-between gap-1 rounded-md border border-border-secondary px-2 py-1.5 text-sm leading-[1.4] text-main transition-all duration-fast ease-apple hover:border-accent-hover focus:[.active]:border-accent-hover focus:[.active]:shadow-md"
+      class="flex h-7 w-full cursor-pointer items-center justify-between gap-1 rounded-md border border-border-secondary px-2 py-1.5 text-sm leading-[1.4] text-main transition-all duration-fast bg-surface ease-apple hover:border-accent-hover focus:[.active]:border-accent-hover focus:[.active]:shadow-md"
       :class="{ active: dropDownOpen }"
       @click="toggleDropdown()"
     >
@@ -26,7 +26,7 @@
         v-for="key in keyList"
         :key="key"
         :disabled="disabled"
-        class="block min-h-[unset] w-full cursor-pointer border-none bg-bg-tertiary px-2 py-1 text-center text-sm leading-[1.4] text-main transition-all duration-fast ease-apple hover:bg-accent/50"
+        class="block min-h-[unset] w-full cursor-pointer border-none bg-bg-tertiary px-2 py-1 text-center text-xs leading-[1.4] text-main transition-all duration-fast ease-apple hover:bg-accent/50"
         @click="selectItem(key)"
       >
         <slot name="item" :item="key"> {{ key }} </slot>
