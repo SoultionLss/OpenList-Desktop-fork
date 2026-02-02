@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use tauri::{AppHandle, State};
 
 use crate::core::process_manager::PROCESS_MANAGER;
-use crate::object::structs::{AppState, FileItem};
+use crate::object::structs::AppState;
 use crate::utils::github_proxy::apply_github_proxy;
 use crate::utils::path::{
     app_config_file_path, get_app_logs_dir, get_default_openlist_data_dir,
@@ -85,59 +85,6 @@ pub fn select_directory(title: String, app_handle: AppHandle) -> Result<Option<S
         .blocking_pick_folder();
 
     Ok(dir_path.map(|path| path.to_string()))
-}
-
-#[tauri::command]
-pub async fn list_files(
-    path: String,
-    _state: State<'_, AppState>,
-) -> Result<Vec<FileItem>, String> {
-    let path_buf = PathBuf::from(&path);
-
-    if !path_buf.exists() {
-        return Err("Path does not exist".to_string());
-    }
-
-    let mut files = Vec::new();
-
-    if path_buf.is_dir() {
-        let entries = fs::read_dir(&path_buf).map_err(|e| e.to_string())?;
-
-        for entry in entries {
-            let entry = entry.map_err(|e| e.to_string())?;
-            let metadata = entry.metadata().map_err(|e| e.to_string())?;
-            let file_name = entry.file_name().to_string_lossy().to_string();
-            let file_path = entry.path().to_string_lossy().to_string();
-
-            files.push(FileItem {
-                name: file_name,
-                path: file_path,
-                is_dir: metadata.is_dir(),
-                size: if metadata.is_file() {
-                    Some(metadata.len())
-                } else {
-                    None
-                },
-                modified: metadata
-                    .modified()
-                    .ok()
-                    .and_then(|time| time.duration_since(std::time::UNIX_EPOCH).ok())
-                    .map(|duration| {
-                        chrono::DateTime::from_timestamp(duration.as_secs() as i64, 0)
-                            .unwrap_or_default()
-                            .to_rfc3339()
-                    }),
-            });
-        }
-    }
-
-    files.sort_by(|a, b| match (a.is_dir, b.is_dir) {
-        (true, false) => std::cmp::Ordering::Less,
-        (false, true) => std::cmp::Ordering::Greater,
-        _ => a.name.cmp(&b.name),
-    });
-
-    Ok(files)
 }
 
 #[tauri::command]

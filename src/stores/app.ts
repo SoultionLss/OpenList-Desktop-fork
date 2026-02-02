@@ -490,12 +490,6 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  const listFiles = (path: string) =>
-    withLoading(async () => {
-      files.value = await TauriAPI.files.list(path)
-      currentPath.value = path
-    }, 'Failed to list files')
-
   async function openFile(path: string) {
     try {
       await TauriAPI.files.open(path)
@@ -738,7 +732,6 @@ export const useAppStore = defineStore('app', () => {
     refreshOpenListCoreStatus,
     loadLogs,
     clearLogs,
-    listFiles,
     openFile,
     openFolder,
     openLogsDirectory,

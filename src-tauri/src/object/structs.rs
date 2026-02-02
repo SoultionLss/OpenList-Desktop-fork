@@ -14,15 +14,6 @@ pub struct ServiceStatus {
     pub port: Option<u16>,
 }
 
-#[derive(Debug, Serialize, Clone)]
-pub struct FileItem {
-    pub name: String,
-    pub path: String,
-    pub is_dir: bool,
-    pub size: Option<u64>,
-    pub modified: Option<String>,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RcloneMountInfo {
     pub name: String,
