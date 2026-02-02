@@ -8,7 +8,8 @@ use crate::object::structs::{AppState, FileItem};
 use crate::utils::github_proxy::apply_github_proxy;
 use crate::utils::path::{
     app_config_file_path, get_app_logs_dir, get_default_openlist_data_dir,
-    get_openlist_binary_path, get_rclone_binary_path, get_rclone_config_path,
+    get_openlist_binary_path_with_custom, get_rclone_binary_path_with_custom,
+    get_rclone_config_path,
 };
 
 const OPENLIST_CORE_PROCESS_ID: &str = "openlist_core";
@@ -43,9 +44,10 @@ pub async fn open_folder(path: String) -> Result<bool, String> {
     let normalized_path = normalize_path(&path);
     let path_buf = PathBuf::from(normalized_path);
     if !path_buf.exists() {
-        return Err(format!("Path does not exist: {}", path_buf.display()));
+        fs::create_dir_all(&path_buf)
+            .map_err(|e| format!("Failed to create directory: {}", e.to_string()))?;
     }
-    open::that(path_buf.as_os_str()).map_err(|e| e.to_string())?;
+    open::that_detached(path_buf.as_os_str()).map_err(|e| e.to_string())?;
     Ok(true)
 }
 
@@ -58,12 +60,6 @@ pub async fn open_file(path: String) -> Result<bool, String> {
     }
 
     open::that_detached(path_buf.as_os_str()).map_err(|e| e.to_string())?;
-    Ok(true)
-}
-
-#[tauri::command]
-pub async fn open_url(url: String) -> Result<bool, String> {
-    open::that(url).map_err(|e| e.to_string())?;
     Ok(true)
 }
 
@@ -222,7 +218,8 @@ pub async fn update_tool_version(
         .get_settings()
         .and_then(|settings| settings.app.gh_proxy_api);
 
-    let result = download_and_replace_binary(&tool, &version, &gh_proxy, &gh_proxy_api).await;
+    let result =
+        download_and_replace_binary(&tool, &version, &gh_proxy, &gh_proxy_api, state).await;
 
     match result {
         Ok(_) => {
@@ -258,6 +255,7 @@ async fn download_and_replace_binary(
     version: &str,
     gh_proxy: &Option<String>,
     gh_proxy_api: &Option<bool>,
+    state: State<'_, AppState>,
 ) -> Result<(), String> {
     let platform = std::env::consts::OS;
     let arch = std::env::consts::ARCH;
@@ -280,16 +278,21 @@ async fn download_and_replace_binary(
     );
 
     log::info!("Detected platform: {platform_arch}");
-
+    let settings = state
+        .app_settings
+        .read()
+        .clone()
+        .ok_or("Failed to read app settings")?;
     let (binary_path, download_info) = match tool {
         "openlist" => {
-            let path = get_openlist_binary_path()
-                .map_err(|e| format!("Failed to get OpenList binary path: {e}"))?;
+            let path =
+                get_openlist_binary_path_with_custom(settings.openlist.binary_path.as_deref())
+                    .map_err(|e| format!("Failed to get OpenList binary path: {e}"))?;
             let info = get_openlist_download_info(&platform_arch, version, gh_proxy, gh_proxy_api)?;
             (path, info)
         }
         "rclone" => {
-            let path = get_rclone_binary_path()
+            let path = get_rclone_binary_path_with_custom(settings.rclone.binary_path.as_deref())
                 .map_err(|e| format!("Failed to get Rclone binary path: {e}"))?;
             let info = get_rclone_download_info(&platform_arch, version, gh_proxy, gh_proxy_api)?;
             (path, info)

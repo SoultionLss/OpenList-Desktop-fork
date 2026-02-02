@@ -20,7 +20,6 @@ pub struct ProcessConfig {
     pub log_file: String,
     pub working_dir: Option<String>,
     pub env_vars: Option<HashMap<String, String>>,
-    pub auto_restart: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -258,16 +257,11 @@ impl ProcessManager {
             .unwrap_or(0)
     }
 
-    /// Register a process configuration without starting it
-    /// If the process is already registered (e.g., recovered from persisted
-    /// state), returns the existing process info
     pub fn register(&self, config: ProcessConfig) -> Result<ProcessInfo, String> {
         let mut processes = self.processes.write();
         log::info!("Registering process '{}'", config.id);
 
-        // Check if already registered (possibly recovered from persisted state)
         if let Some(managed) = processes.get_mut(&config.id) {
-            // Update config if needed, but keep the running state
             let (is_running, pid) = if let Some(ref child) = managed.child {
                 (true, Some(child.id()))
             } else if let Some(ext_pid) = managed.external_pid {
@@ -282,7 +276,6 @@ impl ProcessManager {
                 (false, None)
             };
 
-            // Update config
             managed.config = config.clone();
 
             return Ok(ProcessInfo {
@@ -319,14 +312,12 @@ impl ProcessManager {
         Ok(info)
     }
 
-    /// Register and immediately start a process
     pub fn register_and_start(&self, config: ProcessConfig) -> Result<ProcessInfo, String> {
         let id = config.id.clone();
         self.register(config)?;
         self.start(&id)
     }
 
-    /// Start a registered process
     pub fn start(&self, id: &str) -> Result<ProcessInfo, String> {
         let mut processes = self.processes.write();
 
@@ -334,16 +325,13 @@ impl ProcessManager {
             .get_mut(id)
             .ok_or_else(|| format!("Process with id '{id}' not found"))?;
 
-        // Check if already running via Child handle
         if let Some(ref mut child) = managed.child {
             match child.try_wait() {
                 Ok(Some(_)) => {
-                    // Process has exited, we can start a new one
                     managed.child = None;
                     managed.external_pid = None;
                 }
                 Ok(None) => {
-                    // Process is still running
                     return Ok(ProcessInfo {
                         id: managed.config.id.clone(),
                         name: managed.config.name.clone(),
@@ -361,7 +349,6 @@ impl ProcessManager {
             }
         }
 
-        // Check if already running via external PID (recovered process)
         if let Some(ext_pid) = managed.external_pid {
             if Self::is_process_alive(ext_pid) {
                 return Ok(ProcessInfo {
@@ -380,11 +367,9 @@ impl ProcessManager {
 
         let config = &managed.config;
 
-        // Save config values for logging after drop
         let config_bin_path = config.bin_path.clone();
         let config_args = config.args.clone();
 
-        // Open log file for stdout/stderr
         let log_path = PathBuf::from(&config.log_file);
         if let Some(parent) = log_path.parent() {
             std::fs::create_dir_all(parent)
@@ -406,19 +391,16 @@ impl ProcessManager {
             .stdout(Stdio::from(log_file))
             .stderr(Stdio::from(stderr_file));
 
-        // Set working directory if specified
         if let Some(ref working_dir) = config.working_dir {
             cmd.current_dir(working_dir);
         }
 
-        // Set environment variables if specified
         if let Some(ref env_vars) = config.env_vars {
             for (key, value) in env_vars {
                 cmd.env(key, value);
             }
         }
 
-        // Platform-specific: hide console window on Windows
         #[cfg(target_os = "windows")]
         {
             use std::os::windows::process::CommandExt;
@@ -433,7 +415,7 @@ impl ProcessManager {
         let started_at = Self::current_timestamp();
 
         managed.child = Some(child);
-        managed.external_pid = None; // Clear external PID since we now have a Child handle
+        managed.external_pid = None;
         managed.started_at = Some(started_at);
 
         let info = ProcessInfo {
@@ -455,7 +437,6 @@ impl ProcessManager {
             config_args.join(" ")
         );
 
-        // Persist state after starting
         self.persist_state();
 
         Ok(info)
@@ -768,7 +749,6 @@ mod tests {
             log_file: "/tmp/test.log".into(),
             working_dir: None,
             env_vars: None,
-            auto_restart: false,
         };
 
         let result = pm.register(config.clone());

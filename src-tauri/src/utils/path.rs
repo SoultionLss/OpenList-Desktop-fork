@@ -1,31 +1,12 @@
 use std::path::{Path, PathBuf};
 use std::{env, fs};
 
+use dunce::canonicalize;
+
 pub static APP_ID: &str = "io.github.openlistteam.openlist.desktop";
 
-// Normalize path without Windows long path prefix (\\?\)
-// The \\?\ prefix breaks compatibility with some applications like SQLite
 fn normalize_path(path: &Path) -> Result<PathBuf, String> {
-    #[cfg(target_os = "windows")]
-    {
-        // On Windows, use canonicalize but strip the \\?\ prefix if present
-        let canonical = path
-            .canonicalize()
-            .map_err(|e| format!("Failed to canonicalize path: {e}"))?;
-
-        let path_str = canonical.to_string_lossy();
-        if let Some(stripped) = path_str.strip_prefix(r"\\?\") {
-            Ok(PathBuf::from(stripped))
-        } else {
-            Ok(canonical)
-        }
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        path.canonicalize()
-            .map_err(|e| format!("Failed to canonicalize path: {e}"))
-    }
+    canonicalize(path).map_err(|e| format!("Failed to canonicalize path: {e}"))
 }
 
 pub fn get_app_dir() -> Result<PathBuf, String> {
@@ -74,27 +55,6 @@ pub fn get_user_data_dir() -> Result<PathBuf, String> {
     normalize_path(&data_dir)
 }
 
-fn get_user_logs_dir() -> Result<PathBuf, String> {
-    let logs_dir = {
-        #[cfg(target_os = "macos")]
-        {
-            let home = env::var("HOME").map_err(|_| "Failed to get HOME environment variable")?;
-            PathBuf::from(home)
-                .join("Library")
-                .join("Logs")
-                .join("OpenList Desktop")
-        }
-
-        #[cfg(not(target_os = "macos"))]
-        {
-            get_user_data_dir()?.join("logs")
-        }
-    };
-
-    fs::create_dir_all(&logs_dir).map_err(|e| format!("Failed to create logs directory: {e}"))?;
-    normalize_path(&logs_dir)
-}
-
 fn get_binary_path(binary: &str, service_name: &str) -> Result<PathBuf, String> {
     let mut name = binary.to_string();
     if cfg!(target_os = "windows") {
@@ -114,7 +74,6 @@ pub fn get_openlist_binary_path() -> Result<PathBuf, String> {
     get_binary_path("openlist", "OpenList")
 }
 
-/// Get OpenList binary path, with optional custom path override
 pub fn get_openlist_binary_path_with_custom(custom_path: Option<&str>) -> Result<PathBuf, String> {
     if let Some(path) = custom_path.filter(|p| !p.is_empty()) {
         let custom = PathBuf::from(path);
@@ -127,13 +86,11 @@ pub fn get_openlist_binary_path_with_custom(custom_path: Option<&str>) -> Result
 }
 
 pub fn get_rclone_binary_path() -> Result<PathBuf, String> {
-    // Windows/macOS: rclone is bundled with the app
     #[cfg(not(target_os = "linux"))]
     {
         get_binary_path("rclone", "Rclone")
     }
 
-    // Linux: rclone is not bundled, find it in system PATH
     #[cfg(target_os = "linux")]
     {
         use std::process::Command;
@@ -153,7 +110,6 @@ pub fn get_rclone_binary_path() -> Result<PathBuf, String> {
     }
 }
 
-/// Get Rclone binary path, with optional custom path override
 pub fn get_rclone_binary_path_with_custom(custom_path: Option<&str>) -> Result<PathBuf, String> {
     if let Some(path) = custom_path.filter(|p| !p.is_empty()) {
         let custom = PathBuf::from(path);
@@ -174,7 +130,24 @@ pub fn app_config_file_path() -> Result<PathBuf, String> {
 }
 
 pub fn get_app_logs_dir() -> Result<PathBuf, String> {
-    get_user_logs_dir()
+    let logs_dir = {
+        #[cfg(target_os = "macos")]
+        {
+            let home = env::var("HOME").map_err(|_| "Failed to get HOME environment variable")?;
+            PathBuf::from(home)
+                .join("Library")
+                .join("Logs")
+                .join("OpenList Desktop")
+        }
+
+        #[cfg(not(target_os = "macos"))]
+        {
+            get_user_data_dir()?.join("logs")
+        }
+    };
+
+    fs::create_dir_all(&logs_dir).map_err(|e| format!("Failed to create logs directory: {e}"))?;
+    normalize_path(&logs_dir)
 }
 
 pub fn get_rclone_config_path() -> Result<PathBuf, String> {

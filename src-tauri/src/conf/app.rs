@@ -11,10 +11,6 @@ pub struct AppConfig {
     pub show_window_on_startup: Option<bool>,
     pub log_filter_level: Option<String>,
     pub log_filter_source: Option<String>,
-    // Custom binary/config paths
-    pub custom_openlist_binary_path: Option<String>,
-    pub custom_rclone_binary_path: Option<String>,
-    pub custom_rclone_config_path: Option<String>,
     pub hide_dock_icon: Option<bool>,
 }
 
@@ -30,9 +26,6 @@ impl AppConfig {
             show_window_on_startup: Some(true),
             log_filter_level: Some("all".to_string()),
             log_filter_source: Some("openlist".to_string()),
-            custom_openlist_binary_path: None,
-            custom_rclone_binary_path: None,
-            custom_rclone_config_path: None,
             hide_dock_icon: Some(false),
         }
     }

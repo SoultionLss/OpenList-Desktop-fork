@@ -151,8 +151,8 @@ pub async fn create_rclone_mount_remote_process(
         .clone()
         .ok_or("Failed to read app settings")?;
 
-    let custom_rclone_binary = settings.app.custom_rclone_binary_path;
-    let custom_rclone_config = settings.app.custom_rclone_config_path;
+    let custom_rclone_binary = settings.rclone.binary_path;
+    let custom_rclone_config = settings.rclone.rclone_conf_path;
 
     let binary_path = get_rclone_binary_path_with_custom(custom_rclone_binary.as_deref())
         .map_err(|e| format!("Failed to get rclone binary path: {e}"))?;
@@ -196,7 +196,6 @@ pub async fn create_rclone_mount_remote_process(
             .parent()
             .map(|p| p.to_string_lossy().into_owned()),
         env_vars: None,
-        auto_restart: true,
     };
 
     if PROCESS_MANAGER.is_registered(&config.id) {

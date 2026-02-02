@@ -7,7 +7,7 @@ type ActionFn<T = any> = () => Promise<T>
 
 export const useAppStore = defineStore('app', () => {
   const settings = ref<MergedSettings>({
-    openlist: { port: 5244, data_dir: '', auto_launch: false, ssl_enabled: false },
+    openlist: { port: 5244, data_dir: '', auto_launch: false, ssl_enabled: false, binary_path: undefined },
     rclone: { config: {}, api_port: 45572 },
     app: {
       theme: 'light',
@@ -17,7 +17,6 @@ export const useAppStore = defineStore('app', () => {
       open_links_in_browser: false,
       admin_password: undefined,
       show_window_on_startup: true,
-      custom_openlist_binary_path: undefined,
       custom_rclone_binary_path: undefined,
       custom_rclone_config_path: undefined,
     },

@@ -19,7 +19,6 @@ fn build_openlist_config(
         get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {e}"))?;
     let log_file_path = log_file_path.join("process_openlist_core.log");
 
-    // Use custom data dir if set, otherwise use platform-specific default
     let effective_data_dir = if !data_dir.is_empty() {
         data_dir
     } else {
@@ -39,7 +38,6 @@ fn build_openlist_config(
             .parent()
             .map(|p| p.to_string_lossy().into_owned()),
         env_vars: None,
-        auto_restart: true,
     })
 }
 
@@ -54,7 +52,7 @@ pub async fn create_openlist_core_process(
         .ok_or("Failed to read app settings")?;
 
     let data_dir = settings.openlist.data_dir;
-    let custom_binary_path = settings.app.custom_openlist_binary_path;
+    let custom_binary_path = settings.openlist.binary_path;
 
     let config = build_openlist_config(data_dir, custom_binary_path.as_deref())?;
 
@@ -97,7 +95,7 @@ pub async fn restart_openlist_core(state: State<'_, AppState>) -> Result<Process
         .ok_or("Failed to read app settings")?;
 
     let data_dir = settings.openlist.data_dir;
-    let custom_binary_path = settings.app.custom_openlist_binary_path;
+    let custom_binary_path = settings.openlist.binary_path;
     let config = build_openlist_config(data_dir, custom_binary_path.as_deref())?;
 
     if PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {

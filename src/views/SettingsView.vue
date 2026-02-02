@@ -87,7 +87,7 @@
             </SettingCard>
             <SettingCard>
               <CustomInput
-                v-model="appSettings.custom_openlist_binary_path"
+                v-model="openlistCoreSettings.binary_path"
                 type="text"
                 :placeholder="t('settings.service.customPaths.openlistBinary.placeholder')"
                 :tips="t('settings.service.customPaths.openlistBinary.help')"
@@ -323,6 +323,7 @@ import SettingCard from '@/components/common/SettingCard.vue'
 import SettingSection from '@/components/common/SettingSection.vue'
 import useConfirm from '@/hooks/useConfirm'
 import useMessage from '@/hooks/useMessage'
+import { DEFAULT_CONFIG } from '@/utils/constant'
 
 import CustomButton from '../components/common/CustomButton.vue'
 import { useTranslation } from '../composables/useI18n'
@@ -346,14 +347,6 @@ let originalOpenlistPort = openlistCoreSettings.port || 5244
 let originalDataDir = openlistCoreSettings.data_dir
 let originalAdminPassword = appStore.settings.app.admin_password || ''
 
-watch(autoStartApp, async newValue => {
-  if (newValue) {
-    await enable()
-  } else {
-    await disable()
-  }
-})
-
 const tabs = computed(() => [
   {
     id: 'openlist',
@@ -375,40 +368,6 @@ const tabs = computed(() => [
   },
 ])
 
-onMounted(async () => {
-  autoStartApp.value = await isEnabled()
-  const tabParam = route.query.tab as string
-  if (tabParam && ['openlist', 'rclone', 'app'].includes(tabParam)) {
-    activeTab.value = tabParam
-  }
-
-  if (!openlistCoreSettings.port) openlistCoreSettings.port = 5244
-  if (!openlistCoreSettings.data_dir) openlistCoreSettings.data_dir = ''
-  if (openlistCoreSettings.auto_launch === undefined) openlistCoreSettings.auto_launch = false
-  if (openlistCoreSettings.ssl_enabled === undefined) openlistCoreSettings.ssl_enabled = false
-
-  if (!rcloneSettings.config) rcloneSettings.config = {}
-
-  rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
-  if (!appSettings.theme) appSettings.theme = 'light'
-
-  if (appSettings.auto_update_enabled === undefined) appSettings.auto_update_enabled = true
-  if (!appSettings.gh_proxy) appSettings.gh_proxy = ''
-  if (appSettings.gh_proxy_api === undefined) appSettings.gh_proxy_api = false
-  if (appSettings.open_links_in_browser === undefined) appSettings.open_links_in_browser = false
-  if (appSettings.show_window_on_startup === undefined) appSettings.show_window_on_startup = true
-  if (appSettings.hide_dock_icon === undefined) appSettings.hide_dock_icon = false
-  if (!appSettings.admin_password) appSettings.admin_password = ''
-  if (!appSettings.custom_openlist_binary_path) appSettings.custom_openlist_binary_path = ''
-  if (!appSettings.custom_rclone_binary_path) appSettings.custom_rclone_binary_path = ''
-  if (!appSettings.custom_rclone_config_path) appSettings.custom_rclone_config_path = ''
-  originalOpenlistPort = openlistCoreSettings.port || 5244
-  originalDataDir = openlistCoreSettings.data_dir
-
-  // Load current admin password
-  await loadCurrentAdminPassword()
-})
-
 const hasUnsavedChanges = computed(() => {
   let rcloneConfigChanged = false
   try {
@@ -428,6 +387,14 @@ const hasUnsavedChanges = computed(() => {
 
 const isMacOs = computed(() => {
   return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'darwin'
+})
+
+watch(autoStartApp, async newValue => {
+  if (newValue) {
+    await enable()
+  } else {
+    await disable()
+  }
 })
 
 const handleSave = async () => {
@@ -578,7 +545,7 @@ const handleSelectOpenlistBinary = async () => {
       directory: false,
       multiple: false,
       title: t('settings.service.customPaths.openlistBinary.selectTitle'),
-      defaultPath: appSettings.custom_openlist_binary_path || undefined,
+      defaultPath: openlistCoreSettings.binary_path || undefined,
       filters: [
         {
           name: 'Executable',
@@ -588,7 +555,7 @@ const handleSelectOpenlistBinary = async () => {
     })
 
     if (selected && typeof selected === 'string') {
-      appSettings.custom_openlist_binary_path = selected
+      openlistCoreSettings.binary_path = selected
     }
   } catch (error) {
     console.error('Failed to select OpenList binary:', error)
@@ -655,4 +622,39 @@ const loadCurrentAdminPassword = async () => {
     console.error('Failed to load admin password:', error)
   }
 }
+
+async function init() {
+  autoStartApp.value = await isEnabled()
+  const tabParam = route.query.tab as string
+  if (tabParam && ['openlist', 'rclone', 'app'].includes(tabParam)) {
+    activeTab.value = tabParam
+  }
+  Object.assign(openlistCoreSettings, { ...DEFAULT_CONFIG.openlistCore, ...openlistCoreSettings })
+  Object.assign(rcloneSettings, { ...DEFAULT_CONFIG.rclone, ...rcloneSettings })
+  Object.assign(appSettings, { ...DEFAULT_CONFIG.app, ...appSettings })
+
+  if (!rcloneSettings.config) rcloneSettings.config = {}
+
+  rcloneConfigJson.value = JSON.stringify(rcloneSettings.config, null, 2)
+  if (!appSettings.theme) appSettings.theme = 'light'
+
+  if (appSettings.auto_update_enabled === undefined) appSettings.auto_update_enabled = true
+  if (!appSettings.gh_proxy) appSettings.gh_proxy = ''
+  if (appSettings.gh_proxy_api === undefined) appSettings.gh_proxy_api = false
+  if (appSettings.open_links_in_browser === undefined) appSettings.open_links_in_browser = false
+  if (appSettings.show_window_on_startup === undefined) appSettings.show_window_on_startup = true
+  if (appSettings.hide_dock_icon === undefined) appSettings.hide_dock_icon = false
+  if (!appSettings.admin_password) appSettings.admin_password = ''
+  if (!appSettings.custom_rclone_binary_path) appSettings.custom_rclone_binary_path = ''
+  if (!appSettings.custom_rclone_config_path) appSettings.custom_rclone_config_path = ''
+  originalOpenlistPort = openlistCoreSettings.port || 5244
+  originalDataDir = openlistCoreSettings.data_dir
+
+  // Load current admin password
+  await loadCurrentAdminPassword()
+}
+
+onMounted(async () => {
+  await init()
+})
 </script>

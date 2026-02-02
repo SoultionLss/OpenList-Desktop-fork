@@ -51,7 +51,6 @@ export class TauriAPI {
     list: (path: string): Promise<FileItem[]> => call('list_files', { path }),
     open: (path: string): Promise<boolean> => call('open_file', { path }),
     folder: (path: string): Promise<boolean> => call('open_folder', { path }),
-    url: (url: string): Promise<boolean> => call('open_url', { url }),
     urlInBrowser: (url: string): Promise<boolean> => call('open_url_in_browser', { url }),
     openOpenListDataDir: (): Promise<boolean> => call('open_openlist_data_dir'),
     openLogsDirectory: (): Promise<boolean> => call('open_logs_directory'),

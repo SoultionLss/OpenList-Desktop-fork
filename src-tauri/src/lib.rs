@@ -24,7 +24,7 @@ use cmd::openlist_core::{
 };
 use cmd::os_operate::{
     get_available_versions, list_files, open_file, open_folder, open_logs_directory,
-    open_openlist_data_dir, open_rclone_config_file, open_settings_file, open_url,
+    open_openlist_data_dir, open_rclone_config_file, open_settings_file, 
     open_url_in_browser, select_directory, update_tool_version,
 };
 use cmd::rclone_core::check_rclone_available;
@@ -146,7 +146,6 @@ pub fn run() {
             open_openlist_data_dir,
             open_rclone_config_file,
             open_settings_file,
-            open_url,
             open_url_in_browser,
             // Settings
             save_settings,

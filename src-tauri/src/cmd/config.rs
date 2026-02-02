@@ -60,7 +60,6 @@ async fn restart_openlist_core_internal(_state: State<'_, AppState>) -> Result<(
 }
 
 async fn recreate_openlist_core_process(state: State<'_, AppState>) -> Result<(), String> {
-    // Stop and remove existing process if registered
     if PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
         let _ = PROCESS_MANAGER.stop(OPENLIST_CORE_PROCESS_ID);
         sleep(Duration::from_millis(500)).await;
@@ -97,6 +96,7 @@ pub async fn save_settings_with_update_port(
     let old_settings = state.get_settings();
     let needs_openlist_recreation = if let Some(old) = &old_settings {
         old.openlist.data_dir != settings.openlist.data_dir
+            || old.openlist.binary_path != settings.openlist.binary_path
     } else {
         false
     };

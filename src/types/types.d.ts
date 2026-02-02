@@ -7,6 +7,7 @@ interface OpenListCoreConfig {
   data_dir: string
   auto_launch: boolean
   ssl_enabled: boolean
+  binary_path?: string
 }
 
 interface RcloneConfig {
@@ -53,7 +54,6 @@ interface AppConfig {
   log_filter_level?: string
   log_filter_source?: string
   // Custom binary/config paths
-  custom_openlist_binary_path?: string
   custom_rclone_binary_path?: string
   custom_rclone_config_path?: string
   hide_dock_icon?: boolean
@@ -94,7 +94,6 @@ interface ProcessConfig {
   log_file: string
   working_dir?: string
   env_vars?: Record<string, string>
-  auto_restart: boolean
 }
 
 // ProcessInfo returned from process manager operations
