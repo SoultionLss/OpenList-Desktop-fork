@@ -453,13 +453,13 @@ export const useAppStore = defineStore('app', () => {
       const statusChanged = openlistCoreStatus.value.running !== status.running
       openlistCoreStatus.value = status
       if (statusChanged) {
-        await TauriAPI.tray.updateDelayed(status.running)
+        await TauriAPI.tray.update(status.running)
       }
     } catch (_err) {
       const wasRunning = openlistCoreStatus.value.running
       openlistCoreStatus.value = { running: false }
       if (wasRunning) {
-        await TauriAPI.tray.updateDelayed(false)
+        await TauriAPI.tray.update(false)
       }
     }
   }
@@ -640,7 +640,6 @@ export const useAppStore = defineStore('app', () => {
     try {
       await loadSettings()
       await refreshOpenListCoreStatus()
-      await TauriAPI.tray.updateDelayed(openlistCoreStatus.value.running)
       loadLogs()
       autoStartCoreIfEnabled()
       await loadRemoteConfigs()

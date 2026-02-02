@@ -1,12 +1,9 @@
-use std::sync::Mutex;
-use std::time::{Duration, Instant};
-
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Manager};
 
-static LAST_MENU_UPDATE: Mutex<Option<Instant>> = Mutex::new(None);
-const MIN_UPDATE_INTERVAL: Duration = Duration::from_millis(30000);
+use crate::cmd;
+use crate::object::structs::AppState;
 
 pub fn create_tray(app_handle: &AppHandle) -> tauri::Result<()> {
     let quit_i = MenuItem::with_id(app_handle, "quit", "退出", true, None::<&str>)?;
@@ -82,7 +79,12 @@ pub fn create_tray(app_handle: &AppHandle) -> tauri::Result<()> {
                 }
             }
         })
-        .on_menu_event(handle_menu_event)
+        .on_menu_event(|app_handle, event| {
+            let app_handle = app_handle.clone();
+            tauri::async_runtime::spawn(async move {
+                handle_menu_event(&app_handle, event).await;
+            });
+        })
         .build(app_handle)?;
 
     Ok(())
@@ -99,7 +101,7 @@ fn handle_tray_click(app_handle: &AppHandle) {
     }
 }
 
-fn handle_menu_event(app_handle: &AppHandle, event: tauri::menu::MenuEvent) {
+async fn handle_menu_event(app_handle: &AppHandle, event: tauri::menu::MenuEvent) {
     match event.id().as_ref() {
         "quit" => {
             log::info!("Quit menu item clicked");
@@ -122,15 +124,27 @@ fn handle_menu_event(app_handle: &AppHandle, event: tauri::menu::MenuEvent) {
         }
         "start_service" => {
             log::info!("Start service menu item clicked");
-            handle_core_action(app_handle, "start");
+            if let Err(e) = handle_core_action(app_handle, "start").await {
+                log::error!("Failed to start OpenList Core: {e}");
+            } else {
+                update_tray_menu(app_handle, true).ok();
+            }
         }
         "stop_service" => {
             log::info!("Stop service menu item clicked");
-            handle_core_action(app_handle, "stop");
+            if let Err(e) = handle_core_action(app_handle, "stop").await {
+                log::error!("Failed to stop OpenList Core: {e}");
+            } else {
+                update_tray_menu(app_handle, false).ok();
+            }
         }
         "restart_service" => {
             log::info!("Restart service menu item clicked");
-            handle_core_action(app_handle, "restart");
+            if let Err(e) = handle_core_action(app_handle, "restart").await {
+                log::error!("Failed to restart OpenList Core: {e}");
+            } else {
+                update_tray_menu(app_handle, true).ok();
+            }
         }
         _ => {
             log::debug!("Unknown menu item clicked: {:?}", event.id());
@@ -139,16 +153,6 @@ fn handle_menu_event(app_handle: &AppHandle, event: tauri::menu::MenuEvent) {
 }
 
 pub fn update_tray_menu(app_handle: &AppHandle, service_running: bool) -> tauri::Result<()> {
-    if let Ok(mut last_update) = LAST_MENU_UPDATE.lock() {
-        if let Some(last_time) = *last_update
-            && last_time.elapsed() < MIN_UPDATE_INTERVAL
-        {
-            log::debug!("Skipping tray menu update - too soon since last update");
-            return Ok(());
-        }
-        *last_update = Some(Instant::now());
-    }
-
     if let Some(tray) = app_handle.tray_by_id("main-tray") {
         let start_service_i = MenuItem::with_id(
             app_handle,
@@ -204,87 +208,21 @@ pub fn update_tray_menu(app_handle: &AppHandle, service_running: bool) -> tauri:
     Ok(())
 }
 
-pub fn update_tray_menu_delayed(
-    app_handle: &AppHandle,
-    service_running: bool,
-) -> tauri::Result<()> {
-    let app_handle_clone = app_handle.clone();
-    std::thread::spawn(move || {
-        std::thread::sleep(std::time::Duration::from_millis(3000));
-        if let Err(e) = update_tray_menu(&app_handle_clone, service_running) {
-            log::error!("Failed to update tray menu (delayed): {e}");
+async fn handle_core_action(app_handle: &AppHandle, action: &str) -> Result<(), String> {
+    let state = app_handle.state::<AppState>();
+    match action {
+        "start" => {
+            cmd::openlist_core::start_openlist_core(state.clone()).await?;
         }
-    });
-    Ok(())
-}
-
-fn handle_core_action(app_handle: &AppHandle, action: &str) {
-    log::info!("Handling core action from tray: {action}");
-
-    if let Err(e) = app_handle.emit("tray-core-action", action) {
-        log::error!("Failed to emit tray core action event: {e}");
-    }
-
-    log::debug!("Core action '{action}' dispatched to frontend");
-}
-
-pub fn force_update_tray_menu(app_handle: &AppHandle, service_running: bool) -> tauri::Result<()> {
-    if let Some(tray) = app_handle.tray_by_id("main-tray") {
-        let start_service_i = MenuItem::with_id(
-            app_handle,
-            "start_service",
-            "启动OpenList",
-            !service_running,
-            None::<&str>,
-        )?;
-        let stop_service_i = MenuItem::with_id(
-            app_handle,
-            "stop_service",
-            "停止OpenList",
-            service_running,
-            None::<&str>,
-        )?;
-        let restart_service_i = MenuItem::with_id(
-            app_handle,
-            "restart_service",
-            "重启OpenList",
-            service_running,
-            None::<&str>,
-        )?;
-
-        let service_submenu = Submenu::with_id_and_items(
-            app_handle,
-            "service",
-            "核心控制",
-            true,
-            &[&start_service_i, &stop_service_i, &restart_service_i],
-        )?;
-
-        let quit_i = MenuItem::with_id(app_handle, "quit", "退出", true, None::<&str>)?;
-        let show_i = MenuItem::with_id(app_handle, "show", "显示窗口", true, None::<&str>)?;
-        let hide_i = MenuItem::with_id(app_handle, "hide", "隐藏窗口", true, None::<&str>)?;
-        let restart_i = MenuItem::with_id(app_handle, "restart", "重启应用", true, None::<&str>)?;
-
-        let menu = Menu::with_items(
-            app_handle,
-            &[
-                &show_i,
-                &hide_i,
-                &PredefinedMenuItem::separator(app_handle)?,
-                &service_submenu,
-                &PredefinedMenuItem::separator(app_handle)?,
-                &restart_i,
-                &quit_i,
-            ],
-        )?;
-
-        tray.set_menu(Some(menu))?;
-
-        if let Ok(mut last_update) = LAST_MENU_UPDATE.lock() {
-            *last_update = Some(Instant::now());
+        "stop" => {
+            cmd::openlist_core::stop_openlist_core(state.clone()).await?;
         }
-
-        log::debug!("Tray menu force updated with service_running: {service_running}");
+        "restart" => {
+            cmd::openlist_core::restart_openlist_core(state.clone()).await?;
+        }
+        _ => {
+            log::warn!("Unknown core action requested from tray menu: {action}");
+        }
     }
     Ok(())
 }

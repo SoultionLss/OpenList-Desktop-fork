@@ -44,7 +44,7 @@
       "copyAdminPassword": "Copy admin password",
       "firewall": {
         "added": "Port allowed successfully",
-        "disable": "Remove Port Allow",
+        "disable": "Remove Port",
         "enable": "Allow Port",
         "failedToAdd": "Failed to allow port",
         "failedToRemove": "Failed to remove port allow",

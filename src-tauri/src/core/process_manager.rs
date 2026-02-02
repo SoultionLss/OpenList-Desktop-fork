@@ -32,7 +32,6 @@ pub struct ProcessInfo {
     pub config: ProcessConfig,
 }
 
-/// Persisted process state for recovery after app restart
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct PersistedProcessState {
     pub id: String,
@@ -49,8 +48,6 @@ struct PersistedState {
 struct ManagedProcess {
     config: ProcessConfig,
     child: Option<Child>,
-    /// PID stored separately for processes we're tracking but don't have a
-    /// Child handle for
     external_pid: Option<u32>,
     started_at: Option<u64>,
 }
@@ -73,7 +70,6 @@ impl ProcessManager {
             processes: RwLock::new(HashMap::new()),
             state_file,
         };
-        // Load and recover persisted state on creation
         manager.recover_persisted_state();
         manager
     }
@@ -86,7 +82,6 @@ impl ProcessManager {
         data_dir.join("process_state.json")
     }
 
-    /// Check if a process with given PID is still running
     fn is_process_alive(pid: u32) -> bool {
         #[cfg(target_os = "windows")]
         {
@@ -118,7 +113,6 @@ impl ProcessManager {
         }
     }
 
-    /// Kill a process by PID (for processes we don't have a Child handle for)
     fn kill_process_by_pid(pid: u32) {
         #[cfg(target_os = "windows")]
         {
@@ -136,11 +130,8 @@ impl ProcessManager {
         #[cfg(not(target_os = "windows"))]
         {
             unsafe {
-                // Send SIGTERM first
                 libc::kill(pid as i32, libc::SIGTERM);
-                // Give it a moment to terminate gracefully
                 std::thread::sleep(std::time::Duration::from_millis(500));
-                // If still alive, force kill with SIGKILL
                 if libc::kill(pid as i32, 0) == 0 {
                     libc::kill(pid as i32, libc::SIGKILL);
                 }
@@ -208,11 +199,9 @@ impl ProcessManager {
             removed_count
         );
 
-        // Save updated state (without dead processes)
         self.persist_state();
     }
 
-    /// Persist current process state to disk
     fn persist_state(&self) {
         let processes = self.processes.read();
         let mut state = PersistedState::default();

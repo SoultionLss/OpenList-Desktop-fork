@@ -44,7 +44,7 @@
       "copyAdminPassword": "复制管理员密码",
       "firewall": {
         "added": "端口放行成功",
-        "disable": "移除端口放行",
+        "disable": "移除端口",
         "enable": "放行端口",
         "failedToAdd": "添加端口放行失败",
         "failedToRemove": "移除端口放行失败",

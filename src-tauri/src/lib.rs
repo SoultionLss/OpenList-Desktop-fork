@@ -24,8 +24,8 @@ use cmd::openlist_core::{
 };
 use cmd::os_operate::{
     get_available_versions, list_files, open_file, open_folder, open_logs_directory,
-    open_openlist_data_dir, open_rclone_config_file, open_settings_file, 
-    open_url_in_browser, select_directory, update_tool_version,
+    open_openlist_data_dir, open_rclone_config_file, open_settings_file, open_url_in_browser,
+    select_directory, update_tool_version,
 };
 use cmd::rclone_core::check_rclone_available;
 use cmd::rclone_mount::{
@@ -43,24 +43,6 @@ async fn update_tray_menu(
 ) -> Result<(), String> {
     tray::update_tray_menu(&app_handle, service_running)
         .map_err(|e| format!("Failed to update tray menu: {e}"))
-}
-
-#[tauri::command]
-async fn update_tray_menu_delayed(
-    app_handle: tauri::AppHandle,
-    service_running: bool,
-) -> Result<(), String> {
-    tray::update_tray_menu_delayed(&app_handle, service_running)
-        .map_err(|e| format!("Failed to update tray menu (delayed): {e}"))
-}
-
-#[tauri::command]
-async fn force_update_tray_menu(
-    app_handle: tauri::AppHandle,
-    service_running: bool,
-) -> Result<(), String> {
-    tray::force_update_tray_menu(&app_handle, service_running)
-        .map_err(|e| format!("Failed to force update tray menu: {e}"))
 }
 
 fn setup_background_update_checker(app_handle: &tauri::AppHandle) {
@@ -165,8 +147,6 @@ pub fn run() {
             update_tool_version,
             // Tray
             update_tray_menu,
-            update_tray_menu_delayed,
-            force_update_tray_menu,
             // macOS dock
             set_dock_icon_visibility,
             // Firewall

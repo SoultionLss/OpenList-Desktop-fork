@@ -95,9 +95,6 @@ export class TauriAPI {
   // --- Tray management ---
   static tray = {
     update: (r: boolean): Promise<void> => call('update_tray_menu', { serviceRunning: r }),
-    updateDelayed: (r: boolean): Promise<void> => call('update_tray_menu_delayed', { serviceRunning: r }),
-    forceUpdate: (r: boolean): Promise<void> => call('force_update_tray_menu', { serviceRunning: r }),
-    listen: (cb: (action: string) => void) => listen('tray-core-action', e => cb(e.payload as string)),
   }
 
   // --- macOS Dock management ---
