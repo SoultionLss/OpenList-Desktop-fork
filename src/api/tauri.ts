@@ -60,8 +60,7 @@ export class TauriAPI {
   static settings = {
     load: (): Promise<MergedSettings | null> => invoke('load_settings'),
     save: (s: MergedSettings): Promise<boolean> => invoke('save_settings', { settings: s }),
-    saveWithUpdatePort: (s: MergedSettings): Promise<boolean> =>
-      invoke('save_settings_with_update_port', { settings: s }),
+    saveAndRestart: (s: MergedSettings): Promise<boolean> => invoke('save_settings_and_restart', { settings: s }),
     reset: (): Promise<MergedSettings | null> => invoke('reset_settings'),
   }
 

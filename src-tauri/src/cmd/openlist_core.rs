@@ -1,4 +1,5 @@
 use tauri::State;
+use tokio::time::{Duration, sleep};
 use url::Url;
 
 use crate::core::process_manager::{PROCESS_MANAGER, ProcessConfig, ProcessInfo};
@@ -7,7 +8,7 @@ use crate::utils::path::{
     get_app_logs_dir, get_default_openlist_data_dir, get_openlist_binary_path_with_custom,
 };
 
-const OPENLIST_CORE_PROCESS_ID: &str = "openlist_core";
+pub const OPENLIST_CORE_PROCESS_ID: &str = "openlist_core";
 
 fn build_openlist_config(state: State<'_, AppState>) -> Result<ProcessConfig, String> {
     let settings = state
@@ -84,9 +85,10 @@ pub async fn restart_openlist_core(state: State<'_, AppState>) -> Result<Process
     let config = build_openlist_config(state)?;
 
     if PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
-        // Stop and remove the old process, then re-register with new config
         let _ = PROCESS_MANAGER.stop(OPENLIST_CORE_PROCESS_ID);
+        sleep(Duration::from_millis(500)).await;
         let _ = PROCESS_MANAGER.remove(OPENLIST_CORE_PROCESS_ID);
+        sleep(Duration::from_millis(500)).await;
     }
 
     PROCESS_MANAGER.register_and_start(config)

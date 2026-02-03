@@ -9,7 +9,7 @@ mod utils;
 
 use cmd::admin_pass::{get_admin_password, reset_admin_password, set_admin_password};
 use cmd::binary::get_binary_version;
-use cmd::config::{load_settings, reset_settings, save_settings, save_settings_with_update_port};
+use cmd::config::{load_settings, reset_settings, save_settings, save_settings_and_restart};
 use cmd::custom_updater::{
     check_for_updates, download_update, get_current_version, install_update_and_restart,
     is_auto_check_enabled, set_auto_check_enabled,
@@ -129,7 +129,7 @@ pub fn run() {
             open_url_in_browser,
             // Settings
             save_settings,
-            save_settings_with_update_port,
+            save_settings_and_restart,
             load_settings,
             reset_settings,
             // Logs

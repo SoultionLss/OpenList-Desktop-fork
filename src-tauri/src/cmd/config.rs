@@ -2,15 +2,11 @@ use std::fs;
 use std::path::PathBuf;
 
 use tauri::State;
-use tokio::time::{Duration, sleep};
 
-use crate::cmd::openlist_core::create_openlist_core_process;
+use crate::cmd::openlist_core::restart_openlist_core;
 use crate::conf::config::MergedSettings;
-use crate::core::process_manager::PROCESS_MANAGER;
 use crate::object::structs::AppState;
 use crate::utils::path::{app_config_file_path, get_default_openlist_data_dir};
-
-const OPENLIST_CORE_PROCESS_ID: &str = "openlist_core";
 
 fn write_json_to_file<T: serde::Serialize>(path: PathBuf, value: &T) -> Result<(), String> {
     let json = serde_json::to_string_pretty(value).map_err(|e| e.to_string())?;
@@ -50,27 +46,6 @@ fn update_data_config(port: u16, data_dir: Option<&str>) -> Result<(), String> {
     write_json_to_file(data_config_path, &cfg_value)
 }
 
-async fn restart_openlist_core_internal(_state: State<'_, AppState>) -> Result<(), String> {
-    if PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
-        PROCESS_MANAGER
-            .restart(OPENLIST_CORE_PROCESS_ID)
-            .map_err(|e| format!("Failed to restart OpenList core: {e}"))?;
-    }
-    Ok(())
-}
-
-async fn recreate_openlist_core_process(state: State<'_, AppState>) -> Result<(), String> {
-    if PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
-        let _ = PROCESS_MANAGER.stop(OPENLIST_CORE_PROCESS_ID);
-        sleep(Duration::from_millis(500)).await;
-        let _ = PROCESS_MANAGER.remove(OPENLIST_CORE_PROCESS_ID);
-        sleep(Duration::from_millis(500)).await;
-    }
-
-    create_openlist_core_process(state.clone()).await?;
-    Ok(())
-}
-
 #[tauri::command]
 pub async fn load_settings(state: State<'_, AppState>) -> Result<Option<MergedSettings>, String> {
     state.load_settings()?;
@@ -89,24 +64,10 @@ pub async fn save_settings(
 }
 
 #[tauri::command]
-pub async fn save_settings_with_update_port(
+pub async fn save_settings_and_restart(
     settings: MergedSettings,
     state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let old_settings = state.get_settings();
-    let needs_openlist_recreation = if let Some(old) = &old_settings {
-        old.openlist.data_dir != settings.openlist.data_dir
-            || old.openlist.binary_path != settings.openlist.binary_path
-    } else {
-        false
-    };
-    let needs_rclone_recreation = if let Some(old) = &old_settings {
-        old.rclone.binary_path != settings.rclone.binary_path
-            || old.rclone.rclone_conf_path != settings.rclone.rclone_conf_path
-    } else {
-        false
-    };
-
     state.update_settings(settings.clone());
     persist_app_settings(&settings)?;
     let data_dir = if settings.openlist.data_dir.is_empty() {
@@ -116,21 +77,11 @@ pub async fn save_settings_with_update_port(
     };
     update_data_config(settings.openlist.port, data_dir)?;
 
-    if needs_openlist_recreation {
-        if let Err(e) = recreate_openlist_core_process(state.clone()).await {
-            log::error!("{e}");
-            return Err(e);
-        }
-        log::info!(
-            "Settings saved and OpenList core recreated with new data directory successfully"
-        );
-    } else {
-        if let Err(e) = restart_openlist_core_internal(state.clone()).await {
-            log::error!("{e}");
-            return Err(e);
-        }
-        log::info!("Settings saved and OpenList core restarted with new port successfully");
+    if let Err(e) = restart_openlist_core(state.clone()).await {
+        log::error!("{e}");
+        return Err(e);
     }
+    log::info!("Settings saved and OpenList core restarted with new port successfully");
 
     Ok(true)
 }

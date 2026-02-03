@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 
 use tauri::{AppHandle, State};
 
+use crate::cmd::openlist_core::OPENLIST_CORE_PROCESS_ID;
 use crate::core::process_manager::PROCESS_MANAGER;
 use crate::object::structs::AppState;
 use crate::utils::github_proxy::apply_github_proxy;
@@ -12,7 +13,6 @@ use crate::utils::path::{
     get_rclone_config_path,
 };
 
-const OPENLIST_CORE_PROCESS_ID: &str = "openlist_core";
 const RCLONE_BACKEND_PROCESS_ID: &str = "rclone_backend";
 
 fn normalize_path(path: &str) -> String {
