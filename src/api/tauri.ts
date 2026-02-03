@@ -77,7 +77,8 @@ export class TauriAPI {
   // --- Binary management ---
   static bin = {
     version: (name: 'openlist' | 'rclone'): Promise<string> => invoke('get_binary_version', { binaryName: name }),
-    availableVersions: (tool: string): Promise<string[]> => invoke('get_available_versions', { tool }),
+    availableVersions: (tool: string, force: boolean): Promise<string[]> =>
+      invoke('get_available_versions', { tool, force }),
     updateVersion: (tool: string, version: string): Promise<string> => invoke('update_tool_version', { tool, version }),
   }
 

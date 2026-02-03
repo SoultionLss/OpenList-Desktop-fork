@@ -1,6 +1,9 @@
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::time::{Duration, SystemTime};
 
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, State};
 
 use crate::cmd::openlist_core::OPENLIST_CORE_PROCESS_ID;
@@ -12,6 +15,15 @@ use crate::utils::path::{
     get_openlist_binary_path_with_custom, get_rclone_binary_path_with_custom,
     get_rclone_config_path,
 };
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct VersionCache {
+    pub openlist_version: Vec<String>,
+    pub rclone_version: Vec<String>,
+    pub etag: Option<String>,
+    pub last_openlist_check_time: SystemTime,
+    pub last_rclone_check_time: SystemTime,
+}
 
 const RCLONE_BACKEND_PROCESS_ID: &str = "rclone_backend";
 
@@ -90,8 +102,40 @@ pub fn select_directory(title: String, app_handle: AppHandle) -> Result<Option<S
 #[tauri::command]
 pub async fn get_available_versions(
     tool: String,
+    force: bool,
     state: State<'_, AppState>,
 ) -> Result<Vec<String>, String> {
+    let now = SystemTime::now();
+    let cache_duration = Duration::from_secs(1800);
+    let old_etag = if !force {
+        let cache_read = state.version_cache.read();
+        let last_check_time = match tool.as_str() {
+            "openlist" => cache_read
+                .as_ref()
+                .map(|c| c.last_openlist_check_time)
+                .unwrap_or(SystemTime::UNIX_EPOCH),
+            "rclone" => cache_read
+                .as_ref()
+                .map(|c| c.last_rclone_check_time)
+                .unwrap_or(SystemTime::UNIX_EPOCH),
+            _ => return Err("Unsupported tool".to_string()),
+        };
+        if let Some(cache) = &*cache_read {
+            if now.duration_since(last_check_time).unwrap_or_default() < cache_duration {
+                log::info!("Returning cached update result.");
+                return Ok(match tool.as_str() {
+                    "openlist" => cache.openlist_version.clone(),
+                    "rclone" => cache.rclone_version.clone(),
+                    _ => vec![],
+                });
+            }
+            cache.etag.clone()
+        } else {
+            None
+        }
+    } else {
+        None
+    };
     let url = match tool.as_str() {
         "openlist" => "https://api.github.com/repos/OpenListTeam/OpenList/releases",
         "rclone" => "https://api.github.com/repos/rclone/rclone/releases",
@@ -108,20 +152,46 @@ pub async fn get_available_versions(
 
     let proxied_url = apply_github_proxy(url, &gh_proxy, &gh_proxy_api);
     log::info!("Fetching {tool} versions from: {proxied_url}");
-
-    let client = reqwest::Client::builder()
-        .user_agent("OpenList Desktop/1.0")
-        .build()
-        .map_err(|e| e.to_string())?;
-
-    let response = client
+    let client = Client::new();
+    let mut request = client
         .get(&proxied_url)
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
+        .header("User-Agent", "OpenList-Desktop")
+        .timeout(Duration::from_secs(30));
+
+    if let Some(etag) = old_etag {
+        request = request.header("If-None-Match", etag);
+    }
+    let response = request.send().await.map_err(|e| e.to_string())?;
+    if response.status() == reqwest::StatusCode::NOT_MODIFIED {
+        log::info!("Version check returned 304 Not Modified, using cached versions.");
+        let cache_read = state.version_cache.read();
+        return Ok(match tool.as_str() {
+            "openlist" => cache_read
+                .as_ref()
+                .map(|c| c.openlist_version.clone())
+                .unwrap_or_default(),
+            "rclone" => cache_read
+                .as_ref()
+                .map(|c| c.rclone_version.clone())
+                .unwrap_or_default(),
+            _ => vec![],
+        });
+    }
+    if !response.status().is_success() {
+        return Err(format!(
+            "Failed to fetch versions: HTTP {}",
+            response.status()
+        ));
+    }
+    let new_etag = response
+        .headers()
+        .get("etag")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string());
+
     let releases: serde_json::Value = response.json().await.map_err(|e| e.to_string())?;
 
-    let versions = releases
+    let versions: Vec<String> = releases
         .as_array()
         .unwrap_or(&vec![])
         .iter()
@@ -129,6 +199,45 @@ pub async fn get_available_versions(
         .filter_map(|release| release["tag_name"].as_str())
         .map(|tag| tag.to_string())
         .collect();
+
+    {
+        let mut cache_write = state.version_cache.write();
+        *cache_write = Some(VersionCache {
+            etag: new_etag,
+            openlist_version: if tool.as_str() == "openlist" {
+                versions.clone()
+            } else {
+                cache_write
+                    .as_ref()
+                    .map(|c| c.openlist_version.clone())
+                    .unwrap_or_default()
+            },
+            rclone_version: if tool.as_str() == "rclone" {
+                versions.clone()
+            } else {
+                cache_write
+                    .as_ref()
+                    .map(|c| c.rclone_version.clone())
+                    .unwrap_or_default()
+            },
+            last_openlist_check_time: if tool.as_str() == "openlist" {
+                now
+            } else {
+                cache_write
+                    .as_ref()
+                    .map(|c| c.last_openlist_check_time)
+                    .unwrap_or(SystemTime::UNIX_EPOCH)
+            },
+            last_rclone_check_time: if tool.as_str() == "rclone" {
+                now
+            } else {
+                cache_write
+                    .as_ref()
+                    .map(|c| c.last_rclone_check_time)
+                    .unwrap_or(SystemTime::UNIX_EPOCH)
+            },
+        });
+    }
 
     Ok(versions)
 }

@@ -17,11 +17,15 @@
               }}</span>
             </div>
             <button
-              :disabled="refreshing"
+              :disabled="refreshingOpenList"
               class="flex items-center justify-center w-8 h-8 bg-transparent text-secondary border border-border-secondary rounded-md cursor-pointer shrink-0 not-disabled:hover:bg-accent/20 not-disabled:hover:border-accent/20 disabled:opacity-60 disabled:cursor-not-allowed"
-              @click="refreshVersions"
+              @click="refreshVersions(true, 'openlist')"
             >
-              <component :is="RefreshCw" :size="16" :class="{ 'animate-spin': refreshing && !loading.openlist }" />
+              <component
+                :is="RefreshCw"
+                :size="16"
+                :class="{ 'animate-spin': refreshingOpenList && !loading.openlist }"
+              />
             </button>
           </div>
           <div class="flex flex-col gap-2 flex-1">
@@ -57,11 +61,11 @@
               </div>
             </div>
             <button
-              :disabled="refreshing"
+              :disabled="refreshingRclone"
               class="flex items-center justify-center w-8 h-8 bg-transparent text-secondary border border-border-secondary rounded-md cursor-pointer shrink-0 not-disabled:hover:bg-accent/20 not-disabled:hover:border-accent/20 disabled:opacity-60 disabled:cursor-not-allowed"
-              @click="refreshVersions"
+              @click="refreshVersions(true, 'rclone')"
             >
-              <component :is="RefreshCw" :size="16" :class="{ 'animate-spin': refreshing && !loading.rclone }" />
+              <component :is="RefreshCw" :size="16" :class="{ 'animate-spin': refreshingRclone && !loading.rclone }" />
             </button>
           </div>
           <div class="flex flex-col gap-2 flex-1">
@@ -123,7 +127,8 @@ const loading = ref({
   rclone: false,
 })
 
-const refreshing = ref(false)
+const refreshingOpenList = ref(false)
+const refreshingRclone = ref(false)
 
 const getCurrentVersions = async () => {
   try {
@@ -138,36 +143,53 @@ const getCurrentVersions = async () => {
   }
 }
 
-const fetchOpenListVersions = async () => {
+const fetchOpenListVersions = async (force: boolean) => {
   try {
-    return await TauriAPI.bin.availableVersions('openlist')
+    return await TauriAPI.bin.availableVersions('openlist', force)
   } catch (error) {
     console.error('Failed to fetch OpenList versions:', error)
     return []
   }
 }
 
-const fetchRcloneVersions = async () => {
+const fetchRcloneVersions = async (force: boolean) => {
   try {
-    const versions = await TauriAPI.bin.availableVersions('rclone')
+    const versions = await TauriAPI.bin.availableVersions('rclone', force)
     return versions
   } catch (_error) {
     return []
   }
 }
 
-const refreshVersions = async () => {
+const refreshVersions = async (force: boolean, tool: 'openlist' | 'rclone' | 'all') => {
   await getCurrentVersions()
-  refreshing.value = true
   try {
-    const [openlistVersions, rcloneVersions] = await Promise.all([fetchOpenListVersions(), fetchRcloneVersions()])
-
+    if (tool === 'openlist') {
+      refreshingOpenList.value = true
+      const openlistVersions = await fetchOpenListVersions(force)
+      availableVersions.value.openlist = openlistVersions
+      refreshingOpenList.value = false
+      return
+    }
+    if (tool === 'rclone') {
+      refreshingRclone.value = true
+      const rcloneVersions = await fetchRcloneVersions(force)
+      availableVersions.value.rclone = rcloneVersions
+      refreshingRclone.value = false
+      return
+    }
+    refreshingOpenList.value = true
+    refreshingRclone.value = true
+    const [openlistVersions, rcloneVersions] = await Promise.all([
+      fetchOpenListVersions(force),
+      fetchRcloneVersions(force),
+    ])
     availableVersions.value.openlist = openlistVersions
     availableVersions.value.rclone = rcloneVersions
+    refreshingOpenList.value = false
+    refreshingRclone.value = false
   } catch (error) {
     console.error('Failed to refresh versions:', error)
-  } finally {
-    refreshing.value = false
   }
 }
 
@@ -197,6 +219,6 @@ const updateVersion = async (type: 'openlist' | 'rclone') => {
 }
 
 onMounted(() => {
-  refreshVersions()
+  refreshVersions(false, 'all')
 })
 </script>
