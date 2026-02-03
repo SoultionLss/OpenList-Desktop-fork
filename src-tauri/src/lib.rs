@@ -7,6 +7,7 @@ mod object;
 mod tray;
 mod utils;
 
+use cmd::admin_pass::{get_admin_password, reset_admin_password, set_admin_password};
 use cmd::binary::get_binary_version;
 use cmd::config::{load_settings, reset_settings, save_settings, save_settings_with_update_port};
 use cmd::custom_updater::{
@@ -14,18 +15,16 @@ use cmd::custom_updater::{
     is_auto_check_enabled, set_auto_check_enabled,
 };
 use cmd::firewall::{add_firewall_rule, check_firewall_rule, remove_firewall_rule};
-use cmd::logs::{
-    clear_logs, get_admin_password, get_logs, reset_admin_password, set_admin_password,
-};
+use cmd::logs::{clear_logs, get_logs};
 use cmd::macos_dock::set_dock_icon_visibility;
 use cmd::openlist_core::{
     create_openlist_core_process, get_openlist_core_logs, get_openlist_core_process_status,
     get_openlist_core_status, restart_openlist_core, start_openlist_core, stop_openlist_core,
 };
 use cmd::os_operate::{
-    get_available_versions, open_file, open_folder, open_logs_directory,
-    open_openlist_data_dir, open_rclone_config_file, open_settings_file, open_url_in_browser,
-    select_directory, update_tool_version,
+    get_available_versions, open_file, open_folder, open_logs_directory, open_openlist_data_dir,
+    open_rclone_config_file, open_settings_file, open_url_in_browser, select_directory,
+    update_tool_version,
 };
 use cmd::rclone_core::check_rclone_available;
 use cmd::rclone_mount::{

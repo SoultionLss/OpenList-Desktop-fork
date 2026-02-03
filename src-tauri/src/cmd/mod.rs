@@ -1,3 +1,4 @@
+pub mod admin_pass;
 pub mod binary;
 pub mod config;
 pub mod custom_updater;
