@@ -22,3 +22,6 @@ export const DEFAULT_CONFIG = {
     admin_password: '',
   },
 }
+export const isWindows = typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'win32'
+export const isLinux = typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'linux'
+export const isMacOs = typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'darwin'

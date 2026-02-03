@@ -508,6 +508,7 @@ import SettingSection from '@/components/common/SettingSection.vue'
 import SingleSelect from '@/components/common/SingleSelect.vue'
 import useConfirm from '@/hooks/useConfirm'
 import { useAppStore } from '@/stores/app'
+import { isLinux } from '@/utils/constant'
 
 import { useTranslation } from '../composables/useI18n'
 import { useRcloneStore } from '../stores/rclone'
@@ -906,7 +907,6 @@ const dismissWinfspTip = () => {
   localStorage.setItem('winfsp_tip_dismissed', 'true')
 }
 
-const isLinux = typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'linux'
 const showRcloneTip = ref(false)
 
 const dismissRcloneTip = () => {

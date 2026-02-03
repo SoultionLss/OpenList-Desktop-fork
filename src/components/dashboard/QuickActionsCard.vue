@@ -95,14 +95,14 @@
             :icon="Settings"
             class="flex-1!"
             :text="t('dashboard.quickActions.configRclone')"
-            @click="openRcloneConfig"
+            @click="RouteToRcConfig"
           />
           <CustomButton
             type="secondary"
             :icon="HardDrive"
             class="flex-1!"
             :text="t('dashboard.quickActions.manageMounts')"
-            @click="viewMounts"
+            @click="RouteToMounts"
           />
         </div>
       </div>
@@ -112,12 +112,14 @@
 
 <script setup lang="ts">
 import { ExternalLink, HardDrive, Key, Loader, Play, RotateCcw, Settings, Shield, Square } from 'lucide-vue-next'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { TauriAPI } from '@/api/tauri'
 import useMessage from '@/hooks/useMessage'
 import { createNewWindow } from '@/utils/common'
+import { isMacOs, isWindows } from '@/utils/constant'
 
 import { useTranslation } from '../../composables/useI18n'
 import { useAppStore } from '../../stores/app'
@@ -127,23 +129,14 @@ const { t } = useTranslation()
 const router = useRouter()
 const message = useMessage()
 const appStore = useAppStore()
-
-const isCoreRunning = computed(() => appStore.isCoreRunning)
-const isCoreLoading = computed(() => appStore.loading)
-const statusCheckInterval: number | null = null
-
 const firewallEnabled = ref(false)
 const firewallLoading = ref(false)
-const isWindows = computed(() => {
-  return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'win32'
-})
+const { isCoreRunning, loading: isCoreLoading } = storeToRefs(appStore)
+
+const statusCheckInterval: number | null = null
 
 const toggleCore = async () => {
-  if (isCoreRunning.value) {
-    await appStore.stopOpenListCore()
-  } else {
-    await appStore.startOpenListCore()
-  }
+  isCoreRunning.value ? await appStore.stopOpenListCore() : await appStore.startOpenListCore()
 }
 
 const restartCore = async () => {
@@ -151,31 +144,25 @@ const restartCore = async () => {
 }
 
 const openWebUI = () => {
-  if (appStore.openListCoreUrl) {
-    openLink(appStore.openListCoreUrl)
-  }
+  if (!appStore.openListCoreUrl) return
+  openLink(appStore.openListCoreUrl)
 }
 
-const openRcloneConfig = () => {
+const RouteToRcConfig = () => {
   router.push({ name: 'Settings', query: { tab: 'rclone' } })
 }
 
-const viewMounts = () => {
+const RouteToMounts = () => {
   router.push({ name: 'Mount' })
 }
 
 const copyAdminPassword = async () => {
-  try {
-    const password = await appStore.getAdminPassword()
-    if (password) {
-      await navigator.clipboard.writeText(password)
-      message.success('Admin password copied: ' + password)
-    } else {
-      message.error('No admin password found.')
-    }
-  } catch (error) {
-    console.error('Failed to get admin password:', error)
-    message.error('Failed to get admin password. Please check the logs.')
+  const password = await appStore.getAdminPassword()
+  if (password) {
+    await navigator.clipboard.writeText(password)
+    message.success('Admin password copied: ' + password)
+  } else {
+    message.error('No admin password found.')
   }
 }
 
@@ -195,7 +182,7 @@ const resetAdminPassword = async () => {
 }
 
 const checkFirewallStatus = async () => {
-  if (!isWindows.value) return
+  if (!isWindows) return
 
   try {
     firewallEnabled.value = await TauriAPI.firewall.check()
@@ -205,7 +192,7 @@ const checkFirewallStatus = async () => {
 }
 
 const toggleFirewallRule = async () => {
-  if (!isWindows.value) return
+  if (!isWindows) return
 
   try {
     firewallLoading.value = true
@@ -230,13 +217,9 @@ const toggleFirewallRule = async () => {
   }
 }
 
-const isMacOs = computed(() => {
-  return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'darwin'
-})
-
 const openLink = async (url: string) => {
   try {
-    if (appStore.settings.app.open_links_in_browser || isMacOs.value) {
+    if (appStore.settings.app.open_links_in_browser || isMacOs) {
       await TauriAPI.files.urlInBrowser(url)
       return
     }

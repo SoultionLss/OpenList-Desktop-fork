@@ -2,40 +2,19 @@ use std::env;
 use std::path::PathBuf;
 use std::process::Command;
 
+use rand::Rng;
+use rand::distr::Alphanumeric;
 use tauri::State;
 
 use crate::object::structs::AppState;
 use crate::utils::path::{get_app_logs_dir, get_default_openlist_data_dir};
 
-fn generate_random_password() -> String {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    let mut hasher = DefaultHasher::new();
-
-    if let Ok(duration) = SystemTime::now().duration_since(UNIX_EPOCH) {
-        duration.as_nanos().hash(&mut hasher);
-    }
-
-    std::process::id().hash(&mut hasher);
-
-    let dummy = [1, 2, 3];
-    (dummy.as_ptr() as usize).hash(&mut hasher);
-
-    let hash = hasher.finish();
-
-    let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let mut password = String::new();
-    let mut current_hash = hash;
-
-    for _ in 0..16 {
-        let index = (current_hash % chars.len() as u64) as usize;
-        password.push(chars.chars().nth(index).unwrap());
-        current_hash = current_hash.wrapping_mul(1103515245).wrapping_add(12345);
-    }
-
-    password
+fn generate_random_password(length: usize) -> String {
+    rand::rng()
+        .sample_iter(&Alphanumeric)
+        .take(length)
+        .map(char::from)
+        .collect()
 }
 
 async fn execute_openlist_admin_set(
@@ -148,7 +127,7 @@ pub async fn get_admin_password(state: State<'_, AppState>) -> Result<String, St
         return Ok(stored_password.clone());
     }
 
-    let new_password = generate_random_password();
+    let new_password = generate_random_password(16);
 
     if let Err(e) = execute_openlist_admin_set(&new_password, &state).await {
         return Err(format!("Failed to set new admin password: {e}"));
@@ -171,7 +150,7 @@ pub async fn get_admin_password(state: State<'_, AppState>) -> Result<String, St
 #[tauri::command]
 pub async fn reset_admin_password(state: State<'_, AppState>) -> Result<String, String> {
     log::info!("Forcing admin password reset");
-    let new_password = generate_random_password();
+    let new_password = generate_random_password(16);
     if let Err(e) = execute_openlist_admin_set(&new_password, &state).await {
         return Err(format!("Failed to set new admin password: {e}"));
     }

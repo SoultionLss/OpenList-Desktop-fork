@@ -23,7 +23,7 @@ use cmd::openlist_core::{
     get_openlist_core_status, restart_openlist_core, start_openlist_core, stop_openlist_core,
 };
 use cmd::os_operate::{
-    get_available_versions, list_files, open_file, open_folder, open_logs_directory,
+    get_available_versions, open_file, open_folder, open_logs_directory,
     open_openlist_data_dir, open_rclone_config_file, open_settings_file, open_url_in_browser,
     select_directory, update_tool_version,
 };
@@ -121,7 +121,6 @@ pub fn run() {
             get_mount_info_list,
             get_mount_process_logs,
             // File operations
-            list_files,
             open_file,
             open_folder,
             open_logs_directory,
