@@ -27,10 +27,9 @@ pub struct MountProcessInput {
     pub id: String,
     pub name: String,
     pub args: Vec<String>,
-    pub auto_start: Option<bool>,
 }
 
-fn get_mount_process_id(remote_name: &str) -> String {
+pub fn get_mount_process_id(remote_name: &str) -> String {
     format!("rclone_mount_{remote_name}_process")
 }
 
@@ -184,29 +183,13 @@ pub async fn create_rclone_mount_remote_process(
 
     if PROCESS_MANAGER.is_registered(&config.id) {
         let info = PROCESS_MANAGER.get_status(&config.id)?;
-        if config.auto_start.unwrap_or(true) && !info.is_running {
+        if !info.is_running {
             return PROCESS_MANAGER.start(&config.id);
         }
         return Ok(info);
     }
 
     PROCESS_MANAGER.register_and_start(process_config)
-}
-
-#[tauri::command]
-pub async fn start_mount_process(process_id: String) -> Result<ProcessInfo, String> {
-    if !PROCESS_MANAGER.is_registered(&process_id) {
-        return Err(format!("Mount process '{process_id}' is not registered"));
-    }
-    PROCESS_MANAGER.start(&process_id)
-}
-
-#[tauri::command]
-pub async fn stop_mount_process(process_id: String) -> Result<ProcessInfo, String> {
-    if !PROCESS_MANAGER.is_registered(&process_id) {
-        return Err(format!("Mount process '{process_id}' is not registered"));
-    }
-    PROCESS_MANAGER.stop(&process_id)
 }
 
 #[tauri::command]
@@ -277,17 +260,15 @@ pub async fn get_mount_info_list(
 ) -> Result<Vec<RcloneMountInfo>, String> {
     let process_list = PROCESS_MANAGER.list();
     let mut mount_infos = Vec::new();
-
     for process in process_list {
-        if !process.name.starts_with("rclone_mount_") {
+        if !process.id.starts_with("rclone_mount_") {
             continue;
         }
 
         let args = &process.config.args;
-        let non_flag_args: Vec<&String> = args.iter().filter(|arg| !arg.starts_with('-')).collect();
-        if non_flag_args.len() >= 4 && non_flag_args[0] == "mount" {
-            let remote_path = non_flag_args[2].clone();
-            let mount_point = non_flag_args[3].clone();
+        if args.len() >= 5 && args[0] == "mount" {
+            let remote_path = args[3].clone();
+            let mount_point = args[4].clone();
 
             let mount_status = match check_mount_status_internal(&process.id, &mount_point).await {
                 Ok(is_accessible) => {

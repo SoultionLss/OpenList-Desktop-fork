@@ -45,6 +45,7 @@ struct PersistedState {
     pub processes: Vec<PersistedProcessState>,
 }
 
+#[derive(Debug)]
 struct ManagedProcess {
     config: ProcessConfig,
     child: Option<Child>,
@@ -553,6 +554,7 @@ impl ProcessManager {
     }
 
     /// Restart a process
+    #[allow(dead_code)]
     pub fn restart(&self, id: &str) -> Result<ProcessInfo, String> {
         self.stop(id)?;
         std::thread::sleep(std::time::Duration::from_millis(200));

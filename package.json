@@ -45,7 +45,7 @@
     "fix:all": "yarn fix:frontend && yarn fix:rust && yarn i18n:check"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2.9.1",
+    "@tauri-apps/api": "^2.10.1",
     "@tauri-apps/plugin-autostart": "^2.5.1",
     "@tauri-apps/plugin-dialog": "^2.6.0",
     "@tauri-apps/plugin-fs": "^2.4.5",
@@ -53,22 +53,22 @@
     "@tauri-apps/plugin-process": "^2.3.1",
     "@tauri-apps/plugin-shell": "^2.3.4",
     "@tauri-apps/plugin-store": "^2.4.2",
-    "@vueuse/core": "^14.1.0",
+    "@vueuse/core": "^14.2.0",
     "chrono-node": "^2.9.0",
     "lucide-vue-next": "^0.563.0",
     "marked": "^17.0.1",
     "pinia": "^3.0.4",
     "vue": "^3.5.27",
     "vue-i18n": "11.2.8",
-    "vue-router": "^4.6.4"
+    "vue-router": "^5.0.2"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.18",
-    "@tauri-apps/cli": "^2.9.6",
+    "@tauri-apps/cli": "^2.10.0",
     "@types/node": "^24.3.0",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.54.0",
-    "@vitejs/plugin-vue": "^6.0.3",
+    "@vitejs/plugin-vue": "^6.0.4",
     "adm-zip": "^0.5.16",
     "cross-env": "^7.0.3",
     "czg": "^1.12.0",

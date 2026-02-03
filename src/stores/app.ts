@@ -124,13 +124,11 @@ export const useAppStore = defineStore('app', () => {
 
   async function loadMountInfos() {
     try {
-      loading.value = true
       mountInfos.value = await TauriAPI.rclone.mounts.list()
+      console.log('Loaded mount infos:', mountInfos.value)
     } catch (err: any) {
       error.value = 'Failed to load mount information'
       console.error('Failed to load mount infos:', err)
-    } finally {
-      loading.value = false
     }
   }
 
@@ -232,9 +230,8 @@ export const useAppStore = defineStore('app', () => {
             id: `rclone_mount_${fullConfig.name}_process`,
             name: `rclone_mount_${fullConfig.name}_process`,
             args: mountArgs,
-            auto_start: fullConfig.autoMount,
           }
-          await TauriAPI.rclone.mounts.createProcess(newProcessConfig)
+          await TauriAPI.rclone.mounts.mount(newProcessConfig)
         } catch (err) {
           console.warn(`Failed to update mount process for renamed config ${name} -> ${config.name}:`, err)
         }
@@ -322,9 +319,8 @@ export const useAppStore = defineStore('app', () => {
         id,
         name: id,
         args: mountArgs,
-        auto_start: true,
       }
-      const createResponse = await TauriAPI.rclone.mounts.createProcess(createRemoteConfig)
+      const createResponse = await TauriAPI.rclone.mounts.mount(createRemoteConfig)
       if (!createResponse || !createResponse.id) {
         throw new Error('Failed to create mount process')
       }

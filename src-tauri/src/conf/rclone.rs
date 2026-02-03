@@ -22,7 +22,7 @@ pub struct RcloneMountConfig {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RcloneConfig {
-    pub mount_config: HashMap<String, RcloneMountConfig>,
+    pub mount_config: Option<HashMap<String, RcloneMountConfig>>,
     pub binary_path: Option<String>,
     pub rclone_conf_path: Option<String>,
 }
@@ -36,7 +36,7 @@ impl Default for RcloneConfig {
 impl RcloneConfig {
     pub fn new() -> Self {
         Self {
-            mount_config: HashMap::new(),
+            mount_config: Some(HashMap::new()),
             binary_path: None,
             rclone_conf_path: None,
         }

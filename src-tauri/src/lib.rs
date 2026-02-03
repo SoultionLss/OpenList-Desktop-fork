@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use tauri::Manager;
 
 mod cmd;
@@ -30,10 +32,12 @@ use cmd::rclone_core::check_rclone_available;
 use cmd::rclone_mount::{
     check_mount_status, create_rclone_mount_remote_process, get_mount_info_list,
     get_mount_process_logs, rclone_create_remote, rclone_delete_remote, rclone_list_config,
-    rclone_list_remotes, rclone_update_remote, start_mount_process, stop_mount_process,
-    unmount_remote,
+    rclone_list_remotes, rclone_update_remote, unmount_remote,
 };
 use object::structs::*;
+
+use crate::cmd::rclone_mount::{MountProcessInput, get_mount_process_id};
+use crate::conf::rclone::RcloneMountConfig;
 
 #[tauri::command]
 async fn update_tray_menu(
@@ -90,6 +94,69 @@ async fn auto_start_openlist_core_on_login(app_handle: &tauri::AppHandle) -> Res
     Ok(())
 }
 
+async fn auto_mount_rclone_remotes_on_login(app_handle: &tauri::AppHandle) -> Result<(), String> {
+    let app_state = app_handle.state::<AppState>();
+    let settings = app_state
+        .app_settings
+        .read()
+        .clone()
+        .ok_or("Failed to read app settings")?;
+
+    let remotes_to_mount: Vec<RcloneMountConfig> = settings
+        .rclone
+        .mount_config
+        .as_ref()
+        .unwrap_or(&HashMap::new())
+        .values()
+        .filter(|config| {
+            config.auto_mount.unwrap_or(false)
+                && config.mount_point.as_deref().unwrap_or("").is_empty() == false
+                && config.volume_name.as_deref().unwrap_or("").is_empty() == false
+        })
+        .cloned()
+        .collect();
+
+    for remote in remotes_to_mount {
+        log::info!(
+            "Auto-mount on login is enabled for remote '{}', attempting to mount",
+            remote.name
+        );
+        let mut args = vec![
+            format!(
+                "{}:{}",
+                remote.name,
+                remote.volume_name.as_deref().unwrap_or("")
+            ),
+            remote.mount_point.as_deref().unwrap_or("").to_string(),
+        ];
+        if let Some(extra_flags) = &remote.extra_flags {
+            args.extend(extra_flags.clone());
+        }
+        let id = get_mount_process_id(&remote.name);
+        let create_remote_config = MountProcessInput {
+            id: id.clone(),
+            name: id.clone(),
+            args,
+        };
+        match create_rclone_mount_remote_process(create_remote_config, app_state.clone()).await {
+            Ok(_) => {
+                log::info!(
+                    "Rclone remote '{}' mounted successfully on login",
+                    remote.name
+                );
+            }
+            Err(e) => {
+                log::error!(
+                    "Failed to mount rclone remote '{}' on login: {e}",
+                    remote.name
+                );
+            }
+        }
+    }
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app_state = AppState::new();
@@ -135,8 +202,6 @@ pub fn run() {
             rclone_delete_remote,
             // Rclone mount process management
             create_rclone_mount_remote_process,
-            start_mount_process,
-            stop_mount_process,
             unmount_remote,
             check_mount_status,
             get_mount_info_list,
@@ -223,6 +288,12 @@ pub fn run() {
             tauri::async_runtime::spawn(async move {
                 if let Err(e) = auto_start_openlist_core_on_login(&app_handle_clone).await {
                     log::error!("Auto-start task failed: {}", e);
+                }
+            });
+            let app_handle_mount_clone = app_handle.clone();
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = auto_mount_rclone_remotes_on_login(&app_handle_mount_clone).await {
+                    log::error!("Auto-mount Rclone remotes failed: {}", e);
                 }
             });
             if let Some(window) = app.get_webview_window("main") {

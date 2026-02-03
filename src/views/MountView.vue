@@ -177,7 +177,7 @@
                     :is="getStatusIcon(getConfigStatus(config))"
                     class="w-4 h-4 text-secondary"
                     :class="{
-                      'text-warning animate-spin': isConfigMounting(config) || appStore.loading,
+                      'text-warning animate-spin': isConfigMounting(config),
                       'text-success': getConfigStatus(config) === 'mounted',
                       'text-error': getConfigStatus(config) === 'error',
                     }"
@@ -958,6 +958,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (mountRefreshInterval) {
+    console.log('Clearing mount refresh interval')
     clearInterval(mountRefreshInterval)
   }
 })
