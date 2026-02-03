@@ -421,6 +421,7 @@
     "title": "设置"
   },
   "update": {
+    "autoCheck": "自动检查更新",
     "availableInstallers": "可用安装程序",
     "backgroundUpdateAvailable": "后台检测到更新",
     "checkError": "检查更新失败",

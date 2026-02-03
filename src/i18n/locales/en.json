@@ -421,6 +421,7 @@
     "title": "Settings"
   },
   "update": {
+    "autoCheck": "Auto Check Update",
     "availableInstallers": "Available Installers",
     "backgroundUpdateAvailable": "Update available in background",
     "checkError": "Failed to check for updates",

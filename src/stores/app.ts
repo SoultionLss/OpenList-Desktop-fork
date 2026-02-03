@@ -500,52 +500,23 @@ export const useAppStore = defineStore('app', () => {
   }
 
   async function openFolder(path: string) {
-    try {
-      await TauriAPI.files.folder(path)
-    } catch (err) {
-      error.value = 'Failed to open folder'
-      console.error('Failed to open folder:', err)
-    }
+    await TauriAPI.files.folder(path)
   }
 
   async function openLogsDirectory() {
-    try {
-      await TauriAPI.files.openLogsDirectory()
-    } catch (err) {
-      error.value = 'Failed to open logs directory'
-      console.error('Failed to open logs directory:', err)
-      throw err
-    }
+    await TauriAPI.files.openLogsDirectory()
   }
 
   async function openOpenListDataDir() {
-    try {
-      await TauriAPI.files.openOpenListDataDir()
-    } catch (err) {
-      error.value = 'Failed to open openlist data directory'
-      console.error('Failed to open openlist data directory:', err)
-      throw err
-    }
+    await TauriAPI.files.openOpenListDataDir()
   }
 
   async function openRcloneConfigFile() {
-    try {
-      await TauriAPI.files.openRcloneConfigFile()
-    } catch (err) {
-      error.value = 'Failed to open rclone config file'
-      console.error('Failed to open rclone config file:', err)
-      throw err
-    }
+    await TauriAPI.files.openRcloneConfigFile()
   }
 
   async function openSettingsFile() {
-    try {
-      await TauriAPI.files.openSettingsFile()
-    } catch (err) {
-      error.value = 'Failed to open settings file'
-      console.error('Failed to open settings file:', err)
-      throw err
-    }
+    await TauriAPI.files.openSettingsFile()
   }
 
   async function selectDirectory(title: string): Promise<string | null> {

@@ -653,8 +653,18 @@ pub async fn open_logs_directory() -> Result<bool, String> {
 }
 
 #[tauri::command]
-pub async fn open_openlist_data_dir() -> Result<bool, String> {
-    let config_path = get_default_openlist_data_dir()?;
+pub async fn open_openlist_data_dir(state: State<'_, AppState>) -> Result<bool, String> {
+    let settings = state
+        .app_settings
+        .read()
+        .clone()
+        .ok_or("Failed to read app settings")?;
+    let data_dir = settings.openlist.data_dir;
+    let config_path = if !data_dir.is_empty() {
+        PathBuf::from(data_dir)
+    } else {
+        get_default_openlist_data_dir()?
+    };
     if !config_path.exists() {
         fs::create_dir_all(&config_path)
             .map_err(|e| format!("Failed to create config directory: {e}"))?;
@@ -664,7 +674,26 @@ pub async fn open_openlist_data_dir() -> Result<bool, String> {
 }
 
 #[tauri::command]
-pub async fn open_rclone_config_file() -> Result<bool, String> {
+pub async fn open_rclone_config_file(state: State<'_, AppState>) -> Result<bool, String> {
+    let settings = state
+        .app_settings
+        .read()
+        .clone()
+        .ok_or("Failed to read app settings")?;
+    let custom_path = settings.rclone.rclone_conf_path;
+
+    if let Some(path) = custom_path.filter(|p| !p.is_empty()) {
+        let custom = PathBuf::from(path);
+        if !custom.exists() {
+            if let Some(parent) = custom.parent() {
+                let _ = fs::create_dir_all(parent);
+            }
+            fs::File::create(&custom)
+                .map_err(|e| format!("Failed to create custom rclone config file: {e}"))?;
+        }
+        open::that_detached(custom.as_os_str()).map_err(|e| e.to_string())?;
+        return Ok(true);
+    }
     let config_path = get_rclone_config_path()?;
     if !config_path.exists() {
         fs::File::create(&config_path).map_err(|e| format!("Failed to create config file: {e}"))?;

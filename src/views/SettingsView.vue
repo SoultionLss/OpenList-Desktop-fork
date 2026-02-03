@@ -457,11 +457,7 @@ const handleSelectDataDir = async () => {
 
 const handleOpenDataDir = async () => {
   try {
-    if (openlistCoreSettings.data_dir) {
-      await appStore.openFolder(openlistCoreSettings.data_dir)
-    } else {
-      await appStore.openOpenListDataDir()
-    }
+    await appStore.openOpenListDataDir()
     message.success(t('settings.service.network.dataDir.openSuccess'))
   } catch (error) {
     console.error('Failed to open data directory:', error)
