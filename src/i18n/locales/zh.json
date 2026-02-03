@@ -8,7 +8,6 @@
     "cancel": "取消",
     "close": "关闭",
     "confirm": "确认",
-    "loading": "处理中...",
     "maximize": "最大化",
     "minimize": "最小化",
     "reset": "重置",
@@ -33,13 +32,10 @@
       "openDocs": "打开文档",
       "openlist": "OpenList",
       "openlistDesc": "多存储文件列表程序",
-      "quickLinks": "快速链接",
       "rclone": "Rclone",
-      "rcloneDesc": "多平台挂载命令行程序",
-      "title": "文档"
+      "rcloneDesc": "多平台挂载命令行程序"
     },
     "quickActions": {
-      "autoLaunch": "自动启动核心(非桌面app)",
       "configRclone": "配置 RClone",
       "copyAdminPassword": "复制管理员密码",
       "firewall": {
@@ -51,38 +47,14 @@
         "removed": "端口移除成功"
       },
       "manageMounts": "管理挂载",
-      "openWeb": "网页",
       "openlistService": "OpenList 核心",
-      "processing": "处理中...",
-      "quickSettings": "快速设置",
+      "openWeb": "网页",
       "rclone": "RClone",
       "resetAdminPassword": "重置管理员密码",
       "restart": "重启",
       "startOpenListCore": "启动",
-      "startRclone": "启动 RClone",
       "stopOpenListCore": "停止",
-      "stopRclone": "停止 RClone",
       "title": "核心管理"
-    },
-    "serviceManagement": {
-      "confirmUninstall": {
-        "confirm": "卸载",
-        "message": "您确定要卸载 OpenList 服务吗？这将停止所有功能并使应用程序无法使用，直到重新安装服务。",
-        "title": "确认卸载"
-      },
-      "install": "安装",
-      "serviceStatus": "OpenList 后端服务",
-      "start": "启动",
-      "status": {
-        "error": "错误",
-        "installed": "已安装",
-        "notInstalled": "未安装",
-        "running": "运行中",
-        "stopped": "已停止"
-      },
-      "stop": "停止",
-      "title": "服务管理",
-      "uninstall": "卸载"
     },
     "versionManager": {
       "openlist": "OpenList",
@@ -117,8 +89,7 @@
       "sources": {
         "all": "所有来源",
         "openlist": "OpenList",
-        "rclone": "Rclone",
-        "service": "服务"
+        "rclone": "Rclone"
       }
     },
     "headers": {
@@ -195,7 +166,6 @@
     "config": {
       "addFlag": "添加标志",
       "addTitle": "添加远程配置",
-      "advancedSettings": "高级设置",
       "authentication": "身份认证",
       "autoMount": "开机自动挂载",
       "basicInfo": "基本信息",
@@ -252,7 +222,6 @@
       "quickFlags": "常用标志",
       "quickFlagsTooltip": "快速选择常用 rclone 标志",
       "removeFlag": "移除标志",
-      "selectCommonFlags": "选择常用标志",
       "type": "类型",
       "types": {
         "webdav": "WebDAV"
@@ -280,25 +249,15 @@
       "failedToDelete": "删除配置失败",
       "failedToMount": "挂载远程失败",
       "failedToSave": "保存配置失败",
-      "failedToStartService": "启动 rclone 服务失败",
-      "failedToStopService": "停止 rclone 服务失败",
       "failedToUnmount": "卸载远程失败",
       "fillRequiredFields": "请填写所有必填字段",
       "mountPointRequired": "挂载点为必填项"
     },
     "meta": {
-      "autoMount": "自动挂载",
-      "openInExplorer": "点击在文件管理器中打开"
-    },
-    "service": {
-      "running": "运行中",
-      "stopped": "已停止"
+      "autoMount": "自动挂载"
     },
     "stats": {
-      "error": "错误",
-      "mounted": "已挂载",
-      "total": "总计",
-      "unmounted": "未挂载"
+      "mounted": "已挂载"
     },
     "status": {
       "error": "错误",
@@ -327,15 +286,12 @@
     "app": {
       "autoStartApp": {
         "description": "在系统启动时自动启动 OpenList 桌面应用",
-        "subtitle": "在系统启动时自动启动 OpenList 桌面应用",
         "title": "开机自动启动应用(立即生效)"
       },
       "config": {
         "openError": "打开设置文件失败",
-        "openFile": "打开 settings.json",
         "openSuccess": "设置文件打开成功",
-        "subtitle": "访问应用程序配置文件",
-        "title": "配置文件"
+        "subtitle": "访问应用程序配置文件"
       },
       "ghProxy": {
         "api": {
@@ -345,7 +301,6 @@
         "help": "可选。输入代理地址以加速 GitHub。例如：https://ghfast.top",
         "label": "GitHub 代理地址",
         "placeholder": "https://ghfast.top",
-        "subtitle": "使用代理服务加速 GitHub",
         "title": "GitHub 代理"
       },
       "hideDockIcon": {
@@ -356,31 +311,13 @@
         "openInBrowser": {
           "description": "使用系统默认浏览器而不是内置窗口",
           "title": "在外部浏览器中打开链接"
-        },
-        "subtitle": "配置链接的打开方式",
-        "title": "链接处理"
+        }
       },
       "showWindowOnStartup": {
         "description": "在 OpenList 桌面应用启动时显示主应用窗口",
         "title": "启动时显示主窗口"
       },
-      "subtitle": "配置应用程序首选项和行为",
-      "theme": {
-        "auto": "自动",
-        "autoDesc": "跟随系统",
-        "dark": "深色",
-        "light": "浅色",
-        "subtitle": "选择您偏好的外观",
-        "title": "主题"
-      },
-      "updates": {
-        "autoCheck": {
-          "description": "在后台自动检查并通知新的更新",
-          "title": "自动检查更新"
-        },
-        "subtitle": "管理自动更新和通知",
-        "title": "更新"
-      }
+      "subtitle": "配置应用程序首选项和行为"
     },
     "common": "常规设置",
     "confirmReset": {
@@ -388,48 +325,31 @@
       "title": "重置设置"
     },
     "network": {
-      "subtitle": "配置 Web 界面和网络设置",
       "title": "网络配置"
     },
     "rclone": {
-      "api": {
-        "port": {
-          "help": "Rclone API 服务器的端口号 (1-65535)。默认：45572",
-          "label": "API 端口",
-          "placeholder": "45572"
-        },
-        "subtitle": "配置 Rclone API 服务器设置",
-        "title": "API 配置"
-      },
       "config": {
-        "invalidJson": "无效的 JSON 配置。请检查您的语法。",
-        "label": "Rclone 配置",
         "openError": "打开 Rclone 配置文件失败",
         "openFile": "打开 rclone.conf",
         "openSuccess": "Rclone 配置文件打开成功",
-        "subtitle": "配置 rclone 远程存储访问",
-        "tips": "查看你的JSON配置",
-        "title": "远程存储"
+        "subtitle": "配置 rclone 远程存储访问"
       },
       "subtitle": "配置远程存储连接"
     },
     "resetFailed": "重置设置失败。",
     "resetSuccess": "设置已重置为默认值！",
-    "resetToDefaults": "重置为默认值",
     "saveChanges": "保存更改",
-    "saveFailed": "保存设置失败，请重试。",
     "saved": "设置保存成功！",
+    "saveFailed": "保存设置失败，请重试。",
     "service": {
       "admin": {
-        "currentPassword": "管理员密码",
         "help": "输入自定义管理员密码或点击重置按钮生成新的随机密码。点击'保存更改'将密码应用到 OpenList 核心。",
         "passwordPlaceholder": "输入管理员密码或点击重置生成",
-        "passwordUpdateFailed": "更新管理员密码失败。请查看日志了解详细信息。",
         "passwordUpdated": "管理员密码更新成功！",
+        "passwordUpdateFailed": "更新管理员密码失败。请查看日志了解详细信息。",
         "resetFailed": "重置管理员密码失败。请查看日志了解详细信息。",
         "resetSuccess": "管理员密码重置成功！已生成新密码并保存。",
         "resetTitle": "重置管理员密码为新的随机值",
-        "subtitle": "管理 OpenList 核心网页界面的管理员密码",
         "title": "管理员密码"
       },
       "customPaths": {
@@ -452,7 +372,6 @@
           "selectTitle": "选择 Rclone 配置文件"
         },
         "selectError": "选择文件失败。请重试或手动输入路径。",
-        "subtitle": "覆盖默认的二进制文件和配置文件路径",
         "title": "自定义路径"
       },
       "network": {
@@ -478,15 +397,11 @@
       },
       "startup": {
         "autoLaunch": {
-          "description": "开机自动启动 OpenList 核心",
-          "title": "开机自启"
+          "description": "打开软件时，启动 OpenList 核心",
+          "title": "跟随软件启动，自动启动OpenList核心"
         }
       },
       "subtitle": "配置 OpenList 服务设置"
-    },
-    "startup": {
-      "subtitle": "配置自动启动行为",
-      "title": "启动选项"
     },
     "subtitle": "配置您的 OpenList 桌面应用程序",
     "tabs": {
@@ -501,18 +416,13 @@
       "darkDesc": "深色主题",
       "light": "浅色",
       "lightDesc": "浅色主题",
-      "title": "主题",
       "toggle": "切换主题"
     },
     "title": "设置"
   },
   "update": {
-    "aboutUpdates": "关于更新",
-    "autoCheck": "自动检查更新",
-    "autoCheckInfo": "自动更新检查让您的应用保持安全和最新状态",
     "availableInstallers": "可用安装程序",
     "backgroundUpdateAvailable": "后台检测到更新",
-    "backupInfo": "在重大更新前，您的数据会自动备份",
     "checkError": "检查更新失败",
     "checkForUpdates": "检查更新",
     "checking": "检查中...",
@@ -524,16 +434,12 @@
     "lastChecked": "上次检查",
     "noUpdatesFound": "没有可用更新",
     "quitApp": "退出应用中...",
-    "releaseChannels": "发布渠道",
-    "releaseChannelsInfo": "我们使用GitHub Release发布安装包，安全可靠。",
     "releaseDate": "发布日期",
-    "releaseNotes": "更新说明",
-    "securityInfo": "更新包含重要的安全补丁和错误修复",
     "showUpdate": "显示更新",
     "startingDownload": "开始下载...",
     "subtitle": "保持应用程序最新，获取最新功能和安全改进",
     "title": "应用更新",
-    "upToDate": "应用已是最新版本",
-    "updateAvailable": "发现新版本"
+    "updateAvailable": "发现新版本",
+    "upToDate": "应用已是最新版本"
   }
 }

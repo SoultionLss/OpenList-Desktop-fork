@@ -8,7 +8,6 @@
     "cancel": "Cancel",
     "close": "Close",
     "confirm": "Confirm",
-    "loading": "Loading...",
     "maximize": "Maximize",
     "minimize": "Minimize",
     "reset": "Reset",
@@ -33,13 +32,10 @@
       "openDocs": "Open Docs",
       "openlist": "OpenList",
       "openlistDesc": "Manage your cloud storage with OpenList",
-      "quickLinks": "Quick Links",
       "rclone": "Rclone",
-      "rcloneDesc": "Command line program to manage files on cloud storage",
-      "title": "Documentation"
+      "rcloneDesc": "Command line program to manage files on cloud storage"
     },
     "quickActions": {
-      "autoLaunch": "Auto Launch Core(not app)",
       "configRclone": "Configure RClone",
       "copyAdminPassword": "Copy admin password",
       "firewall": {
@@ -51,38 +47,14 @@
         "removed": "Port removed successfully"
       },
       "manageMounts": "Manage Mounts",
-      "openWeb": "Web",
       "openlistService": "OpenList Core",
-      "processing": "Processing...",
-      "quickSettings": "Quick Settings",
+      "openWeb": "Web",
       "rclone": "RClone",
       "resetAdminPassword": "Reset admin password",
       "restart": "Restart",
       "startOpenListCore": "Start",
-      "startRclone": "Start RClone",
       "stopOpenListCore": "Stop",
-      "stopRclone": "Stop RClone",
       "title": "Core Management"
-    },
-    "serviceManagement": {
-      "confirmUninstall": {
-        "confirm": "Uninstall",
-        "message": "Are you sure you want to uninstall the OpenList service? This will stop all functionality and make the application unusable until the service is reinstalled.",
-        "title": "Confirm Uninstall"
-      },
-      "install": "Install",
-      "serviceStatus": "OpenList Backend Service",
-      "start": "Start",
-      "status": {
-        "error": "Error",
-        "installed": "Installed",
-        "notInstalled": "Not Installed",
-        "running": "Running",
-        "stopped": "Stopped"
-      },
-      "stop": "Stop",
-      "title": "Service Management",
-      "uninstall": "Uninstall"
     },
     "versionManager": {
       "openlist": "OpenList",
@@ -117,8 +89,7 @@
       "sources": {
         "all": "All Sources",
         "openlist": "OpenList",
-        "rclone": "Rclone",
-        "service": "Service"
+        "rclone": "Rclone"
       }
     },
     "headers": {
@@ -195,7 +166,6 @@
     "config": {
       "addFlag": "Add Flag",
       "addTitle": "Add Remote Configuration",
-      "advancedSettings": "Advanced Settings",
       "authentication": "Authentication",
       "autoMount": "Auto-mount on startup",
       "basicInfo": "Basic Information",
@@ -252,7 +222,6 @@
       "quickFlags": "Common Used Flags",
       "quickFlagsTooltip": "Quick select common rclone flags",
       "removeFlag": "Remove Flag",
-      "selectCommonFlags": "Select Common Flags",
       "type": "Type",
       "types": {
         "webdav": "WebDAV"
@@ -280,25 +249,15 @@
       "failedToDelete": "Failed to delete configuration",
       "failedToMount": "Failed to mount remote",
       "failedToSave": "Failed to save configuration",
-      "failedToStartService": "Failed to start rclone service",
-      "failedToStopService": "Failed to stop rclone service",
       "failedToUnmount": "Failed to unmount remote",
       "fillRequiredFields": "Please fill in all required fields",
       "mountPointRequired": "Mount point is required"
     },
     "meta": {
-      "autoMount": "Auto Mount",
-      "openInExplorer": "Click to open in file explorer"
-    },
-    "service": {
-      "running": "Running",
-      "stopped": "Stopped"
+      "autoMount": "Auto Mount"
     },
     "stats": {
-      "error": "Error",
-      "mounted": "Mounted",
-      "total": "Total",
-      "unmounted": "Unmounted"
+      "mounted": "Mounted"
     },
     "status": {
       "error": "Error",
@@ -327,15 +286,12 @@
     "app": {
       "autoStartApp": {
         "description": "Automatically start OpenList service when the application launches",
-        "subtitle": "Automatically start OpenList Desktop application when the system starts",
         "title": "Auto-launch on startup(Immediate Effect)"
       },
       "config": {
         "openError": "Failed to open settings file",
-        "openFile": "Open settings.json",
         "openSuccess": "Settings file opened successfully",
-        "subtitle": "Access application configuration files",
-        "title": "Configuration Files"
+        "subtitle": "Access application configuration files"
       },
       "ghProxy": {
         "api": {
@@ -345,7 +301,6 @@
         "help": "Optional. Enter a proxy URL to accelerate GitHub. Example: https://ghfast.top",
         "label": "GitHub Proxy URL",
         "placeholder": "https://ghfast.top",
-        "subtitle": "Accelerate GitHub with proxy service",
         "title": "GitHub Proxy"
       },
       "hideDockIcon": {
@@ -356,31 +311,13 @@
         "openInBrowser": {
           "description": "Use system default browser instead of built-in window",
           "title": "Open links in external browser"
-        },
-        "subtitle": "Configure how links are opened",
-        "title": "Link Handling"
+        }
       },
       "showWindowOnStartup": {
         "description": "Show the main application window when OpenList Desktop starts",
         "title": "Show main window on startup"
       },
-      "subtitle": "Configure application preferences and behavior",
-      "theme": {
-        "auto": "Auto",
-        "autoDesc": "Follow system",
-        "dark": "Dark",
-        "light": "Light",
-        "subtitle": "Choose your preferred appearance",
-        "title": "Theme"
-      },
-      "updates": {
-        "autoCheck": {
-          "description": "Automatically check for and notify about new updates in the background",
-          "title": "Automatic Update Checks"
-        },
-        "subtitle": "Manage automatic updates and notifications",
-        "title": "Updates"
-      }
+      "subtitle": "Configure application preferences and behavior"
     },
     "common": "Common",
     "confirmReset": {
@@ -388,48 +325,31 @@
       "title": "Reset Settings"
     },
     "network": {
-      "subtitle": "Configure the web interface and network settings",
       "title": "Network Configuration"
     },
     "rclone": {
-      "api": {
-        "port": {
-          "help": "Port number for the Rclone API server (1-65535). Default: 45572",
-          "label": "API Port",
-          "placeholder": "45572"
-        },
-        "subtitle": "Configure the Rclone API server settings",
-        "title": "API Configuration"
-      },
       "config": {
-        "invalidJson": "Invalid JSON configuration. Please check your syntax.",
-        "label": "Rclone Configuration",
         "openError": "Failed to open rclone config file",
         "openFile": "Open rclone.conf",
         "openSuccess": "Rclone config file opened successfully",
-        "subtitle": "Configure rclone for remote storage access",
-        "tips": "View your rclone configuration as JSON. This will be used to configure rclone remotes.",
-        "title": "Remote Storage"
+        "subtitle": "Configure rclone for remote storage access"
       },
       "subtitle": "Configure remote storage connections"
     },
     "resetFailed": "Failed to reset settings.",
     "resetSuccess": "Settings reset to defaults successfully!",
-    "resetToDefaults": "Reset to defaults",
     "saveChanges": "Save Changes",
-    "saveFailed": "Failed to save settings. Please try again.",
     "saved": "Settings saved successfully!",
+    "saveFailed": "Failed to save settings. Please try again.",
     "service": {
       "admin": {
-        "currentPassword": "Admin Password",
         "help": "Enter a custom admin password or click the reset button to generate a new random password. Click 'Save Changes' to apply the password to OpenList Core.",
         "passwordPlaceholder": "Enter admin password or click reset to generate",
-        "passwordUpdateFailed": "Failed to update admin password. Please check the logs for more details.",
         "passwordUpdated": "Admin password updated successfully!",
+        "passwordUpdateFailed": "Failed to update admin password. Please check the logs for more details.",
         "resetFailed": "Failed to reset admin password. Please check the logs for more details.",
         "resetSuccess": "Admin password reset successfully! New password has been generated and saved.",
         "resetTitle": "Reset admin password to a new random value",
-        "subtitle": "Manage the admin password for OpenList Core web interface",
         "title": "Admin Password"
       },
       "customPaths": {
@@ -452,7 +372,6 @@
           "selectTitle": "Select Rclone Config File"
         },
         "selectError": "Failed to select file. Please try again or enter path manually.",
-        "subtitle": "Override default binary and configuration file paths",
         "title": "Custom Paths"
       },
       "network": {
@@ -478,15 +397,11 @@
       },
       "startup": {
         "autoLaunch": {
-          "description": "Automatically start OpenList core when the computer starts",
-          "title": "Auto-launch on startup"
+          "description": "Automatically start OpenList Core service when the application launches",
+          "title": "Auto-launch OpenList Core on app startup"
         }
       },
       "subtitle": "Configure OpenList service settings"
-    },
-    "startup": {
-      "subtitle": "Configure automatic startup behavior",
-      "title": "Startup Options"
     },
     "subtitle": "Configure your OpenList Desktop application",
     "tabs": {
@@ -501,18 +416,13 @@
       "darkDesc": "Dark theme",
       "light": "Light",
       "lightDesc": "Light theme",
-      "title": "Theme",
       "toggle": "Toggle theme"
     },
     "title": "Settings"
   },
   "update": {
-    "aboutUpdates": "About Updates",
-    "autoCheck": "Check for updates automatically",
-    "autoCheckInfo": "Automatic update checks keep your app secure and up-to-date",
     "availableInstallers": "Available Installers",
     "backgroundUpdateAvailable": "Update available in background",
-    "backupInfo": "Your data is automatically backed up before major updates",
     "checkError": "Failed to check for updates",
     "checkForUpdates": "Check for Updates",
     "checking": "Checking...",
@@ -524,16 +434,12 @@
     "lastChecked": "Last checked",
     "noUpdatesFound": "No updates available",
     "quitApp": "Quitting application...",
-    "releaseChannels": "Release Channels",
-    "releaseChannelsInfo": "We use GitHub releases to manage app updates.",
     "releaseDate": "Release Date",
-    "releaseNotes": "Release Notes",
-    "securityInfo": "Updates include important security patches and bug fixes",
     "showUpdate": "Show Update",
     "startingDownload": "Starting download...",
     "subtitle": "Keep your application up to date with the latest features and security improvements",
     "title": "App Updates",
-    "upToDate": "App is up to date",
-    "updateAvailable": "Update Available"
+    "updateAvailable": "Update Available",
+    "upToDate": "App is up to date"
   }
 }
