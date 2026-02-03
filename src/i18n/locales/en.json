@@ -167,7 +167,7 @@
       "addFlag": "Add Flag",
       "addTitle": "Add Remote Configuration",
       "authentication": "Authentication",
-      "autoMount": "Auto-mount on startup",
+      "autoMount": "Auto-mount on App Startup",
       "basicInfo": "Basic Information",
       "clickToToggleFlags": "Click on flags to instantly add or remove them from your configuration",
       "editTitle": "Edit Remote Configuration",
@@ -243,15 +243,19 @@
       "allStatus": "All Status",
       "searchPlaceholder": "Search remotes..."
     },
+    "loading": "Initializing mount configurations...",
     "messages": {
+      "addedSuccessfully": "Remote configuration \"{name}\" added successfully",
       "confirmDelete": "Are you sure you want to delete the remote configuration \"{name}\"?",
       "confirmDeleteTitle": "Delete Configuration",
+      "deletedSuccessfully": "Remote configuration \"{name}\" deleted successfully",
       "failedToDelete": "Failed to delete configuration",
       "failedToMount": "Failed to mount remote",
       "failedToSave": "Failed to save configuration",
       "failedToUnmount": "Failed to unmount remote",
       "fillRequiredFields": "Please fill in all required fields",
-      "mountPointRequired": "Mount point is required"
+      "mountPointRequired": "Mount point is required",
+      "updatedSuccessfully": "Remote configuration \"{name}\" updated successfully"
     },
     "meta": {
       "autoMount": "Auto Mount"

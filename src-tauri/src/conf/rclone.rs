@@ -1,8 +1,28 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RcloneMountConfig {
+    pub name: String,
+    pub r#type: String,
+    pub url: String,
+    pub vendor: Option<String>,
+    pub user: String,
+    pub pass: String,
+    #[serde(rename = "mountPoint")]
+    pub mount_point: Option<String>,
+    #[serde(rename = "volumeName")]
+    pub volume_name: Option<String>,
+    #[serde(rename = "extraFlags")]
+    pub extra_flags: Option<Vec<String>>,
+    #[serde(rename = "autoMount")]
+    pub auto_mount: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RcloneConfig {
-    pub mount_config: serde_json::Value,
+    pub mount_config: HashMap<String, RcloneMountConfig>,
     pub binary_path: Option<String>,
     pub rclone_conf_path: Option<String>,
 }
@@ -16,7 +36,7 @@ impl Default for RcloneConfig {
 impl RcloneConfig {
     pub fn new() -> Self {
         Self {
-            mount_config: serde_json::Value::Object(Default::default()),
+            mount_config: HashMap::new(),
             binary_path: None,
             rclone_conf_path: None,
         }

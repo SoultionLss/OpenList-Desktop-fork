@@ -175,6 +175,8 @@ pub fn get_rclone_config_path() -> Result<PathBuf, String> {
     if !rclone_config_path.exists() {
         fs::File::create(&rclone_config_path)
             .map_err(|e| format!("Failed to create rclone config file: {e}"))?;
+        fs::write(&rclone_config_path, "")
+            .map_err(|e| format!("Failed to write to rclone config file: {e}"))?;
     }
     Ok(rclone_config_path)
 }
@@ -194,6 +196,8 @@ pub fn get_rclone_config_path_with_custom(state: State<'_, AppState>) -> Result<
             }
             fs::File::create(&custom)
                 .map_err(|e| format!("Failed to create custom rclone config file: {e}"))?;
+            fs::write(&custom, "")
+                .map_err(|e| format!("Failed to write to custom rclone config file: {e}"))?;
         }
         return Ok(custom);
     }

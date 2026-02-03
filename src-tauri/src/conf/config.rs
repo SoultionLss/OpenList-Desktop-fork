@@ -37,7 +37,7 @@ impl MergedSettings {
         }
     }
 
-    pub fn read_data_config_for_dir(data_dir: Option<&str>) -> Result<serde_json::Value, String> {
+    fn read_data_config_for_dir(data_dir: Option<&str>) -> Result<serde_json::Value, String> {
         let path = Self::get_data_config_path_for_dir(data_dir)?;
         let content = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
         serde_json::from_str(&content).map_err(|e| e.to_string())

@@ -167,7 +167,7 @@
       "addFlag": "添加标志",
       "addTitle": "添加远程配置",
       "authentication": "身份认证",
-      "autoMount": "开机自动挂载",
+      "autoMount": "软件启动时自动挂载",
       "basicInfo": "基本信息",
       "clickToToggleFlags": "点击即可立即添加或移除",
       "editTitle": "编辑远程配置",
@@ -243,15 +243,19 @@
       "allStatus": "所有状态",
       "searchPlaceholder": "搜索远程配置..."
     },
+    "loading": "正在初始化",
     "messages": {
-      "confirmDelete": "您确定要删除远程配置 \"{name}\" 吗？",
+      "addedSuccessfully": "远程配置 {name} 添加成功",
+      "confirmDelete": "您确定要删除远程配置 {name} 吗？",
       "confirmDeleteTitle": "删除配置",
+      "deletedSuccessfully": "远程配置 {name} 删除成功",
       "failedToDelete": "删除配置失败",
       "failedToMount": "挂载远程失败",
       "failedToSave": "保存配置失败",
       "failedToUnmount": "卸载远程失败",
       "fillRequiredFields": "请填写所有必填字段",
-      "mountPointRequired": "挂载点为必填项"
+      "mountPointRequired": "挂载点为必填项",
+      "updatedSuccessfully": "远程配置 {name} 更新成功"
     },
     "meta": {
       "autoMount": "自动挂载"

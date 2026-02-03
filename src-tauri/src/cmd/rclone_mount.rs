@@ -77,29 +77,7 @@ pub async fn rclone_create_remote(
     config: RcloneWebdavConfigInput,
     state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let mut rclone_config = RcloneConfigFile::load_with_custom(state.clone())?;
-
-    if rclone_config.has_remote(&name) {
-        return Err(format!("Remote '{name}' already exists"));
-    }
-
-    let webdav = WebDavRemoteConfig {
-        name: name.clone(),
-        url: config.url,
-        vendor: config.vendor,
-        user: config.user,
-        pass: config.pass,
-    };
-
-    if r#type != "webdav" {
-        return Err(format!("Unsupported remote type: {}", r#type));
-    }
-
-    let remote_config = webdav.to_rclone_config_with_obscured_pass(state.clone())?;
-    rclone_config.set_remote(remote_config);
-    rclone_config.save(state)?;
-
-    Ok(true)
+    rclone_update_remote(name, r#type, config, state).await
 }
 
 #[tauri::command]
@@ -190,7 +168,7 @@ pub async fn create_rclone_mount_remote_process(
     ];
     args.extend(args_vec);
 
-    let log_file = log_dir.join(format!("{}.log", config.id));
+    let log_file = log_dir.join("process_rclone.log");
 
     let process_config = ProcessConfig {
         id: config.id.clone(),
@@ -250,36 +228,25 @@ pub async fn unmount_remote(name: String) -> Result<bool, String> {
 }
 
 #[tauri::command]
-pub async fn check_mount_status(mount_point: String) -> Result<bool, String> {
+pub async fn check_mount_status(id: String, mount_point: String) -> Result<bool, String> {
     let process_list = PROCESS_MANAGER.list();
     let mut found = false;
-    let mut mount_process_id = String::new();
     for process in process_list {
-        if !process.name.starts_with("rclone_mount_") {
-            continue;
-        }
-        let args = &process.config.args;
-        let non_flag_args: Vec<&String> = args.iter().filter(|arg| !arg.starts_with('-')).collect();
-        if non_flag_args.len() >= 3 && non_flag_args[0] == "mount" {
-            let mp = non_flag_args[2];
-            if mp == &mount_point {
-                found = true;
-                mount_process_id = process.id.clone();
-                break;
-            }
+        if process.id == id {
+            found = true;
+            break;
         }
     }
     if !found {
         return Ok(false);
     }
 
-    let process_info = PROCESS_MANAGER.get_status(&mount_process_id)?;
+    let process_info = PROCESS_MANAGER.get_status(&id)?;
     if !process_info.is_running {
         return Ok(false);
     }
 
     let path = Path::new(&mount_point);
-
     if !path.exists() {
         return Ok(false);
     }
@@ -288,7 +255,8 @@ pub async fn check_mount_status(mount_point: String) -> Result<bool, String> {
     {
         if mount_point.len() == 2 && mount_point.ends_with(':') {
             let drive_path = format!("{mount_point}\\");
-            return Ok(fs::read_dir(&drive_path).is_ok());
+            let result = fs::read_dir(&drive_path);
+            return Ok(result.is_ok());
         }
         Ok(fs::read_dir(&mount_point).is_ok())
     }
@@ -299,8 +267,8 @@ pub async fn check_mount_status(mount_point: String) -> Result<bool, String> {
     }
 }
 
-async fn check_mount_status_internal(mount_point: &str) -> Result<bool, String> {
-    check_mount_status(mount_point.to_string()).await
+async fn check_mount_status_internal(id: &str, mount_point: &str) -> Result<bool, String> {
+    check_mount_status(id.to_string(), mount_point.to_string()).await
 }
 
 #[tauri::command]
@@ -317,12 +285,11 @@ pub async fn get_mount_info_list(
 
         let args = &process.config.args;
         let non_flag_args: Vec<&String> = args.iter().filter(|arg| !arg.starts_with('-')).collect();
+        if non_flag_args.len() >= 4 && non_flag_args[0] == "mount" {
+            let remote_path = non_flag_args[2].clone();
+            let mount_point = non_flag_args[3].clone();
 
-        if non_flag_args.len() >= 3 && non_flag_args[0] == "mount" {
-            let remote_path = non_flag_args[1].clone();
-            let mount_point = non_flag_args[2].clone();
-
-            let mount_status = match check_mount_status_internal(&mount_point).await {
+            let mount_status = match check_mount_status_internal(&process.id, &mount_point).await {
                 Ok(is_accessible) => {
                     if process.is_running {
                         if is_accessible { "mounted" } else { "mounting" }

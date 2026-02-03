@@ -56,8 +56,8 @@ export const useAppStore = defineStore('app', () => {
           vendor: config.vendor,
           user: config.user,
           pass: config.pass,
-          mountPoint: settings.value.rclone.mount_config[key].mountPoint,
-          volumeName: settings.value.rclone.mount_config[key].volumeName,
+          mountPoint: settings.value.rclone.mount_config[key].mountPoint || '',
+          volumeName: settings.value.rclone.mount_config[key].volumeName || '',
           extraFlags: settings.value.rclone.mount_config[key].extraFlags || [],
           autoMount: settings.value.rclone.mount_config[key].autoMount ?? false,
         }
@@ -124,10 +124,13 @@ export const useAppStore = defineStore('app', () => {
 
   async function loadMountInfos() {
     try {
+      loading.value = true
       mountInfos.value = await TauriAPI.rclone.mounts.list()
     } catch (err: any) {
       error.value = 'Failed to load mount information'
       console.error('Failed to load mount infos:', err)
+    } finally {
+      loading.value = false
     }
   }
 
@@ -138,17 +141,17 @@ export const useAppStore = defineStore('app', () => {
         name,
         type,
         url: config.url,
-        vendor: config.vendor || undefined,
+        vendor: config.vendor || '',
         user: config.user,
         pass: config.pass,
-        mountPoint: config.mountPoint || undefined,
-        volumeName: config.volumeName || undefined,
+        mountPoint: config.mountPoint || '',
+        volumeName: config.volumeName || '',
         extraFlags: config.extraFlags || [],
         autoMount: config.autoMount ?? false,
       }
       const createdConfig: RcloneWebdavConfig = {
         url: fullConfig.url,
-        vendor: fullConfig.vendor || undefined,
+        vendor: fullConfig.vendor || '',
         user: fullConfig.user,
         pass: fullConfig.pass,
       }
@@ -276,10 +279,13 @@ export const useAppStore = defineStore('app', () => {
 
   async function loadRemoteConfigs() {
     try {
+      loading.value = true
       remoteConfigs.value = await TauriAPI.rclone.remotes.listConfig('webdav')
     } catch (err: any) {
       error.value = 'Failed to load remote configurations'
       console.error('Failed to load remote configs:', err)
+    } finally {
+      loading.value = false
     }
   }
 
@@ -298,9 +304,9 @@ export const useAppStore = defineStore('app', () => {
       if (!config.mountPoint) {
         throw new Error(`Mount point is not set for remote: ${name}`)
       }
+      const id = `rclone_mount_${name}_process`
 
-      // Check if already mounted
-      const mountResult = await TauriAPI.rclone.mounts.check(config.mountPoint)
+      const mountResult = await TauriAPI.rclone.mounts.check(id, config.mountPoint)
       if (mountResult) {
         console.log(`Remote ${name} is already mounted`)
         return
@@ -313,8 +319,8 @@ export const useAppStore = defineStore('app', () => {
         ...(config.extraFlags || []),
       ]
       const createRemoteConfig: MountProcessInput = {
-        id: `rclone_mount_${name}_process`,
-        name: `rclone_mount_${name}_process`,
+        id,
+        name: id,
         args: mountArgs,
         auto_start: true,
       }

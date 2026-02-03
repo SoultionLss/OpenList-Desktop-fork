@@ -124,13 +124,22 @@
       <!-- Remote Configurations -->
       <div class="flex h-full w-full flex-1 flex-col gap-4 overflow-hidden rounded-md shadow-md">
         <div
-          v-if="filteredConfigs.length === 0"
+          v-if="filteredConfigs.length === 0 && !appStore.loading"
           class="flex w-full h-full overflow-auto items-center justify-center p-2"
         >
           <div class="max-w-80 flex flex-col items-center justify-center gap-2">
             <Cloud class="text-secondary w-12 h-12" />
             <h3 class="text-main font-semibold text-xl">{{ t('mount.empty.title') }}</h3>
             <p class="text-secondary text-sm">{{ t('mount.empty.description') }}</p>
+          </div>
+        </div>
+        <div
+          v-else-if="appStore.loading"
+          class="flex w-full h-full overflow-auto no-scrollbar items-center justify-center"
+        >
+          <div class="flex flex-col gap-4 w-full h-full items-center justify-center">
+            <div class="border-3 border-border w-20 h-20 rounded-full border-t-accent border-t-3 animate-spin"></div>
+            <div class="text-main font-semibold">{{ t('mount.loading') }}</div>
           </div>
         </div>
 
@@ -277,6 +286,7 @@
                 v-model="configForm.name"
                 :title="t('mount.config.name')"
                 :required="true"
+                :disabled="!isAddingNew"
                 :placeholder="t('mount.config.namePlaceholder')"
               />
             </SettingCard>
@@ -342,7 +352,6 @@
                 v-model="configForm.mountPoint"
                 type="text"
                 :title="t('mount.config.mountPoint')"
-                :required="true"
                 :placeholder="t('mount.config.mountPointPlaceholder')"
               />
             </SettingCard>
@@ -507,8 +516,9 @@ import SettingCard from '@/components/common/SettingCard.vue'
 import SettingSection from '@/components/common/SettingSection.vue'
 import SingleSelect from '@/components/common/SingleSelect.vue'
 import useConfirm from '@/hooks/useConfirm'
+import useMessage from '@/hooks/useMessage'
 import { useAppStore } from '@/stores/app'
-import { isLinux } from '@/utils/constant'
+import { isLinux, isWindows } from '@/utils/constant'
 
 import { useTranslation } from '../composables/useI18n'
 import { useRcloneStore } from '../stores/rclone'
@@ -517,13 +527,14 @@ const { t } = useTranslation()
 const rcloneStore = useRcloneStore()
 const appStore = useAppStore()
 const confirm = useConfirm()
+const message = useMessage()
 
 const showAddForm = ref(false)
 const editingConfig = ref<RcloneFormConfig | null>(null)
 const searchQuery = ref('')
 const statusFilter = ref<'all' | 'mounted' | 'unmounted' | 'error'>('all')
 const showFlagSelector = ref(false)
-
+const isAddingNew = ref(false)
 let mountRefreshInterval: NodeJS.Timeout | null = null
 
 const configForm = ref({
@@ -651,6 +662,7 @@ const configCounts = computed(() => {
 
 const addNewConfig = () => {
   resetForm()
+  isAddingNew.value = true
   showAddForm.value = true
 }
 
@@ -665,7 +677,7 @@ const editConfig = (config: RcloneFormConfig) => {
     pass: config.pass,
     mountPoint: config.mountPoint || '',
     volumeName: config.volumeName || '',
-    autoMount: config.autoMount,
+    autoMount: config.autoMount || false,
     extraFlags: config.extraFlags || [],
   }
   showAddForm.value = true
@@ -683,11 +695,11 @@ const saveConfig = async () => {
         name: configForm.value.name,
         type: configForm.value.type,
         url: configForm.value.url,
-        vendor: configForm.value.vendor || undefined,
+        vendor: configForm.value.vendor || '',
         user: configForm.value.user,
         pass: configForm.value.pass,
-        mountPoint: configForm.value.mountPoint || undefined,
-        volumeName: configForm.value.volumeName || undefined,
+        mountPoint: configForm.value.mountPoint || '',
+        volumeName: configForm.value.volumeName || '',
         autoMount: configForm.value.autoMount,
         extraFlags: configForm.value.extraFlags,
       })
@@ -696,16 +708,21 @@ const saveConfig = async () => {
         name: configForm.value.name,
         type: configForm.value.type,
         url: configForm.value.url,
-        vendor: configForm.value.vendor || undefined,
+        vendor: configForm.value.vendor || '',
         user: configForm.value.user,
         pass: configForm.value.pass,
-        mountPoint: configForm.value.mountPoint || undefined,
-        volumeName: configForm.value.volumeName || undefined,
+        mountPoint: configForm.value.mountPoint || '',
+        volumeName: configForm.value.volumeName || '',
         autoMount: configForm.value.autoMount,
         extraFlags: configForm.value.extraFlags,
       })
     }
     showAddForm.value = false
+    message.success(
+      isAddingNew.value
+        ? t('mount.messages.addedSuccessfully', { name: configForm.value.name })
+        : t('mount.messages.updatedSuccessfully', { name: configForm.value.name }),
+    )
     resetForm()
   } catch (error: any) {
     console.error(error.message || t('mount.messages.failedToSave'))
@@ -770,6 +787,7 @@ const confirmDelete = async (config: RcloneFormConfig) => {
 
   try {
     await appStore.deleteRemoteConfig(config.name)
+    message.success(t('mount.messages.deletedSuccessfully', { name: config.name }))
   } catch (error: any) {
     console.error(error.message || t('mount.messages.failedToDelete'))
   }
@@ -785,6 +803,8 @@ const refreshData = async () => {
 }
 
 const getConfigStatus = (config: RcloneFormConfig) => {
+  console.log('Getting status for config:', config)
+  console.log('Current mount infos:', appStore.mountInfos)
   const mountInfo = appStore.mountInfos.find(mount => mount.name === config.name)
   return mountInfo?.status || 'unmounted'
 }
@@ -898,8 +918,6 @@ const dismissWebdavTip = () => {
   localStorage.setItem('webdav_tip_dismissed', 'true')
 }
 
-const isWindows = typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'win32'
-
 const showWinfspTip = ref(isWindows && !localStorage.getItem('winfsp_tip_dismissed'))
 
 const dismissWinfspTip = () => {
@@ -930,7 +948,6 @@ onMounted(async () => {
   mountRefreshInterval = setInterval(appStore.loadMountInfos, 15 * 1000)
   rcloneStore.init()
 
-  // Check rclone availability on Linux
   if (isLinux && !localStorage.getItem('rclone_tip_dismissed')) {
     const available = await rcloneStore.checkRcloneAvailable()
     showRcloneTip.value = !available
