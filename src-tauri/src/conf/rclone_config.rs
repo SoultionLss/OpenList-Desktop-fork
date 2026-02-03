@@ -8,21 +8,14 @@ use serde::{Deserialize, Serialize};
 use tauri::State;
 
 use crate::object::structs::AppState;
-use crate::utils::path::{
-    get_rclone_binary_path_with_custom, get_rclone_config_path, get_rclone_config_path_with_custom,
-};
+use crate::utils::path::{get_rclone_binary_path_with_custom, get_rclone_config_path_with_custom};
 
 pub fn obscure_password(password: &str, state: State<'_, AppState>) -> Result<String, String> {
-    let settings = state
-        .app_settings
-        .read()
-        .clone()
-        .ok_or("Failed to read app settings")?;
     if password.is_empty() {
         return Ok(String::new());
     }
 
-    let rclone_bin = get_rclone_binary_path_with_custom(settings.rclone.binary_path.as_deref())?;
+    let rclone_bin = get_rclone_binary_path_with_custom(state)?;
 
     let mut cmd = Command::new(&rclone_bin);
     cmd.args(["obscure", password]);
@@ -44,16 +37,11 @@ pub fn obscure_password(password: &str, state: State<'_, AppState>) -> Result<St
 }
 
 pub fn reveal_password(obscured: &str, state: State<'_, AppState>) -> Result<String, String> {
-    let settings = state
-        .app_settings
-        .read()
-        .clone()
-        .ok_or("Failed to read app settings")?;
     if obscured.is_empty() {
         return Ok(String::new());
     }
 
-    let rclone_bin = get_rclone_binary_path_with_custom(settings.rclone.binary_path.as_deref())?;
+    let rclone_bin = get_rclone_binary_path_with_custom(state)?;
 
     let mut cmd = Command::new(&rclone_bin);
 
@@ -99,7 +87,7 @@ impl RcloneConfigFile {
             .clone()
             .ok_or("Failed to read app settings")?;
         let custom_path = settings.rclone.rclone_conf_path.as_deref();
-        let config_path = get_rclone_config_path_with_custom(custom_path)
+        let config_path = get_rclone_config_path_with_custom(state)
             .map_err(|e| format!("Failed to get config path: {e}"))?;
         let mut config = Self::load_from_path(&config_path)?;
         config.custom_config_path = custom_path.map(|s| s.to_string());
@@ -167,13 +155,9 @@ impl RcloneConfigFile {
         Ok(config)
     }
 
-    pub fn save(&self) -> Result<(), String> {
-        let config_path = if let Some(custom) = &self.custom_config_path {
-            get_rclone_config_path_with_custom(Some(custom.as_str()))
-                .map_err(|e| format!("Failed to get config path: {e}"))?
-        } else {
-            get_rclone_config_path().map_err(|e| format!("Failed to get config path: {e}"))?
-        };
+    pub fn save(&self, state: State<'_, AppState>) -> Result<(), String> {
+        let config_path = get_rclone_config_path_with_custom(state)
+            .map_err(|e| format!("Failed to get config path: {e}"))?;
         self.save_to_path(&config_path)
     }
 

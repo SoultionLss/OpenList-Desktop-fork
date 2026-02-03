@@ -13,17 +13,10 @@ pub async fn get_binary_version(
     state: State<'_, AppState>,
 ) -> Result<String, String> {
     let bin = binary_name.as_deref().unwrap_or("openlist");
-    let settings = state
-        .app_settings
-        .read()
-        .clone()
-        .ok_or("Failed to read app settings")?;
 
     let binary_path = match bin {
-        "openlist" => {
-            get_openlist_binary_path_with_custom(settings.openlist.binary_path.as_deref())
-        }
-        "rclone" => get_rclone_binary_path_with_custom(settings.rclone.binary_path.as_deref()),
+        "openlist" => get_openlist_binary_path_with_custom(state),
+        "rclone" => get_rclone_binary_path_with_custom(state),
         other => Err(format!("Unsupported binary name: {}", other)),
     };
     let binary_path = binary_path?;

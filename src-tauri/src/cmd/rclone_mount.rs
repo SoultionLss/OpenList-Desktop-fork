@@ -95,9 +95,9 @@ pub async fn rclone_create_remote(
         return Err(format!("Unsupported remote type: {}", r#type));
     }
 
-    let remote_config = webdav.to_rclone_config_with_obscured_pass(state)?;
+    let remote_config = webdav.to_rclone_config_with_obscured_pass(state.clone())?;
     rclone_config.set_remote(remote_config);
-    rclone_config.save()?;
+    rclone_config.save(state)?;
 
     Ok(true)
 }
@@ -127,9 +127,9 @@ pub async fn rclone_update_remote(
         pass: config.pass,
     };
 
-    let remote_config = webdav.to_rclone_config_with_obscured_pass(state)?;
+    let remote_config = webdav.to_rclone_config_with_obscured_pass(state.clone())?;
     rclone_config.set_remote(remote_config);
-    rclone_config.save()?;
+    rclone_config.save(state)?;
 
     Ok(true)
 }
@@ -139,7 +139,7 @@ pub async fn rclone_delete_remote(
     name: String,
     state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    let mut rclone_config = RcloneConfigFile::load_with_custom(state)?;
+    let mut rclone_config = RcloneConfigFile::load_with_custom(state.clone())?;
 
     let process_id = get_mount_process_id(&name);
     if PROCESS_MANAGER.is_registered(&process_id) {
@@ -151,7 +151,7 @@ pub async fn rclone_delete_remote(
         return Err(format!("Remote '{name}' does not exist"));
     }
 
-    rclone_config.save()?;
+    rclone_config.save(state)?;
     Ok(true)
 }
 
@@ -160,20 +160,11 @@ pub async fn create_rclone_mount_remote_process(
     config: MountProcessInput,
     state: State<'_, AppState>,
 ) -> Result<ProcessInfo, String> {
-    let settings = state
-        .app_settings
-        .read()
-        .clone()
-        .ok_or("Failed to read app settings")?;
-
-    let custom_rclone_binary = settings.rclone.binary_path;
-    let custom_rclone_config = settings.rclone.rclone_conf_path;
-
-    let binary_path = get_rclone_binary_path_with_custom(custom_rclone_binary.as_deref())
+    let binary_path = get_rclone_binary_path_with_custom(state.clone())
         .map_err(|e| format!("Failed to get rclone binary path: {e}"))?;
     let log_dir =
         get_app_logs_dir().map_err(|e| format!("Failed to get app logs directory: {e}"))?;
-    let rclone_conf_path = get_rclone_config_path_with_custom(custom_rclone_config.as_deref())
+    let rclone_conf_path = get_rclone_config_path_with_custom(state)
         .map_err(|e| format!("Failed to get rclone config path: {e}"))?;
 
     let args_vec = split_args_vec(config.args.clone());

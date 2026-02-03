@@ -225,21 +225,15 @@ async fn download_and_replace_binary(
     );
 
     log::info!("Detected platform: {platform_arch}");
-    let settings = state
-        .app_settings
-        .read()
-        .clone()
-        .ok_or("Failed to read app settings")?;
     let (binary_path, download_info) = match tool {
         "openlist" => {
-            let path =
-                get_openlist_binary_path_with_custom(settings.openlist.binary_path.as_deref())
-                    .map_err(|e| format!("Failed to get OpenList binary path: {e}"))?;
+            let path = get_openlist_binary_path_with_custom(state)
+                .map_err(|e| format!("Failed to get OpenList binary path: {e}"))?;
             let info = get_openlist_download_info(&platform_arch, version, gh_proxy, gh_proxy_api)?;
             (path, info)
         }
         "rclone" => {
-            let path = get_rclone_binary_path_with_custom(settings.rclone.binary_path.as_deref())
+            let path = get_rclone_binary_path_with_custom(state)
                 .map_err(|e| format!("Failed to get Rclone binary path: {e}"))?;
             let info = get_rclone_download_info(&platform_arch, version, gh_proxy, gh_proxy_api)?;
             (path, info)

@@ -2,6 +2,9 @@ use std::path::{Path, PathBuf};
 use std::{env, fs};
 
 use dunce::canonicalize;
+use tauri::State;
+
+use crate::object::structs::AppState;
 
 pub static APP_ID: &str = "io.github.openlistteam.openlist.desktop";
 
@@ -74,7 +77,13 @@ pub fn get_openlist_binary_path() -> Result<PathBuf, String> {
     get_binary_path("openlist", "OpenList")
 }
 
-pub fn get_openlist_binary_path_with_custom(custom_path: Option<&str>) -> Result<PathBuf, String> {
+pub fn get_openlist_binary_path_with_custom(state: State<'_, AppState>) -> Result<PathBuf, String> {
+    let settings = state
+        .app_settings
+        .read()
+        .clone()
+        .ok_or("Failed to read app settings")?;
+    let custom_path = settings.openlist.binary_path;
     if let Some(path) = custom_path.filter(|p| !p.is_empty()) {
         let custom = PathBuf::from(path);
         if custom.exists() {
@@ -110,7 +119,13 @@ pub fn get_rclone_binary_path() -> Result<PathBuf, String> {
     }
 }
 
-pub fn get_rclone_binary_path_with_custom(custom_path: Option<&str>) -> Result<PathBuf, String> {
+pub fn get_rclone_binary_path_with_custom(state: State<'_, AppState>) -> Result<PathBuf, String> {
+    let settings = state
+        .app_settings
+        .read()
+        .clone()
+        .ok_or("Failed to read app settings")?;
+    let custom_path = settings.rclone.binary_path;
     if let Some(path) = custom_path.filter(|p| !p.is_empty()) {
         let custom = PathBuf::from(path);
         if custom.exists() {
@@ -164,7 +179,13 @@ pub fn get_rclone_config_path() -> Result<PathBuf, String> {
     Ok(rclone_config_path)
 }
 
-pub fn get_rclone_config_path_with_custom(custom_path: Option<&str>) -> Result<PathBuf, String> {
+pub fn get_rclone_config_path_with_custom(state: State<'_, AppState>) -> Result<PathBuf, String> {
+    let settings = state
+        .app_settings
+        .read()
+        .clone()
+        .ok_or("Failed to read app settings")?;
+    let custom_path = settings.rclone.rclone_conf_path;
     if let Some(path) = custom_path.filter(|p| !p.is_empty()) {
         let custom = PathBuf::from(path);
         if !custom.exists() {
