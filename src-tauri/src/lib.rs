@@ -31,8 +31,8 @@ use cmd::os_operate::{
 use cmd::rclone_core::check_rclone_available;
 use cmd::rclone_mount::{
     check_mount_status, create_rclone_mount_remote_process, get_mount_info_list,
-    get_mount_process_logs, rclone_create_remote, rclone_delete_remote, rclone_list_config,
-    rclone_list_remotes, rclone_update_remote, unmount_remote,
+    rclone_create_remote, rclone_delete_remote, rclone_list_config, rclone_list_remotes,
+    rclone_update_remote, unmount_remote,
 };
 use object::structs::*;
 
@@ -205,7 +205,6 @@ pub fn run() {
             unmount_remote,
             check_mount_status,
             get_mount_info_list,
-            get_mount_process_logs,
             // File operations
             open_file,
             open_folder,

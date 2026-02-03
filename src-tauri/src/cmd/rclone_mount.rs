@@ -295,14 +295,3 @@ pub async fn get_mount_info_list(
 
     Ok(mount_infos)
 }
-
-#[tauri::command]
-pub async fn get_mount_process_logs(
-    process_id: String,
-    lines: Option<usize>,
-) -> Result<Vec<String>, String> {
-    if !PROCESS_MANAGER.is_registered(&process_id) {
-        return Err(format!("Mount process '{process_id}' is not registered"));
-    }
-    PROCESS_MANAGER.read_logs(&process_id, lines.unwrap_or(100))
-}

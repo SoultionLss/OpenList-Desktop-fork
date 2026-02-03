@@ -1,6 +1,5 @@
 use std::collections::HashMap;
-use std::fs::{File, OpenOptions};
-use std::io::{BufRead, BufReader};
+use std::fs::OpenOptions;
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
@@ -492,7 +491,6 @@ impl ProcessManager {
         Ok(info)
     }
 
-    /// Stop a running process
     pub fn stop(&self, id: &str) -> Result<ProcessInfo, String> {
         let mut processes = self.processes.write();
 
@@ -500,9 +498,7 @@ impl ProcessManager {
             .get_mut(id)
             .ok_or_else(|| format!("Process with id '{id}' not found"))?;
 
-        // Stop via Child handle if available
         if let Some(ref mut child) = managed.child {
-            // Try graceful termination first
             #[cfg(target_os = "windows")]
             {
                 let _ = child.kill();
@@ -510,22 +506,16 @@ impl ProcessManager {
 
             #[cfg(not(target_os = "windows"))]
             {
-                // Send SIGTERM first
                 unsafe {
                     libc::kill(child.id() as i32, libc::SIGTERM);
                 }
-                // Give it a moment to terminate gracefully
                 std::thread::sleep(std::time::Duration::from_millis(500));
-                // If still running, force kill
                 let _ = child.kill();
             }
 
-            // Wait for the process to fully terminate
             let _ = child.wait();
             log::info!("Stopped process '{}' via Child handle", id);
-        }
-        // Stop via external PID (recovered process without Child handle)
-        else if let Some(ext_pid) = managed.external_pid {
+        } else if let Some(ext_pid) = managed.external_pid {
             if Self::is_process_alive(ext_pid) {
                 Self::kill_process_by_pid(ext_pid);
                 log::info!("Stopped process '{}' via external PID {}", id, ext_pid);
@@ -547,13 +537,11 @@ impl ProcessManager {
 
         drop(processes);
 
-        // Persist state after stopping
         self.persist_state();
 
         Ok(info)
     }
 
-    /// Restart a process
     #[allow(dead_code)]
     pub fn restart(&self, id: &str) -> Result<ProcessInfo, String> {
         self.stop(id)?;
@@ -657,17 +645,14 @@ impl ProcessManager {
         result
     }
 
-    /// Remove a process from management (must be stopped first)
     pub fn remove(&self, id: &str) -> Result<(), String> {
         let mut processes = self.processes.write();
 
         if let Some(mut managed) = processes.remove(id) {
-            // Make sure to stop it if running via Child handle
             if let Some(ref mut child) = managed.child {
                 let _ = child.kill();
                 let _ = child.wait();
             }
-            // Also stop if running via external PID
             if let Some(ext_pid) = managed.external_pid {
                 if Self::is_process_alive(ext_pid) {
                     Self::kill_process_by_pid(ext_pid);
@@ -681,7 +666,6 @@ impl ProcessManager {
         }
     }
 
-    /// Update process configuration (must be stopped first to take effect)
     #[allow(dead_code)]
     pub fn update_config(&self, id: &str, config: ProcessConfig) -> Result<ProcessInfo, String> {
         let mut processes = self.processes.write();
@@ -690,13 +674,11 @@ impl ProcessManager {
             .get_mut(id)
             .ok_or_else(|| format!("Process with id '{id}' not found"))?;
 
-        // Check if running via Child handle
         if let Some(ref mut child) = managed.child {
             if child.try_wait().map_or(false, |status| status.is_none()) {
                 return Err("Cannot update config while process is running. Stop it first.".into());
             }
         }
-        // Check if running via external PID
         if let Some(ext_pid) = managed.external_pid {
             if Self::is_process_alive(ext_pid) {
                 return Err("Cannot update config while process is running. Stop it first.".into());
@@ -715,52 +697,24 @@ impl ProcessManager {
         })
     }
 
-    /// Read recent log lines for a process
-    pub fn read_logs(&self, id: &str, lines: usize) -> Result<Vec<String>, String> {
-        let processes = self.processes.read();
-
-        let managed = processes
-            .get(id)
-            .ok_or_else(|| format!("Process with id '{id}' not found"))?;
-
-        let log_path = PathBuf::from(&managed.config.log_file);
-        if !log_path.exists() {
-            return Ok(Vec::new());
-        }
-
-        let file = File::open(&log_path).map_err(|e| format!("Failed to open log file: {e}"))?;
-        let reader = BufReader::new(file);
-
-        let all_lines: Vec<String> = reader.lines().filter_map(|l| l.ok()).collect();
-        let start = all_lines.len().saturating_sub(lines);
-
-        Ok(all_lines[start..].to_vec())
-    }
-
-    /// Check if a process is registered
     pub fn is_registered(&self, id: &str) -> bool {
         self.processes.read().contains_key(id)
     }
 
-    /// Check if a process is running
     pub fn is_running(&self, id: &str) -> bool {
         self.get_status(id).map_or(false, |info| info.is_running)
     }
 
-    /// Stop all managed processes (useful for cleanup on app exit)
     #[allow(dead_code)]
     pub fn stop_all(&self) {
         let mut processes = self.processes.write();
 
         for (id, managed) in processes.iter_mut() {
-            // Stop via Child handle
             if let Some(ref mut child) = managed.child {
                 log::info!("Stopping process '{}' during cleanup", id);
                 let _ = child.kill();
                 let _ = child.wait();
-            }
-            // Also stop via external PID
-            else if let Some(ext_pid) = managed.external_pid {
+            } else if let Some(ext_pid) = managed.external_pid {
                 if Self::is_process_alive(ext_pid) {
                     log::info!(
                         "Stopping process '{}' (external pid: {}) during cleanup",
@@ -780,7 +734,6 @@ impl ProcessManager {
     }
 }
 
-// Global process manager instance
 lazy_static::lazy_static! {
     pub static ref PROCESS_MANAGER: Arc<ProcessManager> = Arc::new(ProcessManager::new());
 }

@@ -36,8 +36,6 @@ export class TauriAPI {
       mount: (cfg: MountProcessInput): Promise<ProcessInfo> =>
         invoke('create_rclone_mount_remote_process', { config: cfg }),
       unmount: (name: string): Promise<boolean> => invoke('unmount_remote', { name }),
-      getLogs: (processId: string, lines?: number): Promise<string[]> =>
-        invoke('get_mount_process_logs', { processId, lines }),
     },
   }
 
