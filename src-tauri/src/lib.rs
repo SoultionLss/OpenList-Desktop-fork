@@ -67,6 +67,29 @@ fn setup_background_update_checker(app_handle: &tauri::AppHandle) {
     });
 }
 
+async fn auto_start_openlist_core_on_login(app_handle: &tauri::AppHandle) -> Result<(), String> {
+    let app_state = app_handle.state::<AppState>();
+    let settings = app_state
+        .app_settings
+        .read()
+        .clone()
+        .ok_or("Failed to read app settings")?;
+    if settings.openlist.auto_launch {
+        log::info!("Auto-start on login is enabled, starting OpenList Core process");
+        match create_openlist_core_process(app_state.clone()).await {
+            Ok(_) => {
+                log::info!("OpenList Core process started successfully on login");
+            }
+            Err(e) => {
+                log::error!("Failed to start OpenList Core process on login: {e}");
+            }
+        }
+    } else {
+        log::info!("Auto-start on login is disabled");
+    }
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app_state = AppState::new();
@@ -196,7 +219,12 @@ pub fn run() {
             }
 
             setup_background_update_checker(app_handle);
-
+            let app_handle_clone = app_handle.clone();
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = auto_start_openlist_core_on_login(&app_handle_clone).await {
+                    log::error!("Auto-start task failed: {}", e);
+                }
+            });
             if let Some(window) = app.get_webview_window("main") {
                 if show_window {
                     let _ = window.show();
