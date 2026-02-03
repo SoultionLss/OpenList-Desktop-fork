@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, State};
 
 use crate::cmd::openlist_core::OPENLIST_CORE_PROCESS_ID;
+use crate::cmd::rclone_mount::stop_all_rclone_mounts;
 use crate::core::process_manager::PROCESS_MANAGER;
 use crate::object::structs::AppState;
 use crate::utils::github_proxy::apply_github_proxy;
@@ -24,8 +25,6 @@ pub struct VersionCache {
     pub last_openlist_check_time: SystemTime,
     pub last_rclone_check_time: SystemTime,
 }
-
-const RCLONE_BACKEND_PROCESS_ID: &str = "rclone_backend";
 
 fn normalize_path(path: &str) -> String {
     #[cfg(target_os = "windows")]
@@ -249,23 +248,19 @@ pub async fn update_tool_version(
     state: State<'_, AppState>,
 ) -> Result<String, String> {
     log::info!("Updating {tool} to version {version}");
-
-    let process_id = match tool.as_str() {
-        "openlist" => OPENLIST_CORE_PROCESS_ID,
-        "rclone" => RCLONE_BACKEND_PROCESS_ID,
-        _ => return Err("Unsupported tool".to_string()),
-    };
-
-    let was_running = PROCESS_MANAGER.is_running(process_id);
-
-    if was_running {
-        log::info!("Stopping {tool} process");
-        PROCESS_MANAGER
-            .stop(process_id)
-            .map_err(|e| format!("Failed to stop process: {e}"))?;
-        log::info!("Successfully stopped {tool} process");
+    if tool.as_str() == "openlist" {
+        let process_id = OPENLIST_CORE_PROCESS_ID;
+        let was_running = PROCESS_MANAGER.is_running(process_id);
+        if was_running {
+            log::info!("Stopping {tool} process");
+            PROCESS_MANAGER
+                .stop(process_id)
+                .map_err(|e| format!("Failed to stop process: {e}"))?;
+            log::info!("Successfully stopped {tool} process");
+        }
+    } else {
+        stop_all_rclone_mounts().await?;
     }
-
     let gh_proxy = state
         .get_settings()
         .and_then(|settings| settings.app.gh_proxy.clone());
@@ -280,27 +275,10 @@ pub async fn update_tool_version(
     match result {
         Ok(_) => {
             log::info!("Successfully downloaded and replaced {tool} binary");
-
-            if was_running {
-                log::info!("Starting {tool} process");
-                PROCESS_MANAGER
-                    .start(process_id)
-                    .map_err(|e| format!("Failed to start {tool} process: {e}"))?;
-                log::info!("Successfully restarted {tool} process");
-            }
-
             Ok(format!("Successfully updated {tool} to {version}"))
         }
         Err(e) => {
             log::error!("Failed to update {tool} binary: {e}");
-
-            if was_running {
-                log::info!(
-                    "Attempting to restart {tool} with previous binary after update failure"
-                );
-                let _ = PROCESS_MANAGER.start(process_id);
-            }
-
             Err(format!("Failed to update {tool} to {version}: {e}"))
         }
     }

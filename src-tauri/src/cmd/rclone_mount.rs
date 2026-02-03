@@ -295,3 +295,15 @@ pub async fn get_mount_info_list(
 
     Ok(mount_infos)
 }
+
+pub async fn stop_all_rclone_mounts() -> Result<(), String> {
+    let process_list = PROCESS_MANAGER.list();
+    for process in process_list {
+        if process.id.starts_with("rclone_mount_") {
+            if process.is_running {
+                PROCESS_MANAGER.stop(&process.id)?;
+            }
+        }
+    }
+    Ok(())
+}
