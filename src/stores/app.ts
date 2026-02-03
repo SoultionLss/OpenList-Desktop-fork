@@ -105,7 +105,7 @@ export const useAppStore = defineStore('app', () => {
 
   const saveSettings = () => withLoading(() => TauriAPI.settings.save(settings.value), 'Failed to save settings')
 
-  async function saveSettingsWithCoreUpdate(): Promise<boolean> {
+  async function saveAndRestart(): Promise<boolean> {
     try {
       await TauriAPI.settings.saveAndRestart(settings.value)
       return true
@@ -642,15 +642,6 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function getAdminPassword(): Promise<string | null> {
-    try {
-      return await TauriAPI.logs.adminPassword()
-    } catch (err) {
-      console.error('Failed to get admin password:', err)
-      return null
-    }
-  }
-
   async function resetAdminPassword(): Promise<string | null> {
     try {
       const newPassword = await TauriAPI.logs.resetAdminPassword()
@@ -722,7 +713,7 @@ export const useAppStore = defineStore('app', () => {
 
     loadSettings,
     saveSettings,
-    saveSettingsWithCoreUpdate,
+    saveAndRestart,
     resetSettings,
 
     startOpenListCore,
@@ -741,7 +732,6 @@ export const useAppStore = defineStore('app', () => {
     selectDirectory,
     clearError,
     init,
-    getAdminPassword,
     resetAdminPassword,
     setAdminPassword,
 

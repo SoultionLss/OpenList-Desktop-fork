@@ -316,6 +316,8 @@ import SettingCard from '@/components/common/SettingCard.vue'
 import SettingSection from '@/components/common/SettingSection.vue'
 import useConfirm from '@/hooks/useConfirm'
 import useMessage from '@/hooks/useMessage'
+import { getAdminPassword } from '@/utils/common'
+import { isMacOs } from '@/utils/constant'
 import { DEFAULT_CONFIG } from '@/utils/constant'
 
 import CustomButton from '../components/common/CustomButton.vue'
@@ -337,6 +339,7 @@ const rcloneSettings = reactive({ ...appStore.settings.rclone })
 const appSettings = reactive({ ...appStore.settings.app })
 let originalOpenlistPort = openlistCoreSettings.port || 5244
 let originalDataDir = openlistCoreSettings.data_dir
+let originalOpenListBinaryPath = openlistCoreSettings.binary_path || ''
 let originalAdminPassword = appStore.settings.app.admin_password || ''
 
 const tabs = computed(() => [
@@ -360,10 +363,6 @@ const tabs = computed(() => [
   },
 ])
 
-const isMacOs = computed(() => {
-  return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'darwin'
-})
-
 watch(autoStartApp, async newValue => {
   if (newValue) {
     await enable()
@@ -382,8 +381,12 @@ const handleSave = async () => {
 
     const needsPasswordUpdate = originalAdminPassword !== appSettings.admin_password && appSettings.admin_password
 
-    if (originalOpenlistPort !== openlistCoreSettings.port || originalDataDir !== openlistCoreSettings.data_dir) {
-      await appStore.saveSettingsWithCoreUpdate()
+    if (
+      originalOpenlistPort !== openlistCoreSettings.port ||
+      originalDataDir !== openlistCoreSettings.data_dir ||
+      originalOpenListBinaryPath !== openlistCoreSettings.binary_path
+    ) {
+      await appStore.saveAndRestart()
     } else {
       await appStore.saveSettings()
     }
@@ -402,6 +405,7 @@ const handleSave = async () => {
 
     originalOpenlistPort = openlistCoreSettings.port || 5244
     originalDataDir = openlistCoreSettings.data_dir
+    originalOpenListBinaryPath = openlistCoreSettings.binary_path || ''
   } catch (error) {
     message.error(t('settings.saveFailed'))
     console.error('Save settings error:', error)
@@ -577,7 +581,7 @@ const handleSelectRcloneConfig = async () => {
 
 const loadCurrentAdminPassword = async () => {
   try {
-    const password = await appStore.getAdminPassword()
+    const password = await getAdminPassword()
     if (password) {
       appSettings.admin_password = password
       originalAdminPassword = password
@@ -599,7 +603,7 @@ async function init() {
 
   originalOpenlistPort = openlistCoreSettings.port || 5244
   originalDataDir = openlistCoreSettings.data_dir
-
+  originalOpenListBinaryPath = openlistCoreSettings.binary_path || ''
   // Load current admin password
   await loadCurrentAdminPassword()
 }

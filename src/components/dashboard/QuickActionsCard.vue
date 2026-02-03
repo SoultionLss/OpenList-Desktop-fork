@@ -118,7 +118,7 @@ import { useRouter } from 'vue-router'
 
 import { TauriAPI } from '@/api/tauri'
 import useMessage from '@/hooks/useMessage'
-import { createNewWindow } from '@/utils/common'
+import { createNewWindow, getAdminPassword } from '@/utils/common'
 import { isMacOs, isWindows } from '@/utils/constant'
 
 import { useTranslation } from '../../composables/useI18n'
@@ -157,7 +157,7 @@ const RouteToMounts = () => {
 }
 
 const copyAdminPassword = async () => {
-  const password = await appStore.getAdminPassword()
+  const password = await getAdminPassword()
   if (password) {
     await navigator.clipboard.writeText(password)
     message.success('Admin password copied: ' + password)

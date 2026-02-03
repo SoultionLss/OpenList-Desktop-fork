@@ -11,7 +11,6 @@ export class TauriAPI {
     restart: (): Promise<ProcessInfo> => invoke('restart_openlist_core'),
     getStatus: (): Promise<OpenListCoreStatus> => invoke('get_openlist_core_status'),
     getProcessStatus: (): Promise<ProcessInfo> => invoke('get_openlist_core_process_status'),
-    getLogs: (lines?: number): Promise<string[]> => invoke('get_openlist_core_logs', { lines }),
   }
 
   // --- Rclone management ---

@@ -18,8 +18,8 @@ use cmd::firewall::{add_firewall_rule, check_firewall_rule, remove_firewall_rule
 use cmd::logs::{clear_logs, get_logs};
 use cmd::macos_dock::set_dock_icon_visibility;
 use cmd::openlist_core::{
-    create_openlist_core_process, get_openlist_core_logs, get_openlist_core_process_status,
-    get_openlist_core_status, restart_openlist_core, start_openlist_core, stop_openlist_core,
+    create_openlist_core_process, get_openlist_core_process_status, get_openlist_core_status,
+    restart_openlist_core, start_openlist_core, stop_openlist_core,
 };
 use cmd::os_operate::{
     get_available_versions, open_file, open_folder, open_logs_directory, open_openlist_data_dir,
@@ -102,7 +102,6 @@ pub fn run() {
             restart_openlist_core,
             get_openlist_core_status,
             get_openlist_core_process_status,
-            get_openlist_core_logs,
             // Rclone availability check
             check_rclone_available,
             // Rclone remotes configuration (direct file management)

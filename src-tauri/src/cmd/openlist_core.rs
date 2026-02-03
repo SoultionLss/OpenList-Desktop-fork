@@ -148,8 +148,3 @@ pub async fn get_openlist_core_status(state: State<'_, AppState>) -> Result<Serv
         }),
     }
 }
-
-#[tauri::command]
-pub async fn get_openlist_core_logs(lines: Option<usize>) -> Result<Vec<String>, String> {
-    PROCESS_MANAGER.read_logs(OPENLIST_CORE_PROCESS_ID, lines.unwrap_or(100))
-}
