@@ -254,7 +254,9 @@
       "failedToSave": "Failed to save configuration",
       "failedToUnmount": "Failed to unmount remote",
       "fillRequiredFields": "Please fill in all required fields",
+      "mountPointPathNotAvailable": "Mount point path is not available",
       "mountPointRequired": "Mount point is required",
+      "unmountBeforeEdit": "Please unmount remote configuration {name} before editing",
       "updatedSuccessfully": "Remote configuration \"{name}\" updated successfully"
     },
     "meta": {

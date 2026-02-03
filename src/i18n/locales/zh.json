@@ -254,7 +254,9 @@
       "failedToSave": "保存配置失败",
       "failedToUnmount": "卸载远程失败",
       "fillRequiredFields": "请填写所有必填字段",
+      "mountPointPathNotAvailable": "挂载点路径不可用",
       "mountPointRequired": "挂载点为必填项",
+      "unmountBeforeEdit": "请先卸载远程配置 {name}，然后再进行编辑",
       "updatedSuccessfully": "远程配置 {name} 更新成功"
     },
     "meta": {

@@ -123,23 +123,20 @@
 
       <!-- Remote Configurations -->
       <div class="flex h-full w-full flex-1 flex-col gap-4 overflow-hidden rounded-md shadow-md">
+        <div v-if="initLoading" class="flex w-full h-full overflow-auto no-scrollbar items-center justify-center">
+          <div class="flex flex-col gap-4 w-full h-full items-center justify-center">
+            <div class="border-3 border-border w-20 h-20 rounded-full border-t-accent border-t-3 animate-spin"></div>
+            <div class="text-main font-semibold">{{ t('mount.loading') }}</div>
+          </div>
+        </div>
         <div
-          v-if="filteredConfigs.length === 0 && !appStore.loading"
+          v-else-if="filteredConfigs.length === 0 && !initLoading"
           class="flex w-full h-full overflow-auto items-center justify-center p-2"
         >
           <div class="max-w-80 flex flex-col items-center justify-center gap-2">
             <Cloud class="text-secondary w-12 h-12" />
             <h3 class="text-main font-semibold text-xl">{{ t('mount.empty.title') }}</h3>
             <p class="text-secondary text-sm">{{ t('mount.empty.description') }}</p>
-          </div>
-        </div>
-        <div
-          v-else-if="appStore.loading"
-          class="flex w-full h-full overflow-auto no-scrollbar items-center justify-center"
-        >
-          <div class="flex flex-col gap-4 w-full h-full items-center justify-center">
-            <div class="border-3 border-border w-20 h-20 rounded-full border-t-accent border-t-3 animate-spin"></div>
-            <div class="text-main font-semibold">{{ t('mount.loading') }}</div>
           </div>
         </div>
 
@@ -535,6 +532,7 @@ const searchQuery = ref('')
 const statusFilter = ref<'all' | 'mounted' | 'unmounted' | 'error'>('all')
 const showFlagSelector = ref(false)
 const isAddingNew = ref(false)
+const initLoading = ref(true)
 let mountRefreshInterval: NodeJS.Timeout | null = null
 
 const configForm = ref({
@@ -685,7 +683,11 @@ const editConfig = (config: RcloneFormConfig) => {
 
 const saveConfig = async () => {
   if (!configForm.value.name || !configForm.value.url || !configForm.value.user || !configForm.value.pass) {
-    console.error(t('mount.messages.fillRequiredFields'))
+    message.error(t('mount.messages.fillRequiredFields'))
+    return
+  }
+  if (isConfigMounted(configForm.value)) {
+    message.error(t('mount.messages.unmountBeforeEdit', { name: configForm.value.name }))
     return
   }
 
@@ -725,7 +727,7 @@ const saveConfig = async () => {
     )
     resetForm()
   } catch (error: any) {
-    console.error(error.message || t('mount.messages.failedToSave'))
+    message.error(error.message || t('mount.messages.failedToSave'))
   }
 }
 
@@ -754,7 +756,7 @@ const mountConfig = async (config: RcloneFormConfig) => {
   try {
     await appStore.mountRemote(config.name)
   } catch (error: any) {
-    console.error(error.message || t('mount.messages.failedToMount'))
+    message.error(error.message || t('mount.messages.failedToMount'))
   }
 }
 
@@ -763,7 +765,7 @@ const unmountConfig = async (config: RcloneFormConfig) => {
   try {
     await appStore.unmountRemote(config.name)
   } catch (error: any) {
-    console.error(error.message || t('mount.messages.failedToUnmount'))
+    message.error(error.message || t('mount.messages.failedToUnmount'))
   }
 }
 
@@ -789,7 +791,7 @@ const confirmDelete = async (config: RcloneFormConfig) => {
     await appStore.deleteRemoteConfig(config.name)
     message.success(t('mount.messages.deletedSuccessfully', { name: config.name }))
   } catch (error: any) {
-    console.error(error.message || t('mount.messages.failedToDelete'))
+    message.error(error.message || t('mount.messages.failedToDelete'))
   }
 }
 
@@ -798,13 +800,11 @@ const refreshData = async () => {
     await appStore.loadRemoteConfigs()
     await appStore.loadMountInfos()
   } catch (error: any) {
-    console.error(error.message)
+    message.error(error.message)
   }
 }
 
 const getConfigStatus = (config: RcloneFormConfig) => {
-  console.log('Getting status for config:', config)
-  console.log('Current mount infos:', appStore.mountInfos)
   const mountInfo = appStore.mountInfos.find(mount => mount.name === config.name)
   return mountInfo?.status || 'unmounted'
 }
@@ -896,7 +896,7 @@ const getFlagDescription = (flag: { flag: string; value: string; descriptionKey:
 
 const openInFileExplorer = async (path?: string) => {
   if (!path) {
-    console.warn('Mount point path is not available')
+    message.error(t('mount.messages.mountPointPathNotAvailable'))
     return
   }
   const normalizedPath = path.trim()
@@ -943,6 +943,7 @@ const shouldShowWebdavTip = computed(() => {
 })
 
 onMounted(async () => {
+  initLoading.value = true
   appStore.loadRemoteConfigs()
   appStore.loadMountInfos()
   mountRefreshInterval = setInterval(appStore.loadMountInfos, 15 * 1000)
@@ -952,6 +953,7 @@ onMounted(async () => {
     const available = await rcloneStore.checkRcloneAvailable()
     showRcloneTip.value = !available
   }
+  initLoading.value = false
 })
 
 onUnmounted(() => {
