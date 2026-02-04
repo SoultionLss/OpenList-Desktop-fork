@@ -39,10 +39,10 @@ jobs:
       build-date: ${{ steps.version.outputs.build-date }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 'lts/*'
 
@@ -77,7 +77,7 @@ jobs:
             target: x86_64-pc-windows-msvc
             platform: windows
             arch: x64
-          - os: windows-latest
+          - os: windows-11-arm
             target: aarch64-pc-windows-msvc
             platform: windows
             arch: arm64
@@ -85,7 +85,7 @@ jobs:
             target: aarch64-apple-darwin
             platform: macos
             arch: arm64
-          - os: macos-latest
+          - os: macos-15-intel
             target: x86_64-apple-darwin
             platform: macos
             arch: x64
@@ -97,7 +97,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Install Rust
         uses: dtolnay/rust-toolchain@nightly
@@ -118,7 +118,7 @@ jobs:
           sudo apt-get install -y libxslt1.1 libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
         
       - name: Install Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
       
@@ -133,7 +133,7 @@ jobs:
           yarn run prebuild:dev --target=${{ matrix.target }}
 
       - name: Update version for test build (Windows)
-        if: runner.os == 'Windows'
+        if: matrix.platform == 'windows'
         shell: pwsh
         run: |
           # Update package.json
@@ -146,7 +146,7 @@ jobs:
           (Get-Content src-tauri/tauri.conf.json) -replace '"version": ".*"', '"version": "${{ needs.prepare.outputs.version }}"' | Set-Content src-tauri/tauri.conf.json
 
       - name: Update version for test build (macOS)
-        if: runner.os == 'macOS'
+        if: matrix.platform == 'macos'
         shell: bash
         run: |
           # Update package.json
@@ -159,7 +159,7 @@ jobs:
           sed -i '' 's/"version": "[^"]*"/"version": "${{ needs.prepare.outputs.version }}"/' src-tauri/tauri.conf.json
 
       - name: Update version for test build (Linux)
-        if: runner.os == 'Linux'
+        if: matrix.platform == 'linux'
         shell: bash
         run: |
           # Update package.json
@@ -172,7 +172,7 @@ jobs:
           sed -i 's/"version": "[^"]*"/"version": "${{ needs.prepare.outputs.version }}"/' src-tauri/tauri.conf.json
           
       - name: Import Apple Developer Certificate (macOS only)
-        if: matrix.os == 'macos-latest' && env.APPLE_CERTIFICATE != ''
+        if: matrix.platform == 'macos' && env.APPLE_CERTIFICATE != ''
         uses: apple-actions/import-codesign-certs@v5
         with:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
@@ -252,7 +252,7 @@ jobs:
           args: --target ${{ matrix.target }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.platform }}-${{ matrix.arch }}-build
           path: |
@@ -377,7 +377,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
 
       - name: Upload Linux ARM artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: linux-${{ matrix.target }}-build
           path: |
@@ -392,7 +392,7 @@ jobs:
     if: always()
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: artifacts
 
@@ -443,7 +443,7 @@ jobs:
           echo "4. Report any issues found" >> build-summary.md
 
       - name: Upload build summary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: build-summary
           path: build-summary.md
