@@ -29,6 +29,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "longDescription": "OpenList Desktop is a cross-platform desktop application for managing your OpenList",
     "category": "DeveloperTool",
     "shortDescription": "OpenList Desktop",
@@ -45,6 +46,13 @@
     "shell": {
       "open": true
     },
-    "store": {}
+    "store": {},
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDIzQzg5OTgzOTE3NkFFM0MKUldROHJuYVJnNW5JSXpESWhtY0dyM2VFVk0zdDA5MUt4OXRtUXRyY25SZUo3elVCYzlPMDhGQm0K",
+      "endpoints": ["https://github.com/OpenListTeam/openlist-desktop/releases/latest/download/latest.json"],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

@@ -95,30 +95,6 @@
             <div class="notes-body" v-html="renderedReleaseNotes"></div>
           </div>
 
-          <div v-if="updateCheck.assets.length > 0" class="mt-2 flex flex-col gap-2 border-t border-t-border p-1">
-            <h5 class="text-sm font-semibold text-secondary">{{ t('update.availableInstallers') }}</h5>
-            <div class="flex flex-col gap-2">
-              <div
-                v-for="asset in updateCheck.assets"
-                :key="asset.name"
-                class="flex justify-between items-center p-3 bg-surface rounded-md cursor-alias hover:bg-accent/30 [.selected]:border-2 [.selected]:border-accent"
-                :class="{ selected: selectedAsset?.name === asset.name }"
-                @click="selectAsset(asset)"
-              >
-                <div class="flex-1 flex flex-col gap-1">
-                  <div class="font-semibold text-sm text-secondary">{{ asset.name }}</div>
-                  <div class="flex gap-2 text-xs text-secondary items-center">
-                    <span class="text-white font-semibold text-xs py-0.5 px-2 bg-accent/50 rounded-xs uppercase">{{
-                      asset.type.toUpperCase()
-                    }}</span>
-                    <span class="text-xs text-secondary font-medium">{{ formatBytes(asset.size) }}</span>
-                  </div>
-                </div>
-                <div class="text-xs text-secondary">{{ asset.platform }}</div>
-              </div>
-            </div>
-          </div>
-
           <div v-if="downloading" class="flex flex-col p-2 border border-border-secondary rounded-md">
             <div class="flex justify-between items-center mb-2">
               <span class="text-sm text-secondary font-semibold">{{ t('update.downloading') }}...</span>
@@ -145,7 +121,7 @@
               type="primary"
               :icon="Download"
               :text="t('update.downloadAndInstall')"
-              :disabled="!selectedAsset || checking || downloading || installing"
+              :disabled="!updateCheck?.hasUpdate || checking || downloading || installing"
               @click="downloadAndInstall"
             />
           </div>
@@ -187,15 +163,10 @@ const lastChecked = ref<string | null>(null)
 const error = ref<string | null>(null)
 const autoCheckEnabled = ref(true)
 const settingsLoading = ref(false)
-const selectedAsset = ref<UpdateAsset | null>(null)
 
 const backgroundUpdateAvailable = computed(() => backgroundUpdateCheck.value && !updateCheck.value?.hasUpdate)
 
 let backgroundUpdateUnlisten: (() => void) | null = null
-let downloadProgressUnlisten: (() => void) | null = null
-let installStartedUnlisten: (() => void) | null = null
-let installErrorUnlisten: (() => void) | null = null
-let appQuitEventUnsubscriber: (() => void) | null = null
 
 const checkForUpdates = async () => {
   if (checking.value || downloading.value || installing.value) return
@@ -206,10 +177,6 @@ const checkForUpdates = async () => {
 
     const result = await TauriAPI.updater.check()
     updateCheck.value = result
-
-    if (result.hasUpdate && result.assets.length > 0) {
-      selectedAsset.value = result.assets[0]
-    }
 
     lastChecked.value = new Date().toISOString()
 
@@ -224,24 +191,23 @@ const checkForUpdates = async () => {
   }
 }
 
-const selectAsset = (asset: UpdateAsset) => {
-  selectedAsset.value = asset
-}
-
 const downloadAndInstall = async () => {
-  if (!selectedAsset.value || downloading.value || installing.value) return
+  if (!TauriAPI.updater.hasPendingUpdate() || downloading.value || installing.value) return
 
   try {
     downloading.value = true
     message.info(t('update.startingDownload'))
 
-    const filePath = await TauriAPI.updater.download(selectedAsset.value.url, selectedAsset.value.name)
+    await TauriAPI.updater.downloadAndInstall(progress => {
+      downloadProgress.value = progress
+    })
 
     downloading.value = false
     installing.value = true
     message.info(t('update.installingUpdate'))
 
-    await TauriAPI.updater.installAndRestart(filePath)
+    // Relaunch the application after update is installed
+    await TauriAPI.updater.relaunch()
   } catch (err: any) {
     console.error('Failed to download/install update:', err)
     downloading.value = false
@@ -265,12 +231,15 @@ const toggleAutoCheck = async () => {
   }
 }
 
-const showBackgroundUpdate = () => {
+const showBackgroundUpdate = async () => {
   if (backgroundUpdateCheck.value) {
-    updateCheck.value = backgroundUpdateCheck.value
-    backgroundUpdateCheck.value = null
-    if (updateCheck.value.assets.length > 0) {
-      selectedAsset.value = updateCheck.value.assets[0]
+    // Re-check to get the actual Update object stored in TauriAPI
+    try {
+      const result = await TauriAPI.updater.check()
+      updateCheck.value = result
+      backgroundUpdateCheck.value = null
+    } catch (err) {
+      console.error('Failed to fetch update info:', err)
     }
   }
 }
@@ -300,8 +269,10 @@ onMounted(async () => {
   try {
     if (appStore.updateAvailable && appStore.updateCheck) {
       updateCheck.value = appStore.updateCheck
-      if (appStore.updateCheck.assets.length > 0) {
-        selectedAsset.value = appStore.updateCheck.assets[0]
+      try {
+        await TauriAPI.updater.check()
+      } catch (err) {
+        console.warn('Failed to fetch update object:', err)
       }
     }
     appStore.clearUpdateStatus()
@@ -317,44 +288,6 @@ onMounted(async () => {
       backgroundUpdateUnlisten = null
     }
 
-    try {
-      downloadProgressUnlisten = await TauriAPI.updater.onDownloadProgress(progress => {
-        downloadProgress.value = progress
-      })
-    } catch (err) {
-      console.warn('Download progress listener not available:', err)
-      downloadProgressUnlisten = null
-    }
-
-    try {
-      installStartedUnlisten = await TauriAPI.updater.onInstallStarted(() => {
-        installing.value = true
-        message.info(t('update.installingUpdate'))
-      })
-    } catch (err) {
-      console.warn('Install started listener not available:', err)
-      installStartedUnlisten = null
-    }
-
-    try {
-      installErrorUnlisten = await TauriAPI.updater.onInstallError(errorMsg => {
-        installing.value = false
-        error.value = errorMsg
-        message.error(t('update.installError'))
-      })
-    } catch (err) {
-      console.warn('Install error listener not available:', err)
-      installErrorUnlisten = null
-    }
-
-    try {
-      appQuitEventUnsubscriber = await TauriAPI.updater.onAppQuit(() => {
-        message.success(t('update.quitApp'))
-      })
-    } catch (err) {
-      console.warn('App restarting listener not available:', err)
-      appQuitEventUnsubscriber = null
-    }
     if (autoCheckEnabled.value) {
       await checkForUpdates()
     }
@@ -368,30 +301,6 @@ onUnmounted(() => {
     backgroundUpdateUnlisten?.()
   } catch (err) {
     console.warn('Error unregistering background update listener:', err)
-  }
-
-  try {
-    downloadProgressUnlisten?.()
-  } catch (err) {
-    console.warn('Error unregistering download progress listener:', err)
-  }
-
-  try {
-    installStartedUnlisten?.()
-  } catch (err) {
-    console.warn('Error unregistering install started listener:', err)
-  }
-
-  try {
-    installErrorUnlisten?.()
-  } catch (err) {
-    console.warn('Error unregistering install error listener:', err)
-  }
-
-  try {
-    appQuitEventUnsubscriber?.()
-  } catch (err) {
-    console.warn('Error unregistering app restarting listener:', err)
   }
 })
 </script>

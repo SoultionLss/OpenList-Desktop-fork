@@ -14,17 +14,16 @@ env:
   RUST_BACKTRACE: short
   TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
   TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
-  # macOS signing and notarization (optional for testing)
+  # macOS signing and notarization
   APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
   APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
   APPLE_ID: ${{ secrets.APPLE_ID }}
   APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
   APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-  # Certum cloud code signing for Windows
-  CERTUM_OTP_URI: ${{ secrets.CERTUM_OTP_URI }}
-  CERTUM_USERNAME: ${{ secrets.CERTUM_USERNAME }}
-  CERTUM_CERTIFICATE_SHA1: ${{ secrets.CERTUM_CERTIFICATE_SHA1 }}
+  # Windows self pfx
+  WINDOWS_PFX: ${{ secrets.WINDOWS_PFX }}
+  WINDOWS_PFX_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
 
 concurrency:
   group: "${{ github.workflow }} - ${{ github.head_ref || github.ref }}"
@@ -77,7 +76,7 @@ jobs:
             target: x86_64-pc-windows-msvc
             platform: windows
             arch: x64
-          - os: windows-11-arm
+          - os: windows-latest
             target: aarch64-pc-windows-msvc
             platform: windows
             arch: arm64
@@ -178,53 +177,32 @@ jobs:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
 
-      - name: Setup Certum Code Signing (Windows)
+      - name: Decode and Setup PFX Certificate (Windows)
         if: matrix.platform == 'windows'
+        shell: pwsh
         run: |
-          echo "=== SETTING UP CERTUM CODE SIGNING FOR WINDOWS ==="
-          echo "Installing SimplySign Desktop and configuring for automatic authentication"
+          $pfxPath = Join-Path (Get-Location) "certificate.pfx"
           
-          # Install SimplySign Desktop
-          chmod +x ./.github/scripts/install-simplysign.sh
-          ./.github/scripts/install-simplysign.sh
+          $certBytes = [Convert]::FromBase64String("${{ secrets.WINDOWS_PFX }}")
+          [IO.File]::WriteAllBytes($pfxPath, $certBytes)
           
-          # Configure registry for auto-login dialog
-          echo "Configuring registry for automatic login dialog..."
-          powershell -ExecutionPolicy Bypass -File "./.github/scripts/configure-simplysign-registry.ps1"
-          
-          echo "Certum signing environment ready"
-        shell: bash
-
-      - name: Authenticate Certum (Windows)
-        if: matrix.platform == 'windows'
-        env:
-          CERTUM_OTP_URI: ${{ secrets.CERTUM_OTP_URI }}
-          CERTUM_USERNAME: ${{ secrets.CERTUM_USERNAME }}
-        run: |
-          echo "=== CERTUM AUTHENTICATION ==="
-          echo "Authenticating with Certum cloud certificate using TOTP"
-          
-          # Authenticate with Certum using our enhanced script
-          powershell -ExecutionPolicy Bypass -File "./.github/scripts/Connect-SimplySign-Enhanced.ps1"
-          
-          echo "Authentication completed"
-        shell: bash
-
-      - name: Configure Certum Certificate Thumbprint (Windows)
-        if: matrix.platform == 'windows'
-        shell: bash
-        run: |
-          echo "=== CONFIGURING CERTUM CERTIFICATE THUMBPRINT ==="
-          CONFIG_PATH="src-tauri/tauri.windows.conf.json"
-          THUMBPRINT="${{ secrets.CERTUM_CERTIFICATE_SHA1 }}"
-          
-          # Update the certificateThumbprint field using jq
-          jq --arg thumbprint "$THUMBPRINT" '.bundle.windows.certificateThumbprint = $thumbprint' "$CONFIG_PATH" > tmp.$$ && mv tmp.$$ "$CONFIG_PATH"
-          
-          echo "Certificate thumbprint configured: $THUMBPRINT"
+          echo "WINDOWS_PFX_PATH=$pfxPath" >> $env:GITHUB_ENV
+          echo "WINDOWS_PFX_PASSWORD=${{ secrets.WINDOWS_PFX_PASSWORD }}" >> $env:GITHUB_ENV
 
       - name: Build the app
-        if: matrix.platform == 'windows' || matrix.platform == 'linux'
+        if: matrix.platform == 'windows'
+        uses: tauri-apps/tauri-action@v0
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+          WINDOWS_PFX_PATH: ${{ env.WINDOWS_PFX_PATH }}
+          WINDOWS_PFX_PASSWORD: ${{ env.WINDOWS_PFX_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+        with:
+          args: --target ${{ matrix.target }}
+
+      - name: Build the app
+        if:  matrix.platform == 'linux'
         uses: tauri-apps/tauri-action@v0
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"

@@ -12,10 +12,6 @@ mod utils;
 use cmd::admin_pass::{get_admin_password, reset_admin_password, set_admin_password};
 use cmd::binary::get_binary_version;
 use cmd::config::{load_settings, reset_settings, save_settings, save_settings_and_restart};
-use cmd::custom_updater::{
-    check_for_updates, download_update, get_current_version, install_update_and_restart,
-    is_auto_check_enabled, set_auto_check_enabled,
-};
 use cmd::firewall::{add_firewall_rule, check_firewall_rule, remove_firewall_rule};
 use cmd::logs::{clear_logs, get_logs};
 use cmd::macos_dock::set_dock_icon_visibility;
@@ -34,7 +30,9 @@ use cmd::rclone_mount::{
     rclone_create_remote, rclone_delete_remote, rclone_list_config, rclone_list_remotes,
     rclone_update_remote, unmount_remote,
 };
+use cmd::updater::{get_current_version, is_auto_check_enabled, set_auto_check_enabled};
 use object::structs::*;
+use tauri::Emitter;
 
 use crate::cmd::rclone_mount::{MountProcessInput, get_mount_process_id};
 use crate::conf::rclone::RcloneMountConfig;
@@ -49,6 +47,7 @@ async fn update_tray_menu(
 }
 
 fn setup_background_update_checker(app_handle: &tauri::AppHandle) {
+    use tauri_plugin_updater::UpdaterExt;
     let app_handle_initial = app_handle.clone();
     tauri::async_runtime::spawn(async move {
         tokio::time::sleep(std::time::Duration::from_secs(300)).await;
@@ -57,11 +56,35 @@ fn setup_background_update_checker(app_handle: &tauri::AppHandle) {
         match is_auto_check_enabled(app_state).await {
             Ok(enabled) if enabled => {
                 log::info!("Performing initial background update check");
-                if let Err(e) =
-                    cmd::custom_updater::perform_background_update_check(app_handle_initial.clone())
-                        .await
-                {
-                    log::debug!("Initial background update check failed: {e}");
+                if let Ok(updater) = app_handle_initial.updater() {
+                    match updater.check().await {
+                        Ok(Some(update)) => {
+                            log::info!(
+                                "Background check: Update available {} -> {}",
+                                update.current_version,
+                                update.version
+                            );
+                            if let Err(e) = app_handle_initial.emit(
+                                "background-update-available",
+                                serde_json::json!({
+                                    "hasUpdate": true,
+                                    "currentVersion": update.current_version,
+                                    "latestVersion": update.version,
+                                    "releaseNotes": update.body.unwrap_or_default(),
+                                }),
+                            ) {
+                                log::error!(
+                                    "Failed to emit background-update-available event: {e}"
+                                );
+                            }
+                        }
+                        Ok(None) => {
+                            log::info!("Background check: App is up to date");
+                        }
+                        Err(e) => {
+                            log::debug!("Background update check failed: {e}");
+                        }
+                    }
                 }
             }
             _ => {
@@ -183,6 +206,7 @@ pub fn run() {
         ))
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
             // OpenList Core management
@@ -237,10 +261,6 @@ pub fn run() {
             check_firewall_rule,
             add_firewall_rule,
             remove_firewall_rule,
-            // Updates
-            check_for_updates,
-            download_update,
-            install_update_and_restart,
             get_current_version,
             set_auto_check_enabled,
             is_auto_check_enabled

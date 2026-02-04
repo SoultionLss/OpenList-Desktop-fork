@@ -56,8 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, onUnmounted, ref } from 'vue'
 
 import UIServiceProvider from '@/components/ui/UIServiceProvider.vue'
 
@@ -67,69 +66,29 @@ import TitleBar from './components/ui/TitleBar.vue'
 import { useTranslation } from './composables/useI18n'
 import { useTray } from './composables/useTray'
 import { useAppStore } from './stores/app'
+import { isMacOs } from './utils/constant'
 
 const appStore = useAppStore()
 const { t } = useTranslation()
 const { updateTrayMenu } = useTray()
-const router = useRouter()
 const isLoading = ref(true)
 
 let updateUnlisten: (() => void) | null = null
 
-const isMacOs = computed(() => {
-  return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'darwin'
-})
-
-const handleKeydown = (event: KeyboardEvent) => {
-  const { ctrlKey, key } = event
-
-  if (!ctrlKey) return
-
-  switch (key.toLowerCase()) {
-    case 'h':
-      event.preventDefault()
-      router.push('/')
-      break
-    case 'm':
-      event.preventDefault()
-      router.push('/mount')
-      break
-    case 'u':
-      event.preventDefault()
-      router.push('/update')
-      break
-    case 'l':
-      event.preventDefault()
-      router.push('/logs')
-      break
-    case ',':
-      event.preventDefault()
-      router.push('/settings')
-      break
-  }
-}
-
 onMounted(async () => {
   try {
-    appStore.init()
+    await appStore.init()
     appStore.applyTheme(appStore.settings.app.theme || 'light')
     await updateTrayMenu(appStore.openlistCoreStatus.running)
-
-    try {
-      updateUnlisten = await TauriAPI.updater.onBackgroundUpdate(updateInfo => {
-        appStore.setUpdateAvailable(true, updateInfo)
-      })
-    } catch (err) {
-      console.warn('Failed to set up global update listener:', err)
-    }
-    document.addEventListener('keydown', handleKeydown)
+    updateUnlisten = await TauriAPI.updater.onBackgroundUpdate(updateInfo => {
+      appStore.setUpdateAvailable(true, updateInfo)
+    })
   } finally {
     isLoading.value = false
   }
 })
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
   try {
     updateUnlisten?.()
   } catch (err) {

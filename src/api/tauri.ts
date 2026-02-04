@@ -1,6 +1,10 @@
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import { appDataDir, join } from '@tauri-apps/api/path'
+import { relaunch } from '@tauri-apps/plugin-process'
+import { check, type DownloadEvent } from '@tauri-apps/plugin-updater'
+
+let pendingUpdateInstance: Awaited<ReturnType<typeof check>> = null
 
 export class TauriAPI {
   // --- OpenList Core management ---
@@ -104,19 +108,97 @@ export class TauriAPI {
 
   // --- Update management ---
   static updater = {
-    check: (): Promise<UpdateCheck> => invoke('check_for_updates'),
-    download: (url: string, name: string): Promise<string> =>
-      invoke('download_update', { assetUrl: url, assetName: name }),
-    installAndRestart: (path: string): Promise<void> => invoke('install_update_and_restart', { installerPath: path }),
+    check: async (): Promise<UpdateCheck> => {
+      const update = await check()
+      const currentVersion = await invoke<string>('get_current_version')
+
+      pendingUpdateInstance = update
+
+      if (update) {
+        return {
+          hasUpdate: true,
+          currentVersion,
+          latestVersion: update.version,
+          releaseDate: update.date ?? '',
+          releaseNotes: update.body ?? '',
+          assets: [],
+        }
+      }
+
+      return {
+        hasUpdate: false,
+        currentVersion,
+        latestVersion: currentVersion,
+        releaseDate: '',
+        releaseNotes: '',
+        assets: [],
+      }
+    },
+
+    hasPendingUpdate: (): boolean => {
+      return pendingUpdateInstance !== null
+    },
+
+    downloadAndInstall: async (onProgress?: (progress: DownloadProgress) => void): Promise<void> => {
+      if (!pendingUpdateInstance) {
+        throw new Error('No pending update available. Call check() first.')
+      }
+
+      let downloaded = 0
+      let contentLength = 0
+
+      await pendingUpdateInstance.downloadAndInstall((event: DownloadEvent) => {
+        switch (event.event) {
+          case 'Started':
+            contentLength = event.data.contentLength ?? 0
+            if (onProgress) {
+              onProgress({
+                downloaded: 0,
+                total: contentLength,
+                percentage: 0,
+                speed: 0,
+              })
+            }
+            break
+          case 'Progress':
+            downloaded += event.data.chunkLength
+            if (onProgress) {
+              onProgress({
+                downloaded,
+                total: contentLength,
+                percentage: contentLength > 0 ? (downloaded / contentLength) * 100 : 0,
+                speed: event.data.chunkLength, // Approximate speed
+              })
+            }
+            break
+          case 'Finished':
+            if (onProgress) {
+              onProgress({
+                downloaded: contentLength,
+                total: contentLength,
+                percentage: 100,
+                speed: 0,
+              })
+            }
+            break
+        }
+      })
+
+      pendingUpdateInstance = null
+    },
+
+    clearPendingUpdate: (): void => {
+      pendingUpdateInstance = null
+    },
+
+    relaunch: async (): Promise<void> => {
+      await relaunch()
+    },
+
     currentVersion: (): Promise<string> => invoke('get_current_version'),
     setAutoCheck: (e: boolean): Promise<void> => invoke('set_auto_check_enabled', { enabled: e }),
     isAutoCheckEnabled: (): Promise<boolean> => invoke('is_auto_check_enabled'),
     onBackgroundUpdate: (cb: (u: UpdateCheck) => void) =>
       listen('background-update-available', e => cb(e.payload as UpdateCheck)),
-    onDownloadProgress: (cb: (p: DownloadProgress) => void) =>
-      listen('download-progress', e => cb(e.payload as DownloadProgress)),
-    onInstallStarted: (cb: () => void) => listen('update-install-started', () => cb()),
-    onInstallError: (cb: (err: string) => void) => listen('update-install-error', e => cb(e.payload as string)),
-    onAppQuit: (cb: () => void) => listen('quit-app', () => cb()),
   }
 }

@@ -4,7 +4,6 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
-use crate::cmd::custom_updater::CachedUpdate;
 use crate::cmd::os_operate::VersionCache;
 use crate::conf::config::MergedSettings;
 
@@ -27,6 +26,5 @@ pub struct RcloneMountInfo {
 pub struct AppState {
     pub app_settings: Arc<RwLock<Option<MergedSettings>>>,
     pub app_handle: Arc<RwLock<Option<AppHandle>>>,
-    pub update_cache: Arc<RwLock<Option<CachedUpdate>>>,
     pub version_cache: Arc<RwLock<Option<VersionCache>>>,
 }
