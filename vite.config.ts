@@ -4,14 +4,11 @@ import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
 
-
 const host = process.env.TAURI_DEV_HOST
 
-// https://vitejs.dev/config/
 export default defineConfig(async () => ({
   plugins: [tailwindcss(), vue()],
 
-  // Path aliases
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')

@@ -958,7 +958,6 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (mountRefreshInterval) {
-    console.log('Clearing mount refresh interval')
     clearInterval(mountRefreshInterval)
   }
 })
