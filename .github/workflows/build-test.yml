@@ -190,7 +190,7 @@ jobs:
            Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\CurrentUser\My -Password $password | Out-Null
 
       - name: Build the app
-        if: matrix.platform == 'windows'
+        if: matrix.platform == 'windows' || matrix.platform == 'linux'
         uses: tauri-apps/tauri-action@v0
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
@@ -198,16 +198,7 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
           args: --target ${{ matrix.target }}
-
-      - name: Build the app
-        if:  matrix.platform == 'linux'
-        uses: tauri-apps/tauri-action@v0
-        env:
-          NODE_OPTIONS: "--max_old_space_size=4096"
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
-        with:
-          args: --target ${{ matrix.target }}
+          
       
       - name: Build the app (macOS)
         uses: tauri-apps/tauri-action@v0

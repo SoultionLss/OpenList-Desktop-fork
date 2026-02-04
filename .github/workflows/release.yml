@@ -26,11 +26,10 @@ env:
   APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
   APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-  # Certum cloud code signing for Windows
-  CERTUM_OTP_URI: ${{ secrets.CERTUM_OTP_URI }}
-  CERTUM_USERNAME: ${{ secrets.CERTUM_USERNAME }}
-  CERTUM_CERTIFICATE_SHA1: ${{ secrets.CERTUM_CERTIFICATE_SHA1 }}
-  PERSONAL_GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+  # Windows self pfx
+  WINDOWS_PFX: ${{ secrets.WINDOWS_PFX }}
+  WINDOWS_PFX_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
+
 concurrency:
   group: "${{ github.workflow }} - ${{ github.head_ref || github.ref }}"
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -45,7 +44,7 @@ jobs:
       version-type: ${{ steps.check.outputs.version-type }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -193,7 +192,7 @@ jobs:
     if: github.event_name != 'workflow_dispatch' || inputs.version != ''
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Ensure jq and grep are installed
         run: sudo apt-get update && sudo apt-get install -y jq
@@ -253,7 +252,7 @@ jobs:
       tag: ${{ steps.tag.outputs.tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -294,7 +293,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Upload changelog
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: changelog
           path: changelog.md
@@ -308,19 +307,29 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            platform: windows
+            arch: x64
           - os: windows-latest
             target: aarch64-pc-windows-msvc
+            platform: windows
+            arch: arm64
           - os: macos-latest
             target: aarch64-apple-darwin
-          - os: macos-latest
+            platform: macos
+            arch: arm64
+          - os: macos-15-intel
             target: x86_64-apple-darwin
+            platform: macos
+            arch: x64
           - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
+            platform: linux
+            arch: x64
 
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Install Rust
         uses: dtolnay/rust-toolchain@nightly
@@ -341,7 +350,7 @@ jobs:
           sudo apt-get install -y libxslt1.1 libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
         
       - name: Install Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
       
@@ -400,50 +409,17 @@ jobs:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
 
-      - name: Setup Certum Code Signing (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Decode and Setup PFX Certificate (Windows)
+        if: matrix.platform == 'windows'
+        shell: pwsh
         run: |
-          echo "=== SETTING UP CERTUM CODE SIGNING FOR WINDOWS ==="
-          echo "Installing SimplySign Desktop and configuring for automatic authentication"
-          
-          # Install SimplySign Desktop
-          chmod +x ./.github/scripts/install-simplysign.sh
-          ./.github/scripts/install-simplysign.sh
-          
-          # Configure registry for auto-login dialog
-          echo "Configuring registry for automatic login dialog..."
-          powershell -ExecutionPolicy Bypass -File "./.github/scripts/configure-simplysign-registry.ps1"
-          
-          echo "Certum signing environment ready"
-        shell: bash
-
-      - name: Authenticate Certum (Windows)
-        if: matrix.os == 'windows-latest'
-        env:
-          CERTUM_OTP_URI: ${{ secrets.CERTUM_OTP_URI }}
-          CERTUM_USERNAME: ${{ secrets.CERTUM_USERNAME }}
-        run: |
-          echo "=== CERTUM AUTHENTICATION ==="
-          echo "Authenticating with Certum cloud certificate using TOTP"
-          
-          # Authenticate with Certum using our enhanced script
-          powershell -ExecutionPolicy Bypass -File "./.github/scripts/Connect-SimplySign-Enhanced.ps1"
-          
-          echo "Authentication completed"
-        shell: bash
-
-      - name: Configure Certum Certificate Thumbprint (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-          echo "=== CONFIGURING CERTUM CERTIFICATE THUMBPRINT ==="
-          CONFIG_PATH="src-tauri/tauri.windows.conf.json"
-          THUMBPRINT="${{ secrets.CERTUM_CERTIFICATE_SHA1 }}"
-          
-          # Update the certificateThumbprint field using jq
-          jq --arg thumbprint "$THUMBPRINT" '.bundle.windows.certificateThumbprint = $thumbprint' "$CONFIG_PATH" > tmp.$$ && mv tmp.$$ "$CONFIG_PATH"
-          
-          echo "Certificate thumbprint configured: $THUMBPRINT"
+           $certDir = "certificate"
+           New-Item -ItemType Directory -Force -Path $certDir | Out-Null
+           $pfxPath = Join-Path $certDir "certificate.pfx"
+           $certBytes = [Convert]::FromBase64String("${{ secrets.WINDOWS_PFX }}")
+           [IO.File]::WriteAllBytes($pfxPath, $certBytes)
+           $password = ConvertTo-SecureString "${{ secrets.WINDOWS_PFX_PASSWORD }}" -AsPlainText -Force
+           Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\CurrentUser\My -Password $password | Out-Null
 
       - name: Build the app
         uses: tauri-apps/tauri-action@v0
@@ -464,7 +440,7 @@ jobs:
           tagName: ${{ needs.changelog.outputs.tag }}
           releaseName: 'OpenList Desktop ${{ needs.changelog.outputs.tag }}'
           releaseBody: ${{ needs.changelog.outputs.changelog }}
-          releaseDraft: false
+          releaseDraft: true
           prerelease: false
           args: --target ${{ matrix.target }}
   
@@ -485,7 +461,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@nightly
@@ -500,7 +476,7 @@ jobs:
           save-if: false
 
       - name: Install Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
 
@@ -608,15 +584,15 @@ jobs:
     if: always() && needs.build.result == 'success' && needs.changelog.result == 'success'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Download changelog
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: changelog
 
       - name: Download ARM artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           pattern: linux-*-artifacts
           merge-multiple: true
@@ -628,58 +604,10 @@ jobs:
           tag_name: ${{ needs.changelog.outputs.tag }}
           name: 'OpenList Desktop ${{ needs.changelog.outputs.tag }}'
           body_path: changelog.md
-          draft: false
+          draft: true
           prerelease: false
           files: |
             arm-artifacts/**/*.deb
             arm-artifacts/**/*.rpm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  winget-submit:
-    name: Submit to WinGet
-    needs: [publish, changelog, auto-version]
-    runs-on: windows-latest
-    if: always() && needs.publish.result == 'success'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Get release version
-        id: version
-        run: |
-          $version = "${{ needs.auto-version.outputs.version }}"
-          echo "version=$version" >> $env:GITHUB_OUTPUT
-
-      - name: Download WinGet Create CLI
-        run: |
-          Write-Host "Downloading wingetcreate CLI..."
-          $url = "https://aka.ms/wingetcreate/latest"
-          Invoke-WebRequest -Uri $url -OutFile "wingetcreate.exe"
-          Write-Host "Downloaded wingetcreate.exe"
-
-      - name: Update WinGet package manifest
-        env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
-        run: |
-          $version = "${{ steps.version.outputs.version }}"
-          # URLs for both x64 and arm64 installers
-          $x64InstallerUrl = "https://github.com/${{ github.repository }}/releases/download/v$version/OpenList.Desktop_$version`_x64-setup.exe"
-          $arm64InstallerUrl = "https://github.com/${{ github.repository }}/releases/download/v$version/OpenList.Desktop_$version`_arm64-setup.exe"
-          
-          Write-Host "Updating WinGet package for version: $version"
-          Write-Host "x64 Installer URL: $x64InstallerUrl"
-          Write-Host "arm64 Installer URL: $arm64InstallerUrl"
-          
-          Write-Host "Attempting to update existing package..."
-          ./wingetcreate.exe update OpenListTeam.OpenListDesktop `
-            --version $version `
-            --urls $x64InstallerUrl $arm64InstallerUrl `
-            --token $env:GITHUB_TOKEN `
-            --submit
-          
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "First submit, will do manually..."
-          } else {
-            Write-Host "Successfully updated existing WinGet package"
-          }
