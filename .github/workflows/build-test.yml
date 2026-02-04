@@ -181,41 +181,19 @@ jobs:
         if: matrix.platform == 'windows'
         shell: pwsh
         run: |
-          $pfxPath = Join-Path (Get-Location) "certificate.pfx"
-          
-          $certBytes = [Convert]::FromBase64String("${{ secrets.WINDOWS_PFX }}")
-          [IO.File]::WriteAllBytes($pfxPath, $certBytes)
-          
-          echo "WINDOWS_PFX_PATH=$pfxPath" >> $env:GITHUB_ENV
-          echo "WINDOWS_PFX_PASSWORD=${{ secrets.WINDOWS_PFX_PASSWORD }}" >> $env:GITHUB_ENV
-
-      - name: Add signtool to PATH (Windows)
-        if: matrix.platform == 'windows'
-        shell: pwsh
-        run: |
-          # Find signtool.exe in Windows SDK
-          $sdkPath = "C:\Program Files (x86)\Windows Kits\10\bin"
-          $signtoolPath = Get-ChildItem -Path $sdkPath -Recurse -Filter "signtool.exe" -ErrorAction SilentlyContinue | 
-            Where-Object { $_.FullName -match "x64" } | 
-            Sort-Object { [version]($_.Directory.Parent.Name -replace '\.0$', '') } -Descending | 
-            Select-Object -First 1
-          
-          if ($signtoolPath) {
-            $signtoolDir = $signtoolPath.DirectoryName
-            echo "Found signtool at: $signtoolDir"
-            echo "$signtoolDir" >> $env:GITHUB_PATH
-          } else {
-            Write-Error "signtool.exe not found in Windows SDK"
-            exit 1
-          }
+           $certDir = "certificate"
+           New-Item -ItemType Directory -Force -Path $certDir | Out-Null
+           $pfxPath = Join-Path $certDir "certificate.pfx"
+           $certBytes = [Convert]::FromBase64String("${{ secrets.WINDOWS_PFX }}")
+           [IO.File]::WriteAllBytes($pfxPath, $certBytes)
+           $password = ConvertTo-SecureString "${{ secrets.WINDOWS_PFX_PASSWORD }}" -AsPlainText -Force
+           Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\CurrentUser\My -Password $password | Out-Null
 
       - name: Build the app
         if: matrix.platform == 'windows'
         uses: tauri-apps/tauri-action@v0
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
-          WINDOWS_PFX_PATH: ${{ env.WINDOWS_PFX_PATH }}
-          WINDOWS_PFX_PASSWORD: ${{ env.WINDOWS_PFX_PASSWORD }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:

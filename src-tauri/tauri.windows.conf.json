@@ -4,7 +4,9 @@
   "bundle": {
     "targets": ["nsis"],
     "windows": {
-      "signCommand": "cmd /C \"signtool.exe sign /fd sha256 /f \\\"%WINDOWS_PFX_PATH%\\\" /p \\\"%WINDOWS_PFX_PASSWORD%\\\" /tr http://timestamp.digicert.com /td sha256 /v \\\"%1\\\"\"",
+      "certificateThumbprint": "292e5c9c1b8d207a25596b2b9bda73d82db11959",
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "http://timestamp.digicert.com",
       "webviewInstallMode": {
         "type": "embedBootstrapper",
         "silent": true
