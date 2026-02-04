@@ -32,10 +32,9 @@ The application serves as a comprehensive solution for:
 
 ### 🚀 Core Features
 
-- **OpenList Service Management**: Start, stop, and monitor OpenList core services
+- **OpenList Service Management**: Start, stop, and monitor OpenList core
 - **Local Mounting**: Mount via Rclone to the local file system
 - **Real-time Monitoring**: Track service status, uptime, and performance metrics
-- **Process Management**: Advanced process control with auto-restart capabilities
 - **System Tray**: Background operation with system tray notifications
 
 ### ⚙️ Management Features
@@ -48,57 +47,11 @@ The application serves as a comprehensive solution for:
 
 ## 📸 Screenshots
 
-### Home Dashboard
-
 ![Home Dashboard](./screenshot/homepage.png)
-
-The main dashboard provides a comprehensive overview of your OpenList Desktop environment with:
-
-- OpenList backend status monitoring
-- Quick action buttons for common tasks
-- OpenList and Rclone version management
-- Service management controls
-
-### Mount Management
-
 ![Mount Management](./screenshot/mountpage.png)
-
-Easily perform local mounts:
-
-- Add and configure storage remotes
-- Mount/unmount cloud storage
-- Monitor mount status and statistics
-- Configure auto-mounting options
-
-### Log Monitoring
-
 ![Log Monitoring](./screenshot/logpage.png)
-
-Keep track of system operations:
-
-- Real-time log streaming
-- Filter logs by source and level
-- Export and clear log functionality
-
-### Settings Configuration
-
 ![Settings](./screenshot/settingpage.png)
-
-Comprehensive settings management:
-
-- OpenList core configuration
-- Startup and automation preferences
-- Theme and language selection
-
-### Update Management
-
 ![Update Management](./screenshot/update.png)
-
-Stay up-to-date with the latest versions:
-
-- Download and install updates
-- Version history and changelog
-- Automatic update scheduling
 
 ## 📦 Installation
 
@@ -141,9 +94,8 @@ yarn run tauri build
 ##### Installation via Installer
 
 1. Download the `.exe` installer
-2. Run the installer as Administrator
-3. Follow the installation wizard
-4. Launch from Start Menu or Desktop shortcut
+2. Follow the installation wizard
+3. Launch from Start Menu or Desktop shortcut
 
 ##### Winget
 
@@ -173,8 +125,6 @@ winget install OpenListTeam.OpenListDesktop
 
 ### First Launch
 
-> **Note**: It is recommended to run OpenList Desktop with Administrator privileges on first launch to ensure proper service installation and configuration.
-
 1. **Initial Setup**: On first launch, the application will guide you through initial configuration
 2. **Service Installation**: Install the OpenList service when prompted
 3. **Storage Configuration**: Configure your first cloud storage connection
@@ -185,7 +135,6 @@ winget install OpenListTeam.OpenListDesktop
 
 ```bash
 Dashboard → Quick Actions → Start OpenList Core
-Dashboard → Quick Actions → Start Rclone Backend
 ```
 
 #### Adding Cloud Storage
@@ -207,17 +156,6 @@ Dashboard → Quick Actions → Start Rclone Backend
 - **Performance**: View uptime and response metrics on the dashboard
 
 ### Advanced Features
-
-#### Auto-mounting Configuration
-
-```javascript
-// Configure storage to mount automatically on startup
-{
-  "autoMount": true,
-  "extraFlags": ["--vfs-cache-mode", "full"],
-  "mountPoint": "/mnt/cloudstorage"
-}
-```
 
 #### Custom Rclone Flags
 
@@ -327,7 +265,7 @@ This project is licensed under the **GNU General Public License v3.0** - see the
   <p>Made with ❤️ by the OpenList Team</p>
   <p>
     <a href="https://github.com/OpenListTeam/openlist-desktop">GitHub</a> •
-    <a href="https://openlist.team">Website</a> •
+    <a href="https://doc.oplist.org/">Website</a> •
     <a href="https://t.me/OpenListTeam">Telegram</a>
   </p>
 </div>

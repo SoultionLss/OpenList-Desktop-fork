@@ -216,7 +216,9 @@
           </label>
         </div>
       </div>
-      <div class="flex-1 flex flex-col border border-border-secondary shadow-sm rounded-sm overflow-hidden bg-bg">
+      <div
+        class="flex-1 flex flex-col border w-full border-border-secondary shadow-sm rounded-sm overflow-hidden bg-bg"
+      >
         <div
           class="grid grid-cols-[120px_60px_80px_1fr_80px] gap-3 py-2 px-4 bg-surface border-b-2 border-b-border text-xs font-semibold text-secondary uppercase tracking-wider items-center"
         >
