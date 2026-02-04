@@ -4,14 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g., v1.0.0). Leave empty for auto-version based on conventional commits.'
-        required: false
+        description: 'Version to release (e.g., v1.0.0).'
+        required: true
         type: string
-      skip_version_check:
-        description: 'Skip automatic version detection and use manual version'
-        required: false
-        type: boolean
-        default: false
 
 permissions: write-all
 env:
@@ -35,161 +30,10 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-  check-commits:
-    name: Check Commits and Determine Version
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && (inputs.version == '' || inputs.skip_version_check == false)
-    outputs:
-      should-release: ${{ steps.check.outputs.should-release }}
-      version-type: ${{ steps.check.outputs.version-type }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Check for conventional commits
-        id: check
-        run: |
-          # Get commits since last tag
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          
-          if [ -z "$LAST_TAG" ]; then
-            echo "No previous tag found, will create initial release"
-            echo "should-release=true" >> $GITHUB_OUTPUT
-            echo "version-type=minor" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          
-          COMMITS=$(git log $LAST_TAG..HEAD --oneline)
-          
-          if echo "$COMMITS" | grep -qE "^[a-f0-9]+ (feat|fix|BREAKING CHANGE)"; then
-            echo "Found commits that warrant a release"
-            echo "should-release=true" >> $GITHUB_OUTPUT
-            
-            # Determine version bump type
-            if echo "$COMMITS" | grep -q "BREAKING CHANGE"; then
-              echo "version-type=major" >> $GITHUB_OUTPUT
-            elif echo "$COMMITS" | grep -q "feat"; then
-              echo "version-type=minor" >> $GITHUB_OUTPUT
-            else
-              echo "version-type=patch" >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "No commits found that warrant a release"
-            echo "should-release=false" >> $GITHUB_OUTPUT
-          fi
-
-  auto-version:
-    name: Calculate and Update Version
-    needs: check-commits
-    runs-on: ubuntu-latest
-    if: |
-      always() && 
-      (needs.check-commits.result == 'skipped' || 
-       (needs.check-commits.result == 'success' && needs.check-commits.outputs.should-release == 'true'))
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      tag: ${{ steps.version.outputs.tag }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-
-      - name: Calculate new version
-        id: version
-        run: |
-          # If manual version is provided, use it
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
-            MANUAL_VERSION="${{ inputs.version }}"
-            # Remove 'v' prefix if present
-            NEW_VERSION="${MANUAL_VERSION#v}"
-            echo "Using manual version: $NEW_VERSION"
-            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-            echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # If triggered by workflow_call, use the provided version
-          if [ "${{ github.event_name }}" = "workflow_call" ]; then
-            CALL_VERSION="${{ inputs.version }}"
-            NEW_VERSION="${CALL_VERSION#v}"
-            echo "Using workflow_call version: $NEW_VERSION"
-            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-            echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Auto-calculate version based on commits
-          CURRENT_VERSION=$(node -p "require('./package.json').version")
-          echo "Current version: $CURRENT_VERSION"
-          
-          # Parse version
-          IFS='.' read -ra VERSION_PARTS <<< "$CURRENT_VERSION"
-          MAJOR=${VERSION_PARTS[0]}
-          MINOR=${VERSION_PARTS[1]}
-          PATCH=${VERSION_PARTS[2]}
-          
-          # Bump version based on commit type
-          case "${{ needs.check-commits.outputs.version-type }}" in
-            major)
-              MAJOR=$((MAJOR + 1))
-              MINOR=0
-              PATCH=0
-              ;;
-            minor)
-              MINOR=$((MINOR + 1))
-              PATCH=0
-              ;;
-            patch)
-              PATCH=$((PATCH + 1))
-              ;;
-          esac
-          
-          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-          echo "New version: $NEW_VERSION"
-          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "tag=v$NEW_VERSION" >> $GITHUB_OUTPUT
-
-      - name: Update version in files
-        if: github.event_name == 'workflow_dispatch' && inputs.version == ''
-        run: |
-          # Update package.json
-          yarn version --new-version ${{ steps.version.outputs.version }} --no-git-tag-version
-          
-          # Update Cargo.toml
-          sed -i 's/^version = "[^"]*"/version = "${{ steps.version.outputs.version }}"/' src-tauri/Cargo.toml
-          
-          # Update tauri.conf.json
-          sed -i 's/"version": "[^"]*"/"version": "${{ steps.version.outputs.version }}"/' src-tauri/tauri.conf.json
-
-      - name: Commit version bump
-        if: github.event_name == 'workflow_dispatch' && inputs.version == ''
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add package.json src-tauri/Cargo.toml src-tauri/tauri.conf.json
-          git commit -m "chore: bump version to ${{ steps.version.outputs.version }} [skip ci]"
-          git push
-
-      - name: Create and push tag
-        if: github.event_name == 'workflow_dispatch' && inputs.version == ''
-        run: |
-          git tag ${{ steps.version.outputs.tag }}
-          git push origin ${{ steps.version.outputs.tag }}
 
   check_tag_version:
     name: Check Tag and All Version Files Consistency
-    needs: auto-version
     runs-on: ubuntu-latest
-    if: github.event_name != 'workflow_dispatch' || inputs.version != ''
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -200,13 +44,7 @@ jobs:
       - name: Validate tag matches versions in package.json, Cargo.toml, tauri.conf.json
         run: |
           # Get the tag to validate
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
-            TAG_REF="${{ inputs.version }}"
-          elif [ "${{ github.event_name }}" = "workflow_call" ]; then
-            TAG_REF="${{ inputs.version }}"
-          else
-            TAG_REF="${GITHUB_REF##*/}"   # e.g., v1.2.3
-          fi
+          TAG_REF="${{ inputs.version }}"
           
           TAG_VERSION="${TAG_REF#v}"    # Remove "v" prefix for direct comparison
 
@@ -242,65 +80,8 @@ jobs:
 
           echo "✅ Tag version matches all version files."
 
-  changelog:
-    name: Generate Changelog
-    needs: [auto-version, check_tag_version]
-    if: always() && (needs.auto-version.result == 'success' && (needs.check_tag_version.result == 'success' || needs.check_tag_version.result == 'skipped'))
-    runs-on: ubuntu-latest
-    outputs:
-      changelog: ${{ steps.changelog.outputs.changelog }}
-      tag: ${{ steps.tag.outputs.tag }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Get tag
-        id: tag
-        run: |
-          if [ -n "${{ needs.auto-version.outputs.tag }}" ]; then
-            echo "tag=${{ needs.auto-version.outputs.tag }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.version }}" ]; then
-            echo "tag=${{ inputs.version }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" = "workflow_call" ]; then
-            echo "tag=${{ inputs.version }}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Generate changelog
-        id: changelog
-        run: |
-          # Get the previous tag
-          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v "^${{ steps.tag.outputs.tag }}$" | head -n 1)
-          
-          if [ -z "$PREVIOUS_TAG" ]; then
-            echo "No previous tag found, generating changelog from first commit"
-            COMMITS=$(git log --pretty=format:"- %s (%h)" --reverse)
-          else
-            echo "Generating changelog from $PREVIOUS_TAG to ${{ steps.tag.outputs.tag }}"
-            COMMITS=$(git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..${{ steps.tag.outputs.tag }})
-          fi
-          
-          # Create changelog
-          CHANGELOG="## What's Changed"$'\n\n'"$COMMITS"
-          
-          # Save to file and output
-          echo "$CHANGELOG" > changelog.md
-          echo "changelog<<EOF" >> $GITHUB_OUTPUT
-          echo "$CHANGELOG" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Upload changelog
-        uses: actions/upload-artifact@v6
-        with:
-          name: changelog
-          path: changelog.md
-
   build:
-    needs: [changelog, auto-version]
-    if: always() && needs.changelog.result == 'success'
+    needs: [check_tag_version]
     strategy:
       fail-fast: false
       matrix:
@@ -363,45 +144,7 @@ jobs:
           yarn install
           yarn run prebuild:dev --target=${{ matrix.target }}
 
-      - name: Update version for build (Windows)
-        if: needs.auto-version.outputs.version && runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          # Update package.json
-          yarn version --new-version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
-          
-          # Update Cargo.toml
-          (Get-Content src-tauri/Cargo.toml) -replace '^version = ".*"', 'version = "${{ needs.auto-version.outputs.version }}"' | Set-Content src-tauri/Cargo.toml
-          
-          # Update tauri.conf.json
-          (Get-Content src-tauri/tauri.conf.json) -replace '"version": ".*"', '"version": "${{ needs.auto-version.outputs.version }}"' | Set-Content src-tauri/tauri.conf.json
 
-      - name: Update version for build (macOS)
-        if: needs.auto-version.outputs.version && runner.os == 'macOS'
-        shell: bash
-        run: |
-          # Update package.json
-          yarn version --new-version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
-          
-          # Update Cargo.toml
-          sed -i '' 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
-          
-          # Update tauri.conf.json
-          sed -i '' 's/"version": "[^"]*"/"version": "${{ needs.auto-version.outputs.version }}"/' src-tauri/tauri.conf.json
-
-      - name: Update version for build (Linux)
-        if: needs.auto-version.outputs.version && runner.os == 'Linux'
-        shell: bash
-        run: |
-          # Update package.json
-          yarn version --new-version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
-          
-          # Update Cargo.toml
-          sed -i 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
-          
-          # Update tauri.conf.json
-          sed -i 's/"version": "[^"]*"/"version": "${{ needs.auto-version.outputs.version }}"/' src-tauri/tauri.conf.json
-          
       - name: Import Apple Developer Certificate (macOS only)
         if: matrix.os == 'macos-latest'
         uses: apple-actions/import-codesign-certs@v5
@@ -436,18 +179,36 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           # Enable signing and notarization for macOS
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      
+      - name: Rename And upload Updater(MacOS)
+        if: matrix.target == 'x86_64-apple-darwin' || matrix.target == 'aarch64-apple-darwin'
+        shell: bash
+        run: |
+          TAG=${{ inputs.version }}
+          VERSION=${TAG#v}
+          SOURCE_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/macos"
+          TARGET_NAME="OpenList-Desktop-${VERSION}-${{ matrix.arch }}.app.tar.gz"
+          if [ -f "$SOURCE_DIR/OpenList Desktop.app.tar.gz" ]; then
+            mv "$SOURCE_DIR/OpenList Desktop.app.tar.gz" "$SOURCE_DIR/$TARGET_NAME"
+            mv "$SOURCE_DIR/OpenList Desktop.app.tar.gz.sig" "$SOURCE_DIR/$TARGET_NAME.sig"
+          fi
+      
+    
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v6
         with:
-          tagName: ${{ needs.changelog.outputs.tag }}
-          releaseName: 'OpenList Desktop ${{ needs.changelog.outputs.tag }}'
-          releaseBody: ${{ needs.changelog.outputs.changelog }}
-          releaseDraft: true
-          prerelease: false
-          args: --target ${{ matrix.target }}
+          name: ${{ matrix.platform }}-${{ matrix.arch }}-build
+          path: |
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.sig
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.rpm
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.tar.gz
+          retention-days: 30
   
   release-for-linux-arm:
     name: Release Build for Linux ARM
-    needs: [changelog, auto-version]
-    if: always() && needs.changelog.result == 'success'
     strategy:
       fail-fast: false
       matrix:
@@ -489,18 +250,6 @@ jobs:
         run: |
           yarn install
           yarn run prebuild:dev --target=${{ matrix.target }}
-
-      - name: Update version for build
-        if: needs.auto-version.outputs.version
-        run: |
-          # Update package.json
-          yarn version --new-version ${{ needs.auto-version.outputs.version }} --no-git-tag-version
-          
-          # Update Cargo.toml
-          sed -i 's/^version = "[^"]*"/version = "${{ needs.auto-version.outputs.version }}"/' src-tauri/Cargo.toml
-          
-          # Update tauri.conf.json
-          sed -i 's/"version": "[^"]*"/"version": "${{ needs.auto-version.outputs.version }}"/' src-tauri/tauri.conf.json
 
       - name: "Setup for linux"
         run: |-
@@ -576,12 +325,14 @@ jobs:
           path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
             src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.rpm
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.sig
+          retention-days: 30
 
   publish:
     name: Publish Release
-    needs: [changelog, build, release-for-linux-arm, auto-version]
+    needs: [ build, release-for-linux-arm]
     runs-on: ubuntu-latest
-    if: always() && needs.build.result == 'success' && needs.changelog.result == 'success'
+    if: always() && needs.build.result == 'success'
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -594,27 +345,40 @@ jobs:
       - name: Download ARM artifacts
         uses: actions/download-artifact@v7
         with:
-          pattern: linux-*-artifacts
+          pattern: '*-artifacts'
           merge-multiple: true
-          path: arm-artifacts
+          path: artifacts
+
+      - name: Read release notes
+        id: read_notes
+        run: |
+          # 使用 EOF 方式处理多行字符串，避免换行符导致崩溃
+          echo "BODY<<EOF" >> $GITHUB_OUTPUT
+          cat release_notes.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
 
       - name: Update release with ARM artifacts
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.changelog.outputs.tag }}
-          name: 'OpenList Desktop ${{ needs.changelog.outputs.tag }}'
-          body_path: changelog.md
+          tag_name: ${{ inputs.version }}
+          name: 'OpenList Desktop ${{ inputs.version }}'
+          body: ${{ steps.read_notes.outputs.BODY }}
           draft: true
           prerelease: false
           files: |
-            arm-artifacts/**/*.deb
-            arm-artifacts/**/*.rpm
+            artifacts/**/*.exe
+            artifacts/**/*.dmg
+            artifacts/**/*.tar.gz
+            artifacts/**/*.deb
+            artifacts/**/*.rpm
+            artifacts/**/*.sig
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   generate-latest-json:
     name: Generate latest.json for Auto-Update
-    needs: [changelog, build, release-for-linux-arm, auto-version, publish]
+    needs: [build, release-for-linux-arm, publish]
     runs-on: ubuntu-latest
     if: always() && needs.build.result == 'success' && needs.publish.result == 'success'
     steps:
@@ -632,7 +396,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ needs.changelog.outputs.tag }}"
+          TAG="${{ inputs.version }}"
           VERSION="${TAG#v}"
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -672,11 +436,11 @@ jobs:
           
           # Build platforms object
           # Windows x64
-          WIN_X64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_x64-setup.nsis.zip"
+          WIN_X64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_x64-setup.exe"
           WIN_X64_SIG=$(get_signature "${WIN_X64_URL}.sig")
           
           # Windows arm64
-          WIN_ARM64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_arm64-setup.nsis.zip"
+          WIN_ARM64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_arm64-setup.exe"
           WIN_ARM64_SIG=$(get_signature "${WIN_ARM64_URL}.sig")
           
           # macOS arm64 (Apple Silicon)
@@ -688,12 +452,16 @@ jobs:
           MAC_X64_SIG=$(get_signature "${MAC_X64_URL}.sig")
           
           # Linux x64
-          LINUX_X64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_amd64.AppImage"
-          LINUX_X64_SIG=$(get_signature "${LINUX_X64_URL}.sig")
+          LINUX_X64_DEB_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_amd64.deb"
+          LINUX_X64_DEB_SIG=$(get_signature "${LINUX_X64_DEB_URL}.sig")
           
           # Linux arm64
-          LINUX_ARM64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_aarch64.AppImage"
-          LINUX_ARM64_SIG=$(get_signature "${LINUX_ARM64_URL}.sig")
+          LINUX_ARM64_DEB_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_arm64.deb"
+          LINUX_ARM64_DEB_SIG=$(get_signature "${LINUX_ARM64_DEB_URL}.sig")
+
+          # Linux armhf
+          LINUX_ARMHF_DEB_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_armhf.deb"
+          LINUX_ARMHF_DEB_SIG=$(get_signature "${LINUX_ARMHF_DEB_URL}.sig")
           
           # Create latest.json
           cat > latest.json << EOF
@@ -710,21 +478,25 @@ jobs:
                 "url": "${WIN_ARM64_URL}",
                 "signature": "${WIN_ARM64_SIG}"
               },
-              "darwin-aarch64": {
-                "url": "${MAC_ARM64_URL}",
-                "signature": "${MAC_ARM64_SIG}"
-              },
               "darwin-x86_64": {
                 "url": "${MAC_X64_URL}",
                 "signature": "${MAC_X64_SIG}"
               },
+              "darwin-aarch64": {
+                "url": "${MAC_ARM64_URL}",
+                "signature": "${MAC_ARM64_SIG}"
+              },
               "linux-x86_64": {
-                "url": "${LINUX_X64_URL}",
-                "signature": "${LINUX_X64_SIG}"
+                "url": "${LINUX_X64_DEB_URL}",
+                "signature": "${LINUX_X64_DEB_SIG}"
               },
               "linux-aarch64": {
-                "url": "${LINUX_ARM64_URL}",
-                "signature": "${LINUX_ARM64_SIG}"
+                "url": "${LINUX_ARM64_DEB_URL}",
+                "signature": "${LINUX_ARM64_DEB_SIG}"
+              },
+              "linux-armv7": {
+                "url": "${LINUX_ARMHF_DEB_URL}",
+                "signature": "${LINUX_ARMHF_DEB_SIG}"
               }
             }
           }

@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "OpenList Desktop",
+  "productName": "OpenList-Desktop",
   "version": "0.8.0",
   "identifier": "io.github.openlistteam.openlist.desktop",
   "build": {
