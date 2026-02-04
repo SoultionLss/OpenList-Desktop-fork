@@ -611,3 +611,135 @@ jobs:
             arm-artifacts/**/*.rpm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  generate-latest-json:
+    name: Generate latest.json for Auto-Update
+    needs: [changelog, build, release-for-linux-arm, auto-version, publish]
+    runs-on: ubuntu-latest
+    if: always() && needs.build.result == 'success' && needs.publish.result == 'success'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download changelog
+        uses: actions/download-artifact@v7
+        with:
+          name: changelog
+        continue-on-error: true
+
+      - name: Get release info
+        id: release_info
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ needs.changelog.outputs.tag }}"
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+          # Get release assets
+          RELEASE_DATA=$(gh release view "$TAG" --json assets,body,publishedAt 2>/dev/null || echo "{}")
+          echo "release_data<<EOF" >> $GITHUB_OUTPUT
+          echo "$RELEASE_DATA" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Generate latest.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.release_info.outputs.tag }}"
+          VERSION="${{ steps.release_info.outputs.version }}"
+          REPO="${{ github.repository }}"
+          BASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
+          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          
+          # Read release notes from release_notes.md (priority) or changelog.md
+          NOTES=""
+          if [ -f "release_notes.md" ]; then
+            NOTES=$(cat release_notes.md | jq -Rs .)
+          elif [ -f "changelog.md" ]; then
+            NOTES=$(cat changelog.md | jq -Rs .)
+          else
+            NOTES="\"Release ${TAG}\""
+          fi
+          
+          # Function to get signature from .sig file URL
+          get_signature() {
+            local sig_url="$1"
+            local sig=$(curl -sL "$sig_url" 2>/dev/null || echo "")
+            echo "$sig"
+          }
+          
+          # Build platforms object
+          # Windows x64
+          WIN_X64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_x64-setup.nsis.zip"
+          WIN_X64_SIG=$(get_signature "${WIN_X64_URL}.sig")
+          
+          # Windows arm64
+          WIN_ARM64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_arm64-setup.nsis.zip"
+          WIN_ARM64_SIG=$(get_signature "${WIN_ARM64_URL}.sig")
+          
+          # macOS arm64 (Apple Silicon)
+          MAC_ARM64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_aarch64.app.tar.gz"
+          MAC_ARM64_SIG=$(get_signature "${MAC_ARM64_URL}.sig")
+          
+          # macOS x64 (Intel)
+          MAC_X64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_x64.app.tar.gz"
+          MAC_X64_SIG=$(get_signature "${MAC_X64_URL}.sig")
+          
+          # Linux x64
+          LINUX_X64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_amd64.AppImage"
+          LINUX_X64_SIG=$(get_signature "${LINUX_X64_URL}.sig")
+          
+          # Linux arm64
+          LINUX_ARM64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_aarch64.AppImage"
+          LINUX_ARM64_SIG=$(get_signature "${LINUX_ARM64_URL}.sig")
+          
+          # Create latest.json
+          cat > latest.json << EOF
+          {
+            "version": "${VERSION}",
+            "notes": ${NOTES},
+            "pub_date": "${PUB_DATE}",
+            "platforms": {
+              "windows-x86_64": {
+                "url": "${WIN_X64_URL}",
+                "signature": "${WIN_X64_SIG}"
+              },
+              "windows-aarch64": {
+                "url": "${WIN_ARM64_URL}",
+                "signature": "${WIN_ARM64_SIG}"
+              },
+              "darwin-aarch64": {
+                "url": "${MAC_ARM64_URL}",
+                "signature": "${MAC_ARM64_SIG}"
+              },
+              "darwin-x86_64": {
+                "url": "${MAC_X64_URL}",
+                "signature": "${MAC_X64_SIG}"
+              },
+              "linux-x86_64": {
+                "url": "${LINUX_X64_URL}",
+                "signature": "${LINUX_X64_SIG}"
+              },
+              "linux-aarch64": {
+                "url": "${LINUX_ARM64_URL}",
+                "signature": "${LINUX_ARM64_SIG}"
+              }
+            }
+          }
+          EOF
+          
+          echo "Generated latest.json:"
+          cat latest.json
+
+      - name: Upload latest.json to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.release_info.outputs.tag }}"
+          
+          # Upload latest.json to the release
+          gh release upload "$TAG" latest.json --clobber
+          
+          echo "✅ latest.json uploaded to release $TAG"
