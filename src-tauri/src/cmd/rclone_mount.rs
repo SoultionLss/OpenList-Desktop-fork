@@ -150,13 +150,13 @@ pub async fn create_rclone_mount_remote_process(
 
     if let Some(mount_point) = mount_point_opt {
         let mount_path = Path::new(mount_point);
-        if !mount_path.exists() {
-            if let Err(e) = fs::create_dir_all(mount_path) {
-                return Err(format!(
-                    "Failed to create mount point directory '{}': {}",
-                    mount_point, e
-                ));
-            }
+        if !mount_path.exists()
+            && let Err(e) = fs::create_dir_all(mount_path)
+        {
+            return Err(format!(
+                "Failed to create mount point directory '{}': {}",
+                mount_point, e
+            ));
         }
     }
 
@@ -299,10 +299,8 @@ pub async fn get_mount_info_list(
 pub async fn stop_all_rclone_mounts() -> Result<(), String> {
     let process_list = PROCESS_MANAGER.list();
     for process in process_list {
-        if process.id.starts_with("rclone_mount_") {
-            if process.is_running {
-                PROCESS_MANAGER.stop(&process.id)?;
-            }
+        if process.id.starts_with("rclone_mount_") && process.is_running {
+            PROCESS_MANAGER.stop(&process.id)?;
         }
     }
     Ok(())

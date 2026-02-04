@@ -227,10 +227,10 @@ impl WebDavRemoteConfig {
         options.insert("user".to_string(), self.user.clone());
         options.insert("pass".to_string(), obscured_pass);
 
-        if let Some(vendor) = &self.vendor {
-            if !vendor.is_empty() {
-                options.insert("vendor".to_string(), vendor.clone());
-            }
+        if let Some(vendor) = &self.vendor
+            && !vendor.is_empty()
+        {
+            options.insert("vendor".to_string(), vendor.clone());
         }
 
         Ok(RcloneRemoteConfig {

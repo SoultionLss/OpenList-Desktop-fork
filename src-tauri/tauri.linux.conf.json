@@ -10,9 +10,7 @@
         "desktopTemplate": "./packages/linux/openlist.desktop",
         "provides": ["openlist-desktop"],
         "conflicts": ["openlist-desktop"],
-        "replaces": ["openlist-desktop"],
-        "postInstallScript": "./packages/linux/post-install.sh",
-        "preRemoveScript": "./packages/linux/pre-remove.sh"
+        "replaces": ["openlist-desktop"]
       },
       "rpm": {
         "depends": ["openssl"],
@@ -20,16 +18,9 @@
         "desktopTemplate": "./packages/linux/openlist.desktop",
         "provides": ["openlist-desktop"],
         "conflicts": ["openlist-desktop"],
-        "obsoletes": ["openlist-desktop"],
-        "postInstallScript": "./packages/linux/post-install.sh",
-        "preRemoveScript": "./packages/linux/pre-remove.sh"
+        "obsoletes": ["openlist-desktop"]
       }
     },
-    "externalBin": [
-      "./binary/install-openlist-service",
-      "./binary/uninstall-openlist-service",
-      "./binary/openlist-desktop-service",
-      "./binary/openlist"
-    ]
+    "externalBin": ["./binary/openlist"]
   }
 }

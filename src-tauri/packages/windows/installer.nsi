@@ -133,7 +133,6 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
   !insertmacro MULTIUSER_PAGE_INSTALLMODE
 !endif
 
-
 ; 4. Custom page to ask user if he wants to reinstall/uninstall
 ;    only if a previous installtion was detected
 Var ReinstallPageCheck
@@ -420,22 +419,6 @@ Function .onInit
 FunctionEnd
 
 !macro CheckAllOpenListProcesses
-  ; Check if openlist-desktop-service.exe is running
-  !if "${INSTALLMODE}" == "currentUser"
-    nsis_tauri_utils::FindProcessCurrentUser "openlist-desktop-service.exe"
-  !else
-    nsis_tauri_utils::FindProcess "openlist-desktop-service.exe"
-  !endif
-  Pop $R0
-  ${If} $R0 = 0
-    DetailPrint "Kill openlist-desktop-service.exe..."
-    !if "${INSTALLMODE}" == "currentUser"
-      nsis_tauri_utils::KillProcessCurrentUser "openlist-desktop-service.exe"
-    !else
-      nsis_tauri_utils::KillProcess "openlist-desktop-service.exe"
-    !endif
-  ${EndIf}
-
   ; Check if openlist-desktop.exe is running
   !if "${INSTALLMODE}" == "currentUser"
     nsis_tauri_utils::FindProcessCurrentUser "openlist-desktop.exe"
@@ -485,32 +468,6 @@ FunctionEnd
   ${EndIf}
 !macroend
 
-!macro StartOpenListDesktopService
-  ; Check if the service exists
-  SimpleSC::ExistsService "openlist_desktop_service"
-  Pop $0  ; 0：service exists；other: service not exists
-  ; Service exists
-  ${If} $0 == 0
-    Push $0
-    ; Check if the service is running
-    SimpleSC::ServiceIsRunning "openlist_desktop_service"
-    Pop $0 ; returns an errorcode (<>0) otherwise success (0)
-    Pop $1 ; returns 1 (service is running) - returns 0 (service is not running)
-    ${If} $0 == 0
-      Push $0
-      ${If} $1 == 0
-            DetailPrint "Restart OpenList Desktop Service..."
-            SimpleSC::StartService "openlist_desktop_service" "" 30
-      ${EndIf}
-    ${ElseIf} $0 != 0
-          Push $0
-          SimpleSC::GetErrorMessage
-          Pop $0
-          MessageBox MB_OK|MB_ICONSTOP "Check Service Status Error ($0)"
-    ${EndIf}
-  ${EndIf}
-!macroend
-
 !macro SetDirectoryPermissions
   DetailPrint "Setting permissions for installation directory..."
   !if "${INSTALLMODE}" == "currentUser"
@@ -537,45 +494,6 @@ FunctionEnd
       DetailPrint "Warning: Failed to set permissions for Authenticated Users - $R0"
     ${EndIf}
   !endif
-!macroend
-
-!macro RemoveOpenListService
-  ; Check if the service exists
-  SimpleSC::ExistsService "openlist_desktop_service"
-  Pop $0  ; 0：service exists；other: service not exists
-  ; Service exists
-  ${If} $0 == 0
-    Push $0
-    ; Check if the service is running
-    SimpleSC::ServiceIsRunning "openlist_desktop_service"
-    Pop $0 ; returns an errorcode (<>0) otherwise success (0)
-    Pop $1 ; returns 1 (service is running) - returns 0 (service is not running)
-    ${If} $0 == 0
-      Push $0
-      ${If} $1 == 1
-        DetailPrint "Stop OpenList Desktop Service..."
-        SimpleSC::StopService "openlist_desktop_service" 1 30
-        Pop $0 ; returns an errorcode (<>0) otherwise success (0)
-        ${If} $0 == 0
-              DetailPrint "Removing OpenList Desktop Service..."
-              SimpleSC::RemoveService "openlist_desktop_service"
-        ${ElseIf} $0 != 0
-                  Push $0
-                  SimpleSC::GetErrorMessage
-                  Pop $0
-                  MessageBox MB_OK|MB_ICONSTOP "OpenList Desktop Service Stop Error ($0)"
-        ${EndIf}
-  ${ElseIf} $1 == 0
-        DetailPrint "Removing OpenList Desktop Service..."
-        SimpleSC::RemoveService "openlist_desktop_service"
-  ${EndIf}
-    ${ElseIf} $0 != 0
-          Push $0
-          SimpleSC::GetErrorMessage
-          Pop $0
-          MessageBox MB_OK|MB_ICONSTOP "Check Service Status Error ($0)"
-    ${EndIf}
-  ${EndIf}
 !macroend
 
 Section EarlyChecks
@@ -695,8 +613,6 @@ SectionEnd
   app_check_done:
 !macroend
 
-
-
 Var VC_REDIST_URL
 Var VC_REDIST_EXE
 
@@ -807,8 +723,6 @@ Section Install
     File /a "/oname={{this}}" "{{@key}}"
   {{/each}}
 
-  !insertmacro StartOpenListDesktopService
-
   ; Create uninstaller
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
@@ -912,7 +826,6 @@ Section Uninstall
 
   !insertmacro CheckIfAppIsRunning
   !insertmacro CheckAllOpenListProcesses
-  !insertmacro RemoveOpenListService
 
   DetailPrint "Cleaning auto-launch registry entries..."
   
@@ -981,15 +894,10 @@ Section Uninstall
   ; Delete app data
   ${If} $DeleteAppDataCheckboxState == 1
     SetShellVarContext current
-    RmDir /r "$APPDATA\${BUNDLEID}"
-    RmDir /r "$LOCALAPPDATA\${BUNDLEID}"
-    RmDir /r "$INSTDIR\data"
-    RmDir /r "$INSTDIR\logs"
+    RmDir /r "$APPDATA\OpenList Desktop"
+    RmDir /r "$LOCALAPPDATA\OpenList Desktop"
     Delete "$INSTDIR\settings.json"
-    Delete "$INSTDIR\openlist-desktop-service.log"
-    Delete "$INSTDIR\rclone.conf"
     RMDir "$INSTDIR"
-    RMDir /r "C:\ProgramData\openlist-service-config"
   ${EndIf}
 
   SetShellVarContext current

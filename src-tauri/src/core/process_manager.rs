@@ -515,11 +515,11 @@ impl ProcessManager {
 
             let _ = child.wait();
             log::info!("Stopped process '{}' via Child handle", id);
-        } else if let Some(ext_pid) = managed.external_pid {
-            if Self::is_process_alive(ext_pid) {
-                Self::kill_process_by_pid(ext_pid);
-                log::info!("Stopped process '{}' via external PID {}", id, ext_pid);
-            }
+        } else if let Some(ext_pid) = managed.external_pid
+            && Self::is_process_alive(ext_pid)
+        {
+            Self::kill_process_by_pid(ext_pid);
+            log::info!("Stopped process '{}' via external PID {}", id, ext_pid);
         }
 
         managed.child = None;
@@ -653,11 +653,12 @@ impl ProcessManager {
                 let _ = child.kill();
                 let _ = child.wait();
             }
-            if let Some(ext_pid) = managed.external_pid {
-                if Self::is_process_alive(ext_pid) {
-                    Self::kill_process_by_pid(ext_pid);
-                }
+            if let Some(ext_pid) = managed.external_pid
+                && Self::is_process_alive(ext_pid)
+            {
+                Self::kill_process_by_pid(ext_pid);
             }
+
             drop(processes);
             self.persist_state();
             Ok(())
@@ -674,15 +675,16 @@ impl ProcessManager {
             .get_mut(id)
             .ok_or_else(|| format!("Process with id '{id}' not found"))?;
 
-        if let Some(ref mut child) = managed.child {
-            if child.try_wait().map_or(false, |status| status.is_none()) {
-                return Err("Cannot update config while process is running. Stop it first.".into());
-            }
+        if let Some(ref mut child) = managed.child
+            && child.try_wait().is_ok_and(|status| status.is_none())
+        {
+            return Err("Cannot update config while process is running. Stop it first.".into());
         }
-        if let Some(ext_pid) = managed.external_pid {
-            if Self::is_process_alive(ext_pid) {
-                return Err("Cannot update config while process is running. Stop it first.".into());
-            }
+
+        if let Some(ext_pid) = managed.external_pid
+            && Self::is_process_alive(ext_pid)
+        {
+            return Err("Cannot update config while process is running. Stop it first.".into());
         }
 
         managed.config = config;
@@ -702,7 +704,7 @@ impl ProcessManager {
     }
 
     pub fn is_running(&self, id: &str) -> bool {
-        self.get_status(id).map_or(false, |info| info.is_running)
+        self.get_status(id).is_ok_and(|info| info.is_running)
     }
 
     #[allow(dead_code)]
@@ -714,16 +716,17 @@ impl ProcessManager {
                 log::info!("Stopping process '{}' during cleanup", id);
                 let _ = child.kill();
                 let _ = child.wait();
-            } else if let Some(ext_pid) = managed.external_pid {
-                if Self::is_process_alive(ext_pid) {
-                    log::info!(
-                        "Stopping process '{}' (external pid: {}) during cleanup",
-                        id,
-                        ext_pid
-                    );
-                    Self::kill_process_by_pid(ext_pid);
-                }
+            } else if let Some(ext_pid) = managed.external_pid
+                && Self::is_process_alive(ext_pid)
+            {
+                log::info!(
+                    "Stopping process '{}' (external pid: {}) during cleanup",
+                    id,
+                    ext_pid
+                );
+                Self::kill_process_by_pid(ext_pid);
             }
+
             managed.child = None;
             managed.external_pid = None;
             managed.started_at = None;

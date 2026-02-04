@@ -110,8 +110,8 @@ async fn auto_mount_rclone_remotes_on_login(app_handle: &tauri::AppHandle) -> Re
         .values()
         .filter(|config| {
             config.auto_mount.unwrap_or(false)
-                && config.mount_point.as_deref().unwrap_or("").is_empty() == false
-                && config.volume_name.as_deref().unwrap_or("").is_empty() == false
+                && !config.mount_point.as_deref().unwrap_or("").is_empty()
+                && !config.volume_name.as_deref().unwrap_or("").is_empty()
         })
         .cloned()
         .collect();

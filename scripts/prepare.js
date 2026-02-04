@@ -70,18 +70,6 @@ const createBinaryInfo = (name, archMap, baseUrl, version = '') => {
   }
 }
 
-// OpenList service URL
-const serviceUrl = `https://github.com/OpenListTeam/openlist-desktop-service/releases/download/${sidecarHost}`
-
-const getServiceInfo = exeName => {
-  const ext = isWin ? '.exe' : ''
-  const suffix = '-' + sidecarHost
-  return {
-    file: exeName + suffix + ext,
-    downloadURL: `${serviceUrl}/${exeName}${ext}`,
-  }
-}
-
 const resolvePlugins = async () => {
   const pluginDir = path.join(process.env.APPDATA, 'Local/NSIS')
   await fs.mkdir(pluginDir, { recursive: true })
@@ -203,26 +191,6 @@ async function resolveSidecar(binInfo) {
   }
 }
 
-async function resolveService(resourceInfo, isChmod = true, defaultMode = 0o755) {
-  const { file, downloadURL } = resourceInfo
-  const resourceDir = path.join(cwd, 'src-tauri', 'binary')
-  const resourcePath = path.join(resourceDir, file)
-
-  await fs.mkdir(resourceDir, { recursive: true })
-
-  try {
-    await downloadFile(downloadURL, resourcePath)
-    if (isChmod) {
-      await fs.chmod(resourcePath, defaultMode)
-    }
-    console.log(`"${file}" downloaded to ${resourcePath}`)
-  } catch (err) {
-    console.error(`Error preparing "${file}":`, err.message)
-    await fs.rm(resourcePath, { recursive: true, force: true })
-    throw err
-  }
-}
-
 async function retryTask(name, fn, maxRetries = 5) {
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -265,7 +233,6 @@ async function main() {
   if (isWin) {
     await resolvePlugins()
   }
-  await resolveService(getServiceInfo('uninstall-openlist-service'))
 }
 
 main().catch(console.log)

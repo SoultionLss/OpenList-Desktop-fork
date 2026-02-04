@@ -55,8 +55,7 @@ pub async fn open_folder(path: String) -> Result<bool, String> {
     let normalized_path = normalize_path(&path);
     let path_buf = PathBuf::from(normalized_path);
     if !path_buf.exists() {
-        fs::create_dir_all(&path_buf)
-            .map_err(|e| format!("Failed to create directory: {}", e.to_string()))?;
+        fs::create_dir_all(&path_buf).map_err(|e| format!("Failed to create directory: {}", e))?;
     }
     open::that_detached(path_buf.as_os_str()).map_err(|e| e.to_string())?;
     Ok(true)
