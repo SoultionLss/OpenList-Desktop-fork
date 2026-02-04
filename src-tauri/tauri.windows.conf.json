@@ -4,7 +4,7 @@
   "bundle": {
     "targets": ["nsis"],
     "windows": {
-      "certificateThumbprint": "292e5c9c1b8d207a25596b2b9bda73d82db11959",
+      "certificateThumbprint": "e488bef576a1a53f9a1a344d2e8b2625a192dcb5",
       "digestAlgorithm": "sha256",
       "timestampUrl": "http://timestamp.digicert.com",
       "webviewInstallMode": {

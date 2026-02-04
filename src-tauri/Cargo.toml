@@ -1,7 +1,7 @@
 [package]
 name = "openlist-desktop"
 version = "0.8.0"
-description = "A Tauri App"
+description = "OpenList Desktop Application"
 authors = ["Kuingsmile"]
 edition = "2024"
 
