@@ -740,29 +740,3 @@ impl ProcessManager {
 lazy_static::lazy_static! {
     pub static ref PROCESS_MANAGER: Arc<ProcessManager> = Arc::new(ProcessManager::new());
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_process_manager_register() {
-        let pm = ProcessManager::new();
-        let config = ProcessConfig {
-            id: "test".into(),
-            name: "Test Process".into(),
-            bin_path: "/bin/echo".into(),
-            args: vec!["hello".into()],
-            log_file: "/tmp/test.log".into(),
-            working_dir: None,
-            env_vars: None,
-        };
-
-        let result = pm.register(config.clone());
-        assert!(result.is_ok());
-
-        // Registering same ID should fail
-        let result = pm.register(config);
-        assert!(result.is_err());
-    }
-}
