@@ -14,7 +14,6 @@ export class TauriAPI {
     stop: (): Promise<ProcessInfo> => invoke('stop_openlist_core'),
     restart: (): Promise<ProcessInfo> => invoke('restart_openlist_core'),
     getStatus: (): Promise<OpenListCoreStatus> => invoke('get_openlist_core_status'),
-    getProcessStatus: (): Promise<ProcessInfo> => invoke('get_openlist_core_process_status'),
   }
 
   // --- Rclone management ---
@@ -45,7 +44,6 @@ export class TauriAPI {
 
   // -- File management ---
   static files = {
-    list: (path: string): Promise<FileItem[]> => invoke('list_files', { path }),
     open: (path: string): Promise<boolean> => invoke('open_file', { path }),
     folder: (path: string): Promise<boolean> => invoke('open_folder', { path }),
     urlInBrowser: (url: string): Promise<boolean> => invoke('open_url_in_browser', { url }),
