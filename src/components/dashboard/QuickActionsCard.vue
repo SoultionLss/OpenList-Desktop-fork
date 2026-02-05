@@ -167,16 +167,11 @@ const copyAdminPassword = async () => {
 }
 
 const resetAdminPassword = async () => {
-  try {
-    const newPassword = await appStore.resetAdminPassword()
-    if (newPassword) {
-      await navigator.clipboard.writeText(newPassword)
-      message.success('Admin password reset and copied: ' + newPassword)
-    } else {
-      message.error('Failed to reset admin password. Please check the logs.')
-    }
-  } catch (error) {
-    console.error('Failed to reset admin password:', error)
+  const newPassword = await appStore.resetAdminPassword()
+  if (newPassword) {
+    await navigator.clipboard.writeText(newPassword)
+    message.success('Admin password reset and copied: ' + newPassword)
+  } else {
     message.error('Failed to reset admin password. Please check the logs.')
   }
 }
@@ -221,7 +216,6 @@ const openLink = async (url: string) => {
   try {
     if (appStore.settings.app.open_links_in_browser || isMacOs) {
       await TauriAPI.files.urlInBrowser(url)
-      return
     }
   } catch (error) {
     console.error('Failed to open link:', error)
@@ -230,7 +224,7 @@ const openLink = async (url: string) => {
 }
 
 onMounted(async () => {
-  await checkFirewallStatus()
+  checkFirewallStatus()
 })
 
 onUnmounted(() => {

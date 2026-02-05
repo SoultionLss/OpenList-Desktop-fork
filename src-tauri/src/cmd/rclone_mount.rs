@@ -76,7 +76,25 @@ pub async fn rclone_create_remote(
     config: RcloneWebdavConfigInput,
     state: State<'_, AppState>,
 ) -> Result<bool, String> {
-    rclone_update_remote(name, r#type, config, state).await
+    let mut rclone_config = RcloneConfigFile::load_with_custom(state.clone())?;
+
+    if r#type != "webdav" {
+        return Err(format!("Unsupported remote type: {}", r#type));
+    }
+
+    let webdav = WebDavRemoteConfig {
+        name: name.clone(),
+        url: config.url,
+        vendor: config.vendor,
+        user: config.user,
+        pass: config.pass,
+    };
+
+    let remote_config = webdav.to_rclone_config_with_obscured_pass(state.clone())?;
+    rclone_config.set_remote(remote_config);
+    rclone_config.save(state)?;
+
+    Ok(true)
 }
 
 #[tauri::command]

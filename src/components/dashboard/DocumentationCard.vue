@@ -105,9 +105,9 @@
 
 <script setup lang="ts">
 import { BookOpen, Cloud, Code, ExternalLink, Github, HelpCircle, MessageCircle, Terminal } from 'lucide-vue-next'
-import { computed } from 'vue'
 
 import { createNewWindow } from '@/utils/common'
+import { isMacOs } from '@/utils/constant'
 
 import { TauriAPI } from '../../api/tauri'
 import { useTranslation } from '../../composables/useI18n'
@@ -128,15 +128,10 @@ const urlMap = {
   rcloneGitHub: 'https://github.com/rclone/rclone',
 }
 
-const isMacOs = computed(() => {
-  return typeof OS_PLATFORM !== 'undefined' && OS_PLATFORM === 'darwin'
-})
-
 const openLink = async (url: string) => {
   try {
-    if (appStore.settings.app.open_links_in_browser || isMacOs.value) {
+    if (appStore.settings.app.open_links_in_browser || isMacOs) {
       await TauriAPI.files.urlInBrowser(url)
-      return
     }
   } catch (error) {
     console.error('Failed to open link:', error)

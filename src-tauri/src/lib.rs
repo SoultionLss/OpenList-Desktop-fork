@@ -138,7 +138,19 @@ async fn auto_mount_rclone_remotes_on_login(app_handle: &tauri::AppHandle) -> Re
         })
         .cloned()
         .collect();
-
+    if remotes_to_mount.is_empty() {
+        log::info!("No Rclone remotes configured for auto-mount on login");
+        return Ok(());
+    }
+    log::info!("Trying to auto-start OpenList Core before mounting remotes");
+    match create_openlist_core_process(app_state.clone()).await {
+        Ok(_) => {
+            log::info!("OpenList Core process started successfully before mounting remotes");
+        }
+        Err(e) => {
+            log::error!("Failed to start OpenList Core process before mounting remotes: {e}");
+        }
+    }
     for remote in remotes_to_mount {
         log::info!(
             "Auto-mount on login is enabled for remote '{}', attempting to mount",
@@ -304,14 +316,17 @@ pub fn run() {
             setup_background_update_checker(app_handle);
             let app_handle_clone = app_handle.clone();
             tauri::async_runtime::spawn(async move {
-                if let Err(e) = auto_start_openlist_core_on_login(&app_handle_clone).await {
-                    log::error!("Auto-start task failed: {}", e);
-                }
-            });
-            let app_handle_mount_clone = app_handle.clone();
-            tauri::async_runtime::spawn(async move {
-                if let Err(e) = auto_mount_rclone_remotes_on_login(&app_handle_mount_clone).await {
-                    log::error!("Auto-mount Rclone remotes failed: {}", e);
+                match auto_start_openlist_core_on_login(&app_handle_clone).await {
+                    Ok(_) => {
+                        log::info!("Auto-start openlist core task completed");
+                        if let Err(e) = auto_mount_rclone_remotes_on_login(&app_handle_clone).await
+                        {
+                            log::error!("Failed to auto-mount rclone remotes on login: {}", e);
+                        }
+                    }
+                    Err(e) => {
+                        log::error!("Auto-start OpenList Core on login failed: {}", e);
+                    }
                 }
             });
             if let Some(window) = app.get_webview_window("main") {

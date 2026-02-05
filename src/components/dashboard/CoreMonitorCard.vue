@@ -101,6 +101,7 @@
 
 <script setup lang="ts">
 import { Activity, Eye, Globe } from 'lucide-vue-next'
+import { storeToRefs } from 'pinia'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import { useTranslation } from '../../composables/useI18n'
@@ -108,6 +109,7 @@ import { useAppStore } from '../../stores/app'
 
 const { t } = useTranslation()
 const appStore = useAppStore()
+const { isCoreRunning, openlistCoreStatus } = storeToRefs(appStore)
 
 const chartContainer = ref<HTMLElement>()
 const chartWidth = ref(400)
@@ -126,9 +128,6 @@ const tooltip = ref({
   status: '',
   statusText: '',
 })
-
-const isCoreRunning = computed(() => appStore.isCoreRunning)
-const openlistCoreStatus = computed(() => appStore.openlistCoreStatus)
 
 const avgResponseTime = computed(() => {
   if (dataPoints.value.length === 0) return 0
@@ -178,7 +177,8 @@ const heartbeatPath = computed(() => {
 })
 
 const lineColor = computed(() => {
-  if (avgResponseTime.value < 100) return '#10b981'
+  if (avgResponseTime.value === 0) return '#6b7280'
+  if (0 < avgResponseTime.value && avgResponseTime.value < 100) return '#10b981'
   if (avgResponseTime.value < 500) return '#f59e0b'
   return '#ef4444'
 })

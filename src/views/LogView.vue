@@ -125,7 +125,6 @@
           <SingleSelect
             v-model="filterLevel"
             :key-list="logLevelList.map(item => item.key)"
-            :label="t('logs.filters.labels.level')"
             title=""
             :fronticon="false"
             :placeholder="logLevelList.find(level => level.key === filterLevel)?.label || filterLevel"
@@ -137,7 +136,6 @@
           <SingleSelect
             v-model="filterSource"
             :key-list="filterSourceOptions.map(item => item.key)"
-            :label="t('logs.filters.labels.source')"
             title=""
             :fronticon="false"
             :placeholder="filterSourceOptions.find(source => source.key === filterSource)?.label || filterSource"
@@ -333,6 +331,7 @@
 </template>
 
 <script setup lang="ts">
+import { useLocalStorage } from '@vueuse/core'
 import * as chrono from 'chrono-node'
 import {
   ArrowDown,
@@ -367,19 +366,19 @@ const confirm = useConfirm()
 const { t } = useTranslation()
 const logContainer = ref<HTMLElement>()
 const searchInputRef = ref<HTMLInputElement>()
-const autoScroll = ref(true)
+const autoScroll = useLocalStorage('logViewerAutoScroll', true)
 const isPaused = ref(false)
 const filterLevel = ref<string>(appStore.settings.app.log_filter_level || 'all')
 const filterSource = ref<string>(appStore.settings.app.log_filter_source || 'openlist')
 const searchQuery = ref('')
 const selectedEntries = ref<Set<number>>(new Set())
-const showFilters = ref(true)
-const showSettings = ref(false)
-const fontSize = ref(13)
-const maxLines = ref(1000)
-const isCompactMode = ref(false)
+const showFilters = useLocalStorage('logViewerShowFilters', true)
+const showSettings = useLocalStorage('logViewerShowSettings', false)
+const fontSize = useLocalStorage('logViewerFontSize', 13)
+const maxLines = useLocalStorage('logViewerMaxLines', 1000)
+const isCompactMode = useLocalStorage('logViewerCompactMode', false)
 const isFullscreen = ref(false)
-const stripAnsiColors = ref(true)
+const stripAnsiColors = useLocalStorage('logViewerStripAnsiColors', true)
 
 let logRefreshInterval: NodeJS.Timeout | null = null
 const logLevelList = [

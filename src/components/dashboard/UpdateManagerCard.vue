@@ -280,7 +280,6 @@ onMounted(async () => {
     autoCheckEnabled.value = await TauriAPI.updater.isAutoCheckEnabled()
     try {
       backgroundUpdateUnlisten = await TauriAPI.updater.onBackgroundUpdate(updateInfo => {
-        console.log('Background update available:', updateInfo)
         backgroundUpdateCheck.value = updateInfo
       })
     } catch (err) {
