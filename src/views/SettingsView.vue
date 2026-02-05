@@ -392,11 +392,10 @@ const handleSave = async () => {
     }
 
     if (needsPasswordUpdate) {
-      try {
-        await appStore.setAdminPassword(appSettings.admin_password!)
+      const res = await appStore.setAdminPassword(appSettings.admin_password!)
+      if (res) {
         message.success(t('settings.service.admin.passwordUpdated'))
-      } catch (error) {
-        console.error('Failed to update admin password:', error)
+      } else {
         message.error(t('settings.service.admin.passwordUpdateFailed'))
       }
     } else {
@@ -467,20 +466,14 @@ const handleOpenDataDir = async () => {
 
 const handleResetAdminPassword = async () => {
   isResettingPassword.value = true
-  try {
-    const newPassword = await appStore.resetAdminPassword()
-    if (newPassword) {
-      appSettings.admin_password = newPassword
-      message.success(t('settings.service.admin.resetSuccess'))
-    } else {
-      message.error(t('settings.service.admin.resetFailed'))
-    }
-  } catch (error) {
-    console.error('Failed to reset admin password:', error)
+  const newPassword = await appStore.resetAdminPassword()
+  if (newPassword) {
+    appSettings.admin_password = newPassword
+    message.success(t('settings.service.admin.resetSuccess'))
+  } else {
     message.error(t('settings.service.admin.resetFailed'))
-  } finally {
-    isResettingPassword.value = false
   }
+  isResettingPassword.value = false
 }
 
 const handleOpenRcloneConfig = async () => {

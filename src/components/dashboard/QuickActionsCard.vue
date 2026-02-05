@@ -136,11 +136,19 @@ const { isCoreRunning, loading: isCoreLoading } = storeToRefs(appStore)
 const statusCheckInterval: number | null = null
 
 const toggleCore = async () => {
-  isCoreRunning.value ? await appStore.stopOpenListCore() : await appStore.startOpenListCore()
+  try {
+    isCoreRunning.value ? await appStore.stopOpenListCore() : await appStore.startOpenListCore()
+  } catch (error) {
+    console.error('Failed to toggle OpenList Core:', error)
+  }
 }
 
 const restartCore = async () => {
-  await appStore.restartOpenListCore()
+  try {
+    await appStore.restartOpenListCore()
+  } catch (error) {
+    console.error('Failed to restart core:', error)
+  }
 }
 
 const openWebUI = () => {

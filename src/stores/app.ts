@@ -27,6 +27,9 @@ export const useAppStore = defineStore('app', () => {
   const currentPath = ref('/')
   const loading = ref(false)
   const error = ref<string | undefined>()
+  const updateAvailable = ref(false)
+  const updateCheck = ref<UpdateCheck | null>(null)
+  const openlistProcessId = ref<string | undefined>(undefined)
 
   const defaultRcloneFormConfig: RcloneFormConfig = {
     name: '',
@@ -315,12 +318,6 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  // Add update status tracking
-  const updateAvailable = ref(false)
-  const updateCheck = ref<UpdateCheck | null>(null)
-
-  const openlistProcessId = ref<string | undefined>(undefined)
-
   async function startOpenListCore() {
     try {
       loading.value = true
@@ -351,9 +348,7 @@ export const useAppStore = defineStore('app', () => {
   async function stopOpenListCore() {
     try {
       loading.value = true
-
       await TauriAPI.core.stop()
-
       openlistCoreStatus.value = { running: false }
       await TauriAPI.tray.update(false)
     } catch (err: any) {
@@ -371,17 +366,10 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function enableAutoLaunch(_autoLaunch: boolean) {
-    // Auto-launch is handled via settings, no separate process update needed
-    // Settings are persisted on save
-  }
-
   async function restartOpenListCore() {
     try {
       loading.value = true
-
       await TauriAPI.core.restart()
-
       await refreshOpenListCoreStatus()
       await TauriAPI.tray.update(openlistCoreStatus.value.running)
     } catch (err: any) {
@@ -554,29 +542,13 @@ export const useAppStore = defineStore('app', () => {
     setTheme(nextTheme)
   }
 
-  async function init() {
-    try {
-      await loadSettings()
-      await refreshOpenListCoreStatus()
-      loadLogs()
-      autoStartCoreIfEnabled()
-      await loadRemoteConfigs()
-      await loadMountInfos()
-    } catch (err) {
-      console.error('Application initialization failed:', err)
-      throw err
-    }
-  }
-
   async function resetAdminPassword(): Promise<string | null> {
     try {
       const newPassword = await TauriAPI.logs.resetAdminPassword()
-
       if (newPassword) {
         settings.value.app.admin_password = newPassword
         await saveSettings()
       }
-
       return newPassword
     } catch (err) {
       console.error('Failed to reset admin password:', err)
@@ -587,10 +559,8 @@ export const useAppStore = defineStore('app', () => {
   async function setAdminPassword(password: string): Promise<boolean> {
     try {
       await TauriAPI.logs.setAdminPassword(password)
-
       settings.value.app.admin_password = password
       await saveSettings()
-
       return true
     } catch (err) {
       console.error('Failed to set admin password:', err)
@@ -607,6 +577,20 @@ export const useAppStore = defineStore('app', () => {
   function clearUpdateStatus() {
     updateAvailable.value = false
     updateCheck.value = null
+  }
+
+  async function init() {
+    try {
+      await loadSettings()
+      await refreshOpenListCoreStatus()
+      loadLogs()
+      autoStartCoreIfEnabled()
+      await loadRemoteConfigs()
+      await loadMountInfos()
+    } catch (err) {
+      console.error('Application initialization failed:', err)
+      throw err
+    }
   }
 
   return {
@@ -646,7 +630,6 @@ export const useAppStore = defineStore('app', () => {
     startOpenListCore,
     stopOpenListCore,
     restartOpenListCore,
-    enableAutoLaunch,
     refreshOpenListCoreStatus,
     loadLogs,
     clearLogs,
