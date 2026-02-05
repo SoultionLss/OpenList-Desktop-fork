@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use tauri::State;
 
-use crate::cmd::openlist_core::restart_openlist_core;
+use crate::cmd::openlist_core::{get_openlist_core_process_status, restart_openlist_core};
 use crate::conf::config::MergedSettings;
 use crate::object::structs::AppState;
 use crate::utils::path::{app_config_file_path, get_default_openlist_data_dir};
@@ -76,13 +76,14 @@ pub async fn save_settings_and_restart(
         Some(settings.openlist.data_dir.as_str())
     };
     update_data_config(settings.openlist.port, data_dir)?;
-
-    if let Err(e) = restart_openlist_core(state.clone()).await {
-        log::error!("{e}");
-        return Err(e);
+    match get_openlist_core_process_status().await {
+        Ok(info) => {
+            if info.is_running {
+                restart_openlist_core(state.clone()).await?;
+            }
+        }
+        Err(_) => {}
     }
-    log::info!("Settings saved and OpenList core restarted with new port successfully");
-
     Ok(true)
 }
 

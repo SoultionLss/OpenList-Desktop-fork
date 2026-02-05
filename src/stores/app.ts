@@ -125,7 +125,6 @@ export const useAppStore = defineStore('app', () => {
   async function loadMountInfos() {
     try {
       mountInfos.value = await TauriAPI.rclone.mounts.list()
-      console.log('Loaded mount infos:', mountInfos.value)
     } catch (err: any) {
       error.value = 'Failed to load mount information'
       console.error('Failed to load mount infos:', err)

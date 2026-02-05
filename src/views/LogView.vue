@@ -704,7 +704,7 @@ onUnmounted(() => {
 const unwatchLogs = appStore.$subscribe(mutation => {
   if (mutation.storeId === 'app') {
     const events = Array.isArray(mutation.events) ? mutation.events : [mutation.events]
-    if (events.some((event: any) => event.key === 'logs')) {
+    if (events.some((event: any) => event?.key === 'logs')) {
       scrollToBottom()
     }
   }

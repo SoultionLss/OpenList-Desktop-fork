@@ -4,7 +4,7 @@
     <div class="w-full h-full flex flex-col gap-6">
       <div
         v-if="error"
-        class="flex items-center overflow-x-hidden gap-2 justify-between p-4 bg-error/10 rounded-md shadow-md"
+        class="flex items-center overflow-x-hidden gap-2 justify-start p-4 bg-error/10 rounded-md shadow-md"
       >
         <div>
           <AlertCircle :size="16" class="text-danger" />

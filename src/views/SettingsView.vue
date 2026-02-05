@@ -383,8 +383,8 @@ const handleSave = async () => {
 
     if (
       originalOpenlistPort !== openlistCoreSettings.port ||
-      originalDataDir !== openlistCoreSettings.data_dir ||
-      originalOpenListBinaryPath !== openlistCoreSettings.binary_path
+      originalDataDir !== (openlistCoreSettings.data_dir || '') ||
+      originalOpenListBinaryPath !== (openlistCoreSettings.binary_path || '')
     ) {
       await appStore.saveAndRestart()
     } else {

@@ -11,9 +11,6 @@
             <p class="m-0 text-xs text-secondary">{{ t('update.subtitle') }}</p>
           </div>
         </div>
-        <div class="flex flex-wrap gap-3 overflow-visible">
-          <CustomButton type="secondary" :icon="Settings" :text="t('navigation.settings')" @click="goToSettings" />
-        </div>
       </div>
 
       <div
@@ -27,19 +24,11 @@
 
 <script setup lang="ts">
 import { Settings } from 'lucide-vue-next'
-import { useRouter } from 'vue-router'
-
-import CustomButton from '@/components/common/CustomButton.vue'
 
 import UpdateManagerCard from '../components/dashboard/UpdateManagerCard.vue'
 import { useTranslation } from '../composables/useI18n'
 
 const { t } = useTranslation()
-const router = useRouter()
-
-const goToSettings = () => {
-  router.push('/settings')
-}
 </script>
 
 <style scoped>
