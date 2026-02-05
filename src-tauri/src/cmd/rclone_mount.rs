@@ -1,10 +1,13 @@
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
+use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use tauri::State;
+use tokio::task::JoinSet;
+use tokio::time::timeout;
 
 use crate::conf::rclone_config::{RcloneConfigFile, WebDavRemoteConfig, reveal_password};
 use crate::core::process_manager::{PROCESS_MANAGER, ProcessConfig, ProcessInfo};
@@ -13,7 +16,6 @@ use crate::utils::args::split_args_vec;
 use crate::utils::path::{
     get_app_logs_dir, get_rclone_binary_path_with_custom, get_rclone_config_path_with_custom,
 };
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RcloneWebdavConfigInput {
     pub url: String,
@@ -229,47 +231,54 @@ pub async fn unmount_remote(name: String) -> Result<bool, String> {
 }
 
 #[tauri::command]
-pub async fn check_mount_status(id: String, mount_point: String) -> Result<bool, String> {
-    let process_list = PROCESS_MANAGER.list();
-    let mut found = false;
-    for process in process_list {
-        if process.id == id {
-            found = true;
-            break;
-        }
-    }
-    if !found {
-        return Ok(false);
-    }
+pub async fn check_mount_status(mount_point: String) -> Result<(), String> {
+    let timeout_duration = Duration::from_secs(2);
+    let mount_point_clone = mount_point.clone();
 
-    let process_info = PROCESS_MANAGER.get_status(&id)?;
-    if !process_info.is_running {
-        return Ok(false);
-    }
+    let result = timeout(timeout_duration, async move {
+        tokio::task::spawn_blocking(move || {
+            let path = Path::new(&mount_point_clone);
 
-    let path = Path::new(&mount_point);
-    if !path.exists() {
-        return Ok(false);
-    }
+            if !path.exists() {
+                return Err(format!(
+                    "Mount point '{}' does not exist",
+                    mount_point_clone
+                ));
+            }
 
-    #[cfg(target_os = "windows")]
-    {
-        if mount_point.len() == 2 && mount_point.ends_with(':') {
-            let drive_path = format!("{mount_point}\\");
-            let result = fs::read_dir(&drive_path);
-            return Ok(result.is_ok());
-        }
-        Ok(fs::read_dir(&mount_point).is_ok())
-    }
+            #[cfg(target_os = "windows")]
+            {
+                let drive_path = if mount_point_clone.len() == 2 && mount_point_clone.ends_with(':')
+                {
+                    format!("{}\\", mount_point_clone)
+                } else {
+                    mount_point_clone.clone()
+                };
 
-    #[cfg(any(target_os = "linux", target_os = "macos"))]
-    {
-        Ok(fs::read_dir(&mount_point).is_ok())
-    }
-}
+                fs::read_dir(&drive_path)
+                    .map(|_| ())
+                    .map_err(|e| format!("Access denied: {}", e))
+            }
 
-async fn check_mount_status_internal(id: &str, mount_point: &str) -> Result<bool, String> {
-    check_mount_status(id.to_string(), mount_point.to_string()).await
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
+            {
+                fs::read_dir(&mount_point_clone)
+                    .map(|_| ())
+                    .map_err(|e| format!("Access denied: {}", e))
+            }
+        })
+        .await
+        .map_err(|e| format!("Runtime error: {}", e))?
+    })
+    .await;
+
+    match result {
+        Ok(inner_res) => inner_res,
+        Err(e) => Err(format!(
+            "Timeout: Network drive '{}' is non-responsive: {}",
+            mount_point, e
+        )),
+    }
 }
 
 #[tauri::command]
@@ -277,7 +286,8 @@ pub async fn get_mount_info_list(
     _state: State<'_, AppState>,
 ) -> Result<Vec<RcloneMountInfo>, String> {
     let process_list = PROCESS_MANAGER.list();
-    let mut mount_infos = Vec::new();
+    let mut set = JoinSet::new();
+
     for process in process_list {
         if !process.id.starts_with("rclone_mount_") {
             continue;
@@ -287,29 +297,51 @@ pub async fn get_mount_info_list(
         if args.len() >= 5 && args[0] == "mount" {
             let remote_path = args[3].clone();
             let mount_point = args[4].clone();
+            let process_id = process.id.clone();
+            let is_running = process.is_running;
 
-            let mount_status = match check_mount_status_internal(&process.id, &mount_point).await {
-                Ok(is_accessible) => {
-                    if process.is_running {
-                        if is_accessible { "mounted" } else { "mounting" }
-                    } else {
-                        "unmounted"
+            set.spawn(async move {
+                let check_result = check_mount_status(mount_point.clone()).await;
+
+                let (status, error_msg) = match check_result {
+                    Ok(()) => {
+                        if is_running {
+                            ("mounted".to_string(), None)
+                        } else {
+                            ("unmounted".to_string(), None)
+                        }
                     }
+                    Err(e) => {
+                        if is_running {
+                            ("error".to_string(), Some(e))
+                        } else {
+                            ("unmounted".to_string(), None)
+                        }
+                    }
+                };
+
+                let remote_name = remote_path.split(':').next().unwrap_or("").to_string();
+
+                RcloneMountInfo {
+                    name: remote_name,
+                    process_id,
+                    remote_path,
+                    mount_point,
+                    status,
+                    error_msg,
                 }
-                Err(_) => "error",
-            };
-
-            let remote_name = remote_path.split(':').next().unwrap_or("").to_string();
-
-            mount_infos.push(RcloneMountInfo {
-                name: remote_name,
-                process_id: process.id,
-                remote_path,
-                mount_point,
-                status: mount_status.to_string(),
             });
         }
     }
+
+    let mut mount_infos = Vec::new();
+    while let Some(res) = set.join_next().await {
+        if let Ok(info) = res {
+            mount_infos.push(info);
+        }
+    }
+
+    mount_infos.sort_by(|a, b| a.name.cmp(&b.name));
 
     Ok(mount_infos)
 }

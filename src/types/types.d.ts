@@ -41,7 +41,8 @@ interface RcloneMountInfo {
   processId: string
   remotePath: string
   mountPoint: string
-  status: 'mounted' | 'unmounted' | 'mounting' | 'unmounting' | 'error'
+  status: 'mounted' | 'unmounted' | 'error'
+  error_msg?: string
 }
 
 interface AppConfig {

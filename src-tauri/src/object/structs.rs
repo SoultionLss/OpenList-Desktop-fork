@@ -21,6 +21,7 @@ pub struct RcloneMountInfo {
     pub remote_path: String,
     pub mount_point: String,
     pub status: String,
+    pub error_msg: Option<String>,
 }
 
 pub struct AppState {

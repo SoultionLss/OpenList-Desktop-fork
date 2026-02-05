@@ -161,6 +161,7 @@
       "mount": "挂载",
       "openInExplorer": "在文件管理器中打开",
       "refresh": "刷新",
+      "stopProcess": "停止进程",
       "unmount": "卸载"
     },
     "config": {
@@ -252,10 +253,12 @@
       "failedToDelete": "删除配置失败",
       "failedToMount": "挂载远程失败",
       "failedToSave": "保存配置失败",
+      "failedToStopProcess": "停止挂载进程失败",
       "failedToUnmount": "卸载远程失败",
       "fillRequiredFields": "请填写所有必填字段",
       "mountPointPathNotAvailable": "挂载点路径不可用",
       "mountPointRequired": "挂载点为必填项",
+      "processStopped": "远程配置 {name} 的挂载进程已停止",
       "unmountBeforeEdit": "请先卸载远程配置 {name}，然后再进行编辑",
       "updatedSuccessfully": "远程配置 {name} 更新成功"
     },

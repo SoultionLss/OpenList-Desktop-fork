@@ -210,31 +210,6 @@ export const useAppStore = defineStore('app', () => {
       if (name !== config.name && settings.value.rclone.mount_config[name]) {
         delete settings.value.rclone.mount_config[name]
       }
-      const oldProcessId = await getRcloneMountProcessId(name)
-      if (oldProcessId) {
-        try {
-          // Stop and remove old mount process by using mount list remove API
-          const mountInfoList = await TauriAPI.rclone.mounts.list()
-          const existingMount = mountInfoList.find(m => m.name === name)
-          if (existingMount) {
-            // Unmount through process manager directly via new mount process
-          }
-
-          const mountArgs = [
-            `${fullConfig.name}:${fullConfig.volumeName || ''}`,
-            fullConfig.mountPoint || '',
-            ...(fullConfig.extraFlags || []),
-          ]
-          const newProcessConfig: MountProcessInput = {
-            id: `rclone_mount_${fullConfig.name}_process`,
-            name: `rclone_mount_${fullConfig.name}_process`,
-            args: mountArgs,
-          }
-          await TauriAPI.rclone.mounts.mount(newProcessConfig)
-        } catch (err) {
-          console.warn(`Failed to update mount process for renamed config ${name} -> ${config.name}:`, err)
-        }
-      }
       await saveSettings()
       await loadMountInfos()
       return true
@@ -249,10 +224,7 @@ export const useAppStore = defineStore('app', () => {
 
   async function deleteRemoteConfig(name: string) {
     try {
-      loading.value = true
-      // Unmount if mounted
-      const mountInfoList = await TauriAPI.rclone.mounts.list()
-      const existingMount = mountInfoList.find(m => m.name === name)
+      const existingMount = mountInfos.value.find(m => m.name === name)
       if (existingMount && existingMount.status === 'mounted') {
         await unmountRemote(name)
       }
@@ -268,8 +240,6 @@ export const useAppStore = defineStore('app', () => {
       error.value = 'Failed to delete remote configuration'
       console.error('Failed to delete remote config:', err)
       throw err
-    } finally {
-      loading.value = false
     }
   }
 
@@ -291,7 +261,6 @@ export const useAppStore = defineStore('app', () => {
 
   async function mountRemote(name: string) {
     try {
-      loading.value = true
       const config = settings.value.rclone.mount_config[name] as RcloneFormConfig | undefined
       if (!config) {
         throw new Error(`No configuration found for remote: ${name}`)
@@ -301,14 +270,6 @@ export const useAppStore = defineStore('app', () => {
         throw new Error(`Mount point is not set for remote: ${name}`)
       }
       const id = `rclone_mount_${name}_process`
-
-      const mountResult = await TauriAPI.rclone.mounts.check(id, config.mountPoint)
-      if (mountResult) {
-        console.log(`Remote ${name} is already mounted`)
-        return
-      }
-
-      // Create mount process
       const mountArgs = [
         `${config.name}:${config.volumeName || ''}`,
         config.mountPoint || '',
@@ -323,28 +284,34 @@ export const useAppStore = defineStore('app', () => {
       if (!createResponse || !createResponse.id) {
         throw new Error('Failed to create mount process')
       }
+      await new Promise(resolve => setTimeout(resolve, 3000))
       await loadMountInfos()
     } catch (err: any) {
       error.value = `Failed to mount remote ${name}: ${formatError(err)}`
       console.error('Failed to mount remote:', err)
       throw err
-    } finally {
-      loading.value = false
+    }
+  }
+
+  async function stopMountProcess(name: string) {
+    try {
+      await TauriAPI.rclone.mounts.unmount(name)
+      await loadMountInfos()
+    } catch (err: any) {
+      error.value = `Failed to stop mount process for remote ${name}: ${formatError(err)}`
+      console.error('Failed to stop mount process:', err)
+      throw err
     }
   }
 
   async function unmountRemote(name: string) {
     try {
-      loading.value = true
-      // Use the new unmount API that stops the mount process
       await TauriAPI.rclone.mounts.unmount(name)
       await loadMountInfos()
     } catch (err: any) {
       error.value = `Failed to unmount remote ${name}: ${formatError(err)}`
       console.error('Failed to unmount remote:', err)
       throw err
-    } finally {
-      loading.value = false
     }
   }
 
@@ -353,19 +320,6 @@ export const useAppStore = defineStore('app', () => {
   const updateCheck = ref<UpdateCheck | null>(null)
 
   const openlistProcessId = ref<string | undefined>(undefined)
-
-  async function getRcloneMountProcessId(name: string): Promise<string | undefined> {
-    try {
-      const mountInfoList = await TauriAPI.rclone.mounts.list()
-      const findMount = mountInfoList.find(m => m.name === name)
-      if (findMount) {
-        return findMount.processId
-      }
-    } catch (err) {
-      console.error('Failed to get Rclone process ID:', err)
-      return undefined
-    }
-  }
 
   async function startOpenListCore() {
     try {
@@ -666,6 +620,7 @@ export const useAppStore = defineStore('app', () => {
     loadRemoteConfigs,
     defaultRcloneFormConfig,
     loadMountInfos,
+    stopMountProcess,
     deleteRemoteConfig,
     getFullRcloneConfigs,
     fullRcloneConfigs,

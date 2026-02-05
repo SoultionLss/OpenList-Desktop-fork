@@ -147,9 +147,10 @@
               :key="config.name"
               class="bg-surface rounded-xl border border-border-secondary p-4 shadow-sm flex flex-col justify-between h-full hover:border-2 hover:border-accent transition-all duration-200 ease-apple gap-2"
               :class="{
-                'border-success/50! border-2': isConfigMounted(config),
-                'border-danger/50! border-2': getConfigStatus(config) === 'error',
-                'border-warning/50! border-2': isConfigMounting(config),
+                'border-success/50! border-2': isConfigMounted(config.name) && !loadingList.includes(config.name),
+                'border-danger/50! border-2':
+                  getConfigStatus(config.name) === 'error' && !loadingList.includes(config.name),
+                'border-warning/50! border-2': loadingList.includes(config.name),
               }"
             >
               <div class="flex items-start justify-between gap-1">
@@ -157,9 +158,9 @@
                   <div class="flex items-center justify-center w-8 h-8 rounded-md bg-accent/10 text-accent shrink-0">
                     <Cloud
                       :class="{
-                        'text-success': isConfigMounted(config),
-                        'text-danger': getConfigStatus(config) === 'error',
-                        'text-warning': isConfigMounting(config),
+                        'text-success': isConfigMounted(config.name) && !loadingList.includes(config.name),
+                        'text-danger': getConfigStatus(config.name) === 'error' && !loadingList.includes(config.name),
+                        'text-warning': loadingList.includes(config.name),
                       }"
                     />
                   </div>
@@ -172,14 +173,15 @@
                     </p>
                   </div>
                 </div>
+
                 <div class="flex items-center justify-center w-6 h-6 shrink-0 bg-bg-secondary rounded-md">
                   <component
-                    :is="getStatusIcon(getConfigStatus(config))"
+                    :is="loadingList.includes(config.name) ? Loader : getStatusIcon(getConfigStatus(config.name))"
                     class="w-4 h-4 text-secondary"
                     :class="{
-                      'text-warning animate-spin': isConfigMounting(config),
-                      'text-success': getConfigStatus(config) === 'mounted',
-                      'text-error': getConfigStatus(config) === 'error',
+                      'text-warning animate-spin': loadingList.includes(config.name),
+                      'text-success': getConfigStatus(config.name) === 'mounted' && !loadingList.includes(config.name),
+                      'text-error!': getConfigStatus(config.name) === 'error' && !loadingList.includes(config.name),
                     }"
                   />
                 </div>
@@ -191,6 +193,7 @@
                     class="inline-flex items-center py-1 px-2 bg-bg-secondary rounded-sm text-[0.6rem] font-semibold text-secondary uppercase"
                     >{{ config.type }}</span
                   >
+
                   <span
                     v-if="config.volumeName"
                     class="inline-flex items-center py-1 px-2 bg-bg-secondary rounded-sm text-[0.6rem] font-semibold text-secondary uppercase"
@@ -202,13 +205,30 @@
                     >{{ t('mount.meta.autoMount') }}</span
                   >
                 </div>
+                <span
+                  v-if="getConfigStatus(config.name) === 'error' && !loadingList.includes(config.name)"
+                  class="group/badge overflow-hidden text-sm font-medium text-ellipsis whitespace-nowrap text-secondary bg-error/10 rounded-md py-0.5 px-1"
+                >
+                  <div class="min-w-0 flex-1 overflow-hidden">
+                    <div
+                      class="flex overflow-hidden text-ellipsis whitespace-nowrap group-hover/badge:w-fit group-hover/badge:animate-[badge-scroll_5s_linear_infinite] group-hover/badge:text-clip"
+                    >
+                      <span class="text-xs py-0.5 leading-none whitespace-nowrap group-hover/badge:pr-5">{{
+                        getErrorMsg(config.name)
+                      }}</span>
+                      <span class="text-xs py-0.5 hidden leading-none whitespace-nowrap group-hover/badge:block">{{
+                        getErrorMsg(config.name)
+                      }}</span>
+                    </div>
+                  </div>
+                </span>
               </div>
 
               <div class="flex items-center justify-between gap-3">
                 <div class="flex-1">
                   <CustomButton
-                    v-if="!isConfigMounted(config)"
-                    :disabled="isConfigMounting(config) || !config.mountPoint"
+                    v-if="!isConfigMounted(config.name)"
+                    :disabled="loadingList.includes(config.name) || !config.mountPoint"
                     :title="!config.mountPoint ? t('mount.messages.mountPointRequired') : ''"
                     type="primary"
                     class="flex-1 w-full"
@@ -224,7 +244,7 @@
                     icon-class="text-white"
                     text-class="text-white"
                     :icon="Square"
-                    :disabled="isConfigMounting(config)"
+                    :disabled="loadingList.includes(config.name)"
                     :text="t('mount.actions.unmount')"
                     :icon-size="14"
                     @click="unmountConfig(config)"
@@ -244,7 +264,7 @@
                     :icon="Trash2"
                     :title="t('mount.actions.delete')"
                     text=""
-                    :disabled="isConfigMounted(config)"
+                    :disabled="isConfigMounted(config.name) || loadingList.includes(config.name)"
                     :icon-size="14"
                     icon-class="text-white"
                     class="bg-danger/50 hover:bg-danger!"
@@ -252,7 +272,7 @@
                     @click="deleteConfig(config)"
                   />
                   <CustomButton
-                    v-if="isConfigMounted(config)"
+                    v-if="isConfigMounted(config.name)"
                     :icon="FolderOpen"
                     :title="t('mount.actions.openInExplorer')"
                     text=""
@@ -260,6 +280,16 @@
                     type="secondary"
                     class="border-none!"
                     @click="openInFileExplorer(config.mountPoint)"
+                  />
+                  <CustomButton
+                    v-if="getConfigStatus(config.name) === 'error' || loadingList.includes(config.name)"
+                    :icon="X"
+                    :title="t('mount.actions.stopProcess')"
+                    text=""
+                    :icon-size="14"
+                    type="secondary"
+                    class="border-none!"
+                    @click="stopProcess(config.name)"
                   />
                 </div>
               </div>
@@ -533,6 +563,7 @@ const statusFilter = ref<'all' | 'mounted' | 'unmounted' | 'error'>('all')
 const showFlagSelector = ref(false)
 const isAddingNew = ref(false)
 const initLoading = ref(true)
+const loadingList = ref<string[]>([])
 let mountRefreshInterval: NodeJS.Timeout | null = null
 
 const configForm = ref({
@@ -624,6 +655,14 @@ const filterList = [
   { label: t('mount.status.error'), value: 'error' },
 ]
 
+const statusMap = computed(() => {
+  const map: Record<string, 'mounted' | 'unmounted' | 'error' | 'mounting'> = {}
+  for (const mountInfo of appStore.mountInfos) {
+    map[mountInfo.name] = mountInfo.status
+  }
+  return map
+})
+
 const filteredConfigs: ComputedRef<RcloneFormConfig[]> = computed(() => {
   const filtered: RcloneFormConfig[] = []
   const fullRemoteConfigs = appStore.fullRcloneConfigs
@@ -686,7 +725,7 @@ const saveConfig = async () => {
     message.error(t('mount.messages.fillRequiredFields'))
     return
   }
-  if (isConfigMounted(configForm.value)) {
+  if (isConfigMounted(configForm.value.name)) {
     message.error(t('mount.messages.unmountBeforeEdit', { name: configForm.value.name }))
     return
   }
@@ -754,9 +793,15 @@ const resetForm = () => {
 
 const mountConfig = async (config: RcloneFormConfig) => {
   try {
+    loadingList.value.push(config.name)
     await appStore.mountRemote(config.name)
   } catch (error: any) {
     message.error(error.message || t('mount.messages.failedToMount'))
+  } finally {
+    const index = loadingList.value.indexOf(config.name)
+    if (index !== -1) {
+      loadingList.value.splice(index, 1)
+    }
   }
 }
 
@@ -804,9 +849,13 @@ const refreshData = async () => {
   }
 }
 
-const getConfigStatus = (config: RcloneFormConfig) => {
-  const mountInfo = appStore.mountInfos.find(mount => mount.name === config.name)
-  return mountInfo?.status || 'unmounted'
+const getErrorMsg = (name: string) => {
+  const mountInfo = appStore.mountInfos.find(m => m.name === name)
+  return mountInfo?.error_msg || ''
+}
+
+const getConfigStatus = (name: string) => {
+  return statusMap.value[name] || 'unmounted'
 }
 
 const getStatusIcon = (status: string) => {
@@ -823,14 +872,8 @@ const getStatusIcon = (status: string) => {
   }
 }
 
-const isConfigMounted = (config: RcloneFormConfig) => {
-  const status = getConfigStatus(config)
-  return status === 'mounted'
-}
-
-const isConfigMounting = (config: RcloneFormConfig) => {
-  const status = getConfigStatus(config)
-  return status === 'mounting' || status === 'unmounting'
+const isConfigMounted = (name: string) => {
+  return getConfigStatus(name) === 'mounted'
 }
 
 const addFlag = () => {
@@ -892,6 +935,15 @@ const toggleFlag = (flag: { flag: string; value: string; descriptionKey: string 
 
 const getFlagDescription = (flag: { flag: string; value: string; descriptionKey: string }) => {
   return t(`mount.config.flagDescriptions.${flag.descriptionKey}`)
+}
+
+const stopProcess = async (name: string) => {
+  try {
+    await appStore.stopMountProcess(name)
+    message.success(t('mount.messages.processStopped', { name }))
+  } catch (error: any) {
+    message.error(error.message || t('mount.messages.failedToStopProcess'))
+  }
 }
 
 const openInFileExplorer = async (path?: string) => {

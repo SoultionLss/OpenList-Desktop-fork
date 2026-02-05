@@ -161,6 +161,7 @@
       "mount": "Mount",
       "openInExplorer": "Open in Explorer",
       "refresh": "Refresh",
+      "stopProcess": "Stop Process",
       "unmount": "Unmount"
     },
     "config": {
@@ -252,10 +253,12 @@
       "failedToDelete": "Failed to delete configuration",
       "failedToMount": "Failed to mount remote",
       "failedToSave": "Failed to save configuration",
+      "failedToStopProcess": "Failed to stop mount process",
       "failedToUnmount": "Failed to unmount remote",
       "fillRequiredFields": "Please fill in all required fields",
       "mountPointPathNotAvailable": "Mount point path is not available",
       "mountPointRequired": "Mount point is required",
+      "processStopped": "Mount process for remote configuration {name} has been stopped",
       "unmountBeforeEdit": "Please unmount remote configuration {name} before editing",
       "updatedSuccessfully": "Remote configuration \"{name}\" updated successfully"
     },
