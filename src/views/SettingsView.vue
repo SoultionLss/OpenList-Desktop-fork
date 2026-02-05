@@ -513,7 +513,7 @@ const handleSelectOpenlistBinary = async () => {
       filters: [
         {
           name: 'Executable',
-          extensions: OS_PLATFORM === 'windows' ? ['exe'] : ['*'],
+          extensions: OS_PLATFORM === 'win32' ? ['exe'] : ['*'],
         },
       ],
     })
@@ -537,7 +537,7 @@ const handleSelectRcloneBinary = async () => {
       filters: [
         {
           name: 'Executable',
-          extensions: OS_PLATFORM === 'windows' ? ['exe'] : ['*'],
+          extensions: OS_PLATFORM === 'win32' ? ['exe'] : ['*'],
         },
       ],
     })
