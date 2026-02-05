@@ -1,5 +1,7 @@
 {
   "name": "openlist-desktop",
+  "version": "0.8.0",
+  "private": true,
   "description": "A desktop application for OpenList",
   "keywords": [
     "openlist",
@@ -8,41 +10,44 @@
     "vue",
     "tauri"
   ],
-  "private": true,
-  "version": "0.8.0",
+  "homepage": "https://github.com/OpenListTeam/openlist-desktop",
+  "license": "GPL-3.0",
   "author": {
     "name": "OpenList Team",
     "email": "96409857+Kuingsmile@users.noreply.github.com"
   },
   "type": "module",
-  "license": "GPL-3.0",
-  "homepage": "https://github.com/OpenListTeam/openlist-desktop",
   "scripts": {
-    "dev": "vite",
-    "tsc:check": "vue-tsc --noEmit",
-    "web:build": "vue-tsc --noEmit && vite build",
-    "web:preview": "vite preview",
     "build": "cross-env NODE_OPTIONS='--max-old-space-size=4096' tauri build",
-    "tauri:dev": "cross-env RUST_BACKTRACE=1 tauri dev",
-    "tauri": "tauri",
-    "nowatch": "tauri dev --no-watch",
-    "lint": "eslint --ext .js,.jsx,.ts,.tsx,.vue src/ scripts/",
-    "lint:fix": "eslint --ext .js,.jsx,.ts,.tsx,.vue src/ scripts/ --fix",
-    "lint:dpdm": "dpdm -T --tsconfig ./tsconfig.json --no-tree --no-warning --exit-code circular:1 src/main.ts",
+    "check:all": "yarn check:frontend && yarn check:rust:all",
+    "check:frontend": "yarn lint && tsc --noEmit",
+    "check:rust": "cd src-tauri && cargo check --all-targets --all-features",
+    "check:rust:all": "yarn check:rust:fmt && yarn check:rust:clippy && yarn check:rust",
+    "check:rust:clippy": "cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings",
+    "check:rust:fmt": "cd src-tauri && cargo fmt --all -- --check",
+    "cz": "czg",
+    "dev": "vite",
+    "fix:all": "yarn fix:frontend && yarn fix:rust && yarn i18n:check",
+    "fix:frontend": "yarn lint:fix",
+    "fix:rust": "cd src-tauri && cargo fmt --all && cargo clippy --all-targets --all-features --fix --allow-dirty",
     "i18n:check": "node scripts/find-unused-i18n.js",
     "i18n:check:verbose": "node scripts/find-unused-i18n.js --verbose",
-    "cz": "czg",
-    "release": "bump-version",
+    "lint": "eslint --ext .js,.jsx,.ts,.tsx,.vue src/ scripts/",
+    "lint:dpdm": "dpdm -T --tsconfig ./tsconfig.json --no-tree --no-warning --exit-code circular:1 src/main.ts",
+    "lint:fix": "eslint --ext .js,.jsx,.ts,.tsx,.vue src/ scripts/ --fix",
+    "nowatch": "tauri dev --no-watch",
     "prebuild:dev": "node scripts/prepare.js",
-    "check:rust": "cd src-tauri && cargo check --all-targets --all-features",
-    "check:rust:fmt": "cd src-tauri && cargo fmt --all -- --check",
-    "check:rust:clippy": "cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings",
-    "check:rust:all": "yarn check:rust:fmt && yarn check:rust:clippy && yarn check:rust",
-    "check:frontend": "yarn lint && tsc --noEmit",
-    "check:all": "yarn check:frontend && yarn check:rust:all",
-    "fix:rust": "cd src-tauri && cargo fmt --all && cargo clippy --all-targets --all-features --fix --allow-dirty",
-    "fix:frontend": "yarn lint:fix",
-    "fix:all": "yarn fix:frontend && yarn fix:rust && yarn i18n:check"
+    "release": "bump-version",
+    "tauri": "tauri",
+    "tauri:dev": "cross-env RUST_BACKTRACE=1 tauri dev",
+    "tsc:check": "vue-tsc --noEmit",
+    "web:build": "vue-tsc --noEmit && vite build",
+    "web:preview": "vite preview"
+  },
+  "resolutions": {
+    "glob": "^10.5.0",
+    "js-yaml": "^4.1.1",
+    "tmp": "^0.2.4"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.10.1",
@@ -51,7 +56,7 @@
     "@tauri-apps/plugin-fs": "^2.4.5",
     "@tauri-apps/plugin-opener": "^2.5.3",
     "@tauri-apps/plugin-process": "^2.3.1",
-    "@tauri-apps/plugin-shell": "^2.3.4",
+    "@tauri-apps/plugin-shell": "^2.3.5",
     "@tauri-apps/plugin-store": "^2.4.2",
     "@tauri-apps/plugin-updater": "^2.10.0",
     "@vueuse/core": "^14.2.0",
@@ -94,10 +99,5 @@
     "vite": "^7.3.1",
     "vue-eslint-parser": "^10.2.0",
     "vue-tsc": "^3.2.4"
-  },
-  "resolutions": {
-    "tmp": "^0.2.4",
-    "js-yaml": "^4.1.1",
-    "glob": "^10.5.0"
   }
 }

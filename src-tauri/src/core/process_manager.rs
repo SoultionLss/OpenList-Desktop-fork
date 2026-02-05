@@ -7,6 +7,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use sysinfo::{ProcessesToUpdate, System};
 
 use crate::utils::path::get_user_data_dir;
 
@@ -139,51 +140,67 @@ impl ProcessManager {
         }
     }
 
-    /// Recover persisted process state from disk
     fn recover_persisted_state(&self) {
         if !self.state_file.exists() {
             log::debug!("No persisted process state file found");
             return;
         }
 
-        let state: PersistedState = match std::fs::read_to_string(&self.state_file) {
-            Ok(content) => match serde_json::from_str(&content) {
-                Ok(state) => state,
-                Err(e) => {
-                    log::warn!("Failed to parse persisted state: {e}");
-                    return;
-                }
-            },
+        let content = match std::fs::read_to_string(&self.state_file) {
+            Ok(c) => c,
             Err(e) => {
                 log::warn!("Failed to read persisted state file: {e}");
                 return;
             }
         };
 
+        let state: PersistedState = match serde_json::from_str(&content) {
+            Ok(s) => s,
+            Err(e) => {
+                log::warn!("Failed to parse persisted state: {e}");
+                return;
+            }
+        };
+
+        let mut sys = System::new_all();
+        sys.refresh_processes(ProcessesToUpdate::All, true);
         let mut processes = self.processes.write();
         let mut recovered_count = 0;
         let mut removed_count = 0;
 
         for persisted in state.processes {
-            if Self::is_process_alive(persisted.pid) {
-                log::info!(
-                    "Recovered running process '{}' (pid: {})",
-                    persisted.id,
-                    persisted.pid
-                );
+            let expected_cmd = &persisted.config.bin_path;
+            let expected_args = &persisted.config.args;
+            let found_pid =
+                self.find_matching_process(&sys, persisted.pid, expected_cmd, expected_args);
+            if let Some(actual_pid) = found_pid {
+                if actual_pid != persisted.pid {
+                    log::info!(
+                        "Process '{}' found with new PID: {}",
+                        persisted.id,
+                        actual_pid
+                    );
+                } else {
+                    log::info!(
+                        "Recovered running process '{}' (pid: {})",
+                        persisted.id,
+                        actual_pid
+                    );
+                }
+
                 processes.insert(
                     persisted.id.clone(),
                     ManagedProcess {
                         config: persisted.config,
-                        child: None, // We don't have the Child handle, but we track the PID
-                        external_pid: Some(persisted.pid),
+                        child: None,
+                        external_pid: Some(actual_pid),
                         started_at: Some(persisted.started_at),
                     },
                 );
                 recovered_count += 1;
             } else {
                 log::info!(
-                    "Process '{}' (pid: {}) is no longer running, removing from state",
+                    "Process '{}' (recorded pid: {}) not found or command mismatch, removing",
                     persisted.id,
                     persisted.pid
                 );
@@ -200,6 +217,73 @@ impl ProcessManager {
         );
 
         self.persist_state();
+    }
+
+    fn find_matching_process(
+        &self,
+        sys: &System,
+        old_pid: u32,
+        expected_cmd: &str,
+        expected_args: &[String],
+    ) -> Option<u32> {
+        let sys_old_pid = sysinfo::Pid::from(old_pid as usize);
+
+        if let Some(proc) = sys.process(sys_old_pid) {
+            if self.is_cmd_match(proc, expected_cmd, expected_args) {
+                return Some(old_pid);
+            }
+        }
+
+        for (pid, proc) in sys.processes() {
+            if self.is_cmd_match(proc, expected_cmd, expected_args) {
+                return Some(pid.as_u32());
+            }
+        }
+
+        None
+    }
+
+    fn is_cmd_match(
+        &self,
+        proc: &sysinfo::Process,
+        expected_cmd: &str,
+        expected_args: &[String],
+    ) -> bool {
+        let actual_exe = proc.exe();
+        if let Some(exe_path) = actual_exe {
+            if !exe_path.to_string_lossy().contains(expected_cmd) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+
+        let actual_args = proc.cmd();
+
+        if actual_args.is_empty() {
+            return false;
+        }
+
+        let actual_args_slice = &actual_args[1..];
+
+        if expected_args.len() > actual_args_slice.len() {
+            return false;
+        }
+
+        for (i, expected_arg) in expected_args.iter().enumerate() {
+            let actual_arg_str = actual_args_slice[i].to_string_lossy();
+
+            let normalized_actual = actual_arg_str.replace("\\\\", "\\");
+            let normalized_expected = expected_arg.replace("\\\\", "\\");
+
+            if normalized_actual != normalized_expected {
+                if !normalized_actual.contains(&normalized_expected) {
+                    return false;
+                }
+            }
+        }
+
+        true
     }
 
     fn persist_state(&self) {

@@ -88,7 +88,7 @@ fn setup_background_update_checker(app_handle: &tauri::AppHandle) {
                 }
             }
             _ => {
-                log::debug!("Auto-update disabled, skipping initial check");
+                log::info!("Auto-update disabled, skipping initial check");
             }
         }
     });
