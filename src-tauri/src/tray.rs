@@ -110,15 +110,15 @@ async fn handle_menu_event(app: &AppHandle, id: &str) -> Result<(), String> {
         ID_QUIT => app.exit(0),
         ID_RESTART_APP => app.restart(),
         ID_SHOW => {
-            get_main_window(app).map(|w| {
-                let _ = w.show();
-                let _ = w.set_focus();
-            });
+            if let Some(window) = get_main_window(app) {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
         }
         ID_HIDE => {
-            get_main_window(app).map(|w| {
+            if let Some(w) = get_main_window(app) {
                 let _ = w.hide();
-            });
+            }
         }
         ID_SERVICE_START | ID_SERVICE_STOP | ID_SERVICE_RESTART => {
             let action = id.replace("_service", "");

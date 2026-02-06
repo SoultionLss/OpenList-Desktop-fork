@@ -76,14 +76,12 @@ pub async fn save_settings_and_restart(
         Some(settings.openlist.data_dir.as_str())
     };
     update_data_config(settings.openlist.port, data_dir)?;
-    match get_openlist_core_process_status().await {
-        Ok(info) => {
-            if info.is_running {
-                restart_openlist_core(state.clone()).await?;
-            }
-        }
-        Err(_) => {}
+    if let Ok(info) = get_openlist_core_process_status().await
+        && info.is_running
+    {
+        restart_openlist_core(state.clone()).await?;
     }
+
     Ok(true)
 }
 

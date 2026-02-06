@@ -228,10 +228,10 @@ impl ProcessManager {
     ) -> Option<u32> {
         let sys_old_pid = sysinfo::Pid::from(old_pid as usize);
 
-        if let Some(proc) = sys.process(sys_old_pid) {
-            if self.is_cmd_match(proc, expected_cmd, expected_args) {
-                return Some(old_pid);
-            }
+        if let Some(proc) = sys.process(sys_old_pid)
+            && self.is_cmd_match(proc, expected_cmd, expected_args)
+        {
+            return Some(old_pid);
         }
 
         for (pid, proc) in sys.processes() {
@@ -276,10 +276,10 @@ impl ProcessManager {
             let normalized_actual = actual_arg_str.replace("\\\\", "\\");
             let normalized_expected = expected_arg.replace("\\\\", "\\");
 
-            if normalized_actual != normalized_expected {
-                if !normalized_actual.contains(&normalized_expected) {
-                    return false;
-                }
+            if normalized_actual != normalized_expected
+                && !normalized_actual.contains(&normalized_expected)
+            {
+                return false;
             }
         }
 
