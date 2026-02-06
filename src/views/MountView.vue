@@ -501,12 +501,7 @@
 
       <template #footer>
         <CustomButton :icon="X" :text="t('common.cancel')" type="secondary" @click="cancelForm" />
-        <CustomButton
-          :icon="Save"
-          :text="editingConfig ? t('common.save') : t('common.add')"
-          :disabled="appStore.loading"
-          @click="saveConfig"
-        />
+        <CustomButton :icon="Save" :text="editingConfig ? t('common.save') : t('common.add')" @click="saveConfig" />
       </template>
     </CustomModal>
   </div>
@@ -939,7 +934,7 @@ const getFlagDescription = (flag: { flag: string; value: string; descriptionKey:
 
 const stopProcess = async (name: string) => {
   try {
-    await appStore.stopMountProcess(name)
+    await appStore.unmountRemote(name)
     message.success(t('mount.messages.processStopped', { name }))
   } catch (error: any) {
     message.error(error.message || t('mount.messages.failedToStopProcess'))

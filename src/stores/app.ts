@@ -23,7 +23,7 @@ export const useAppStore = defineStore('app', () => {
   const remoteConfigs = ref<IRemoteConfig>({})
   const mountInfos = ref<RcloneMountInfo[]>([])
   const logs = ref<string[]>([])
-  const loading = ref(false)
+  const isCoreLoading = ref(false)
   const error = ref<string | undefined>()
   const updateAvailable = ref(false)
   const updateCheck = ref<UpdateCheck | null>(null)
@@ -85,27 +85,26 @@ export const useAppStore = defineStore('app', () => {
   })
 
   // Helper
-  async function withLoading<T>(fn: ActionFn<T>, msg: string): Promise<T> {
-    loading.value = true
+  async function tryCatch<T>(fn: ActionFn<T>, msg: string): Promise<T> {
     try {
       return await fn()
     } catch (e: any) {
       error.value = msg
       console.error(msg, e)
       throw e
-    } finally {
-      loading.value = false
     }
   }
+
   // Settings
-  const loadSettings = () =>
-    withLoading(async () => {
+  const loadSettings = () => {
+    tryCatch(async () => {
       const res = await TauriAPI.settings.load()
       if (res) settings.value = res
       applyTheme(settings.value.app.theme || 'light')
     }, 'Failed to load settings')
+  }
 
-  const saveSettings = () => withLoading(() => TauriAPI.settings.save(settings.value), 'Failed to save settings')
+  const saveSettings = () => tryCatch(() => TauriAPI.settings.save(settings.value), 'Failed to save settings')
 
   async function saveAndRestart(): Promise<boolean> {
     try {
@@ -119,7 +118,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const resetSettings = () =>
-    withLoading(async () => {
+    tryCatch(async () => {
       const res = await TauriAPI.settings.reset()
       if (res) settings.value = res
     }, 'Failed to reset settings')
@@ -135,7 +134,6 @@ export const useAppStore = defineStore('app', () => {
 
   async function createRemoteConfig(name: string, type: string, config: RcloneFormConfig) {
     try {
-      loading.value = true
       const fullConfig = {
         name,
         type,
@@ -166,14 +164,11 @@ export const useAppStore = defineStore('app', () => {
       error.value = 'Failed to create remote configuration'
       console.error('Failed to create remote config:', err)
       throw err
-    } finally {
-      loading.value = false
     }
   }
 
   async function updateRemoteConfig(name: string, type: string, config: RcloneFormConfig) {
     try {
-      loading.value = true
       const fullConfig = {
         name: config.name,
         type,
@@ -192,26 +187,12 @@ export const useAppStore = defineStore('app', () => {
         user: fullConfig.user,
         pass: fullConfig.pass,
       }
-      if (name !== config.name) {
-        const result = createRemoteConfig(config.name, type, config)
-        if (!result) {
-          throw new Error('Failed to create remote configuration')
-        }
-        const deleteResult = await TauriAPI.rclone.remotes.delete(name)
-        if (!deleteResult) {
-          throw new Error('Failed to delete old remote configuration')
-        }
-      } else {
-        const result = await TauriAPI.rclone.remotes.update(name, type, updatedConfig)
-        if (!result) {
-          throw new Error('Failed to update remote configuration')
-        }
-        settings.value.rclone.mount_config[config.name] = fullConfig
+      const result = await TauriAPI.rclone.remotes.update(name, type, updatedConfig)
+      if (!result) {
+        throw new Error('Failed to update remote configuration')
       }
+      settings.value.rclone.mount_config[config.name] = fullConfig
       await loadRemoteConfigs()
-      if (name !== config.name && settings.value.rclone.mount_config[name]) {
-        delete settings.value.rclone.mount_config[name]
-      }
       await saveSettings()
       await loadMountInfos()
       return true
@@ -219,8 +200,6 @@ export const useAppStore = defineStore('app', () => {
       error.value = 'Failed to update remote configuration'
       console.error('Failed to update remote config:', err)
       throw err
-    } finally {
-      loading.value = false
     }
   }
 
@@ -247,13 +226,10 @@ export const useAppStore = defineStore('app', () => {
 
   async function loadRemoteConfigs() {
     try {
-      loading.value = true
       remoteConfigs.value = await TauriAPI.rclone.remotes.listConfig('webdav')
     } catch (err: any) {
       error.value = 'Failed to load remote configurations'
       console.error('Failed to load remote configs:', err)
-    } finally {
-      loading.value = false
     }
   }
 
@@ -295,17 +271,6 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
-  async function stopMountProcess(name: string) {
-    try {
-      await TauriAPI.rclone.mounts.unmount(name)
-      await loadMountInfos()
-    } catch (err: any) {
-      error.value = `Failed to stop mount process for remote ${name}: ${formatError(err)}`
-      console.error('Failed to stop mount process:', err)
-      throw err
-    }
-  }
-
   async function unmountRemote(name: string) {
     try {
       await TauriAPI.rclone.mounts.unmount(name)
@@ -319,7 +284,7 @@ export const useAppStore = defineStore('app', () => {
 
   async function startOpenListCore() {
     try {
-      loading.value = true
+      isCoreLoading.value = true
       const createResponse = await TauriAPI.core.create()
       if (!createResponse || !createResponse.id) {
         throw new Error('Invalid response from TauriAPI.core.create: missing process ID')
@@ -340,13 +305,13 @@ export const useAppStore = defineStore('app', () => {
       await safeUpdateTrayMenu(false)
       throw err
     } finally {
-      loading.value = false
+      isCoreLoading.value = false
     }
   }
 
   async function stopOpenListCore() {
     try {
-      loading.value = true
+      isCoreLoading.value = true
       await TauriAPI.core.stop()
       openlistCoreStatus.value = { running: false }
       await TauriAPI.tray.update(false)
@@ -361,13 +326,13 @@ export const useAppStore = defineStore('app', () => {
       }
       throw err
     } finally {
-      loading.value = false
+      isCoreLoading.value = false
     }
   }
 
   async function restartOpenListCore() {
     try {
-      loading.value = true
+      isCoreLoading.value = true
       await TauriAPI.core.restart()
       await refreshOpenListCoreStatus()
       await TauriAPI.tray.update(openlistCoreStatus.value.running)
@@ -383,7 +348,7 @@ export const useAppStore = defineStore('app', () => {
       }
       throw err
     } finally {
-      loading.value = false
+      isCoreLoading.value = false
     }
   }
 
@@ -416,7 +381,6 @@ export const useAppStore = defineStore('app', () => {
 
   async function clearLogs(source?: 'openlist' | 'rclone' | 'app' | 'all') {
     try {
-      loading.value = true
       source = source || 'openlist'
       const result = await TauriAPI.logs.clear(source)
       if (result) {
@@ -427,8 +391,6 @@ export const useAppStore = defineStore('app', () => {
     } catch (err) {
       error.value = 'Failed to clear logs'
       throw err
-    } finally {
-      loading.value = false
     }
   }
 
@@ -490,16 +452,6 @@ export const useAppStore = defineStore('app', () => {
       await TauriAPI.tray.update(running)
     } catch (err) {
       console.warn('Failed to update tray menu:', err)
-    }
-  }
-
-  async function autoStartCoreIfEnabled() {
-    try {
-      if (settings.value.openlist.auto_launch) {
-        await startOpenListCore()
-      }
-    } catch (err) {
-      console.warn('Failed to auto-start core:', err)
     }
   }
 
@@ -583,7 +535,6 @@ export const useAppStore = defineStore('app', () => {
       await loadSettings()
       await refreshOpenListCoreStatus()
       loadLogs()
-      autoStartCoreIfEnabled()
       await loadRemoteConfigs()
       loadMountInfos()
     } catch (err) {
@@ -603,7 +554,6 @@ export const useAppStore = defineStore('app', () => {
     loadRemoteConfigs,
     defaultRcloneFormConfig,
     loadMountInfos,
-    stopMountProcess,
     deleteRemoteConfig,
     getFullRcloneConfigs,
     fullRcloneConfigs,
@@ -611,7 +561,7 @@ export const useAppStore = defineStore('app', () => {
     settings,
     openlistCoreStatus,
     logs,
-    loading,
+    isCoreLoading,
     error,
     updateAvailable,
     updateCheck,

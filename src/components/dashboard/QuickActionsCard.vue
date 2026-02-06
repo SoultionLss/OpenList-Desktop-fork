@@ -131,7 +131,7 @@ const message = useMessage()
 const appStore = useAppStore()
 const firewallEnabled = ref(false)
 const firewallLoading = ref(false)
-const { isCoreRunning, loading: isCoreLoading } = storeToRefs(appStore)
+const { isCoreRunning, isCoreLoading } = storeToRefs(appStore)
 
 const statusCheckInterval: number | null = null
 
