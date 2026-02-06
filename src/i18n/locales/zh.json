@@ -75,10 +75,6 @@
         "selectAll": "全选 (Ctrl+A)"
       },
       "app": "应用程序",
-      "labels": {
-        "level": "级别：",
-        "source": "来源："
-      },
       "levels": {
         "all": "所有级别",
         "debug": "调试",
@@ -431,7 +427,6 @@
   },
   "update": {
     "autoCheck": "自动检查更新",
-    "availableInstallers": "可用安装程序",
     "backgroundUpdateAvailable": "后台检测到更新",
     "checkError": "检查更新失败",
     "checkForUpdates": "检查更新",
@@ -443,7 +438,6 @@
     "installingUpdate": "安装更新中...",
     "lastChecked": "上次检查",
     "noUpdatesFound": "没有可用更新",
-    "quitApp": "退出应用中...",
     "releaseDate": "发布日期",
     "showUpdate": "显示更新",
     "startingDownload": "开始下载...",
