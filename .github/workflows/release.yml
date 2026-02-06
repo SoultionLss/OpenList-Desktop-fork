@@ -38,7 +38,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Ensure jq and grep are installed
+      - name: Install jq for JSON parsing
         run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Validate tag matches versions in package.json, Cargo.toml, tauri.conf.json
@@ -46,7 +46,7 @@ jobs:
           # Get the tag to validate
           TAG_REF="${{ inputs.version }}"
           
-          TAG_VERSION="${TAG_REF#v}"    # Remove "v" prefix for direct comparison
+          TAG_VERSION="${TAG_REF#v}"
 
           echo "Tag to validate: $TAG_REF"
 
@@ -139,11 +139,11 @@ jobs:
         uses: borales/actions-yarn@v5
         with:
           cmd: install
+
       - name:  install and check
         run: |
           yarn install
           yarn run prebuild:dev --target=${{ matrix.target }}
-
 
       - name: Import Apple Developer Certificate (macOS only)
         if: matrix.os == 'macos-latest'

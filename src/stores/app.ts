@@ -23,8 +23,6 @@ export const useAppStore = defineStore('app', () => {
   const remoteConfigs = ref<IRemoteConfig>({})
   const mountInfos = ref<RcloneMountInfo[]>([])
   const logs = ref<string[]>([])
-  const files = ref<FileItem[]>([])
-  const currentPath = ref('/')
   const loading = ref(false)
   const error = ref<string | undefined>()
   const updateAvailable = ref(false)
@@ -79,6 +77,7 @@ export const useAppStore = defineStore('app', () => {
     }
     return result
   })
+
   const isCoreRunning = computed(() => openlistCoreStatus.value.running)
   const openListCoreUrl = computed(() => {
     const protocol = settings.value.openlist.ssl_enabled ? 'https' : 'http'
@@ -612,8 +611,6 @@ export const useAppStore = defineStore('app', () => {
     settings,
     openlistCoreStatus,
     logs,
-    files,
-    currentPath,
     loading,
     error,
     updateAvailable,

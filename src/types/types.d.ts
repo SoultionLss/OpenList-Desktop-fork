@@ -70,20 +70,6 @@ interface OpenListCoreStatus {
   port?: number
 }
 
-interface MountStatus {
-  mounted: boolean
-  mount_path?: string
-  remote_name?: string
-}
-interface FileItem {
-  name: string
-  path: string
-  isDir: boolean
-  size?: number
-  modified?: string
-  type?: string
-}
-
 // ProcessConfig for creating/registering processes
 interface ProcessConfig {
   id: string
