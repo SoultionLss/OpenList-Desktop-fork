@@ -255,16 +255,26 @@ pub async fn check_mount_status(mount_point: String) -> Result<(), String> {
                     mount_point_clone.clone()
                 };
 
-                fs::read_dir(&drive_path)
-                    .map(|_| ())
-                    .map_err(|e| format!("Access denied: {}", e))
+                let mut it =
+                    fs::read_dir(&drive_path).map_err(|e| format!("Access denied: {}", e))?;
+
+                match it.next() {
+                    Some(Ok(_)) => Ok(()),
+                    Some(Err(e)) => Err(format!("Access denied: {}", e)),
+                    None => Ok(()),
+                }
             }
 
             #[cfg(any(target_os = "linux", target_os = "macos"))]
             {
-                fs::read_dir(&mount_point_clone)
-                    .map(|_| ())
-                    .map_err(|e| format!("Access denied: {}", e))
+                let mut it = fs::read_dir(&mount_point_clone)
+                    .map_err(|e| format!("Access denied: {}", e))?;
+
+                match it.next() {
+                    Some(Ok(_)) => Ok(()),
+                    Some(Err(e)) => Err(format!("Access denied: {}", e)),
+                    None => Ok(()),
+                }
             }
         })
         .await
