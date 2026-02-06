@@ -586,7 +586,7 @@ export const useAppStore = defineStore('app', () => {
       loadLogs()
       autoStartCoreIfEnabled()
       await loadRemoteConfigs()
-      await loadMountInfos()
+      loadMountInfos()
     } catch (err) {
       console.error('Application initialization failed:', err)
       throw err
