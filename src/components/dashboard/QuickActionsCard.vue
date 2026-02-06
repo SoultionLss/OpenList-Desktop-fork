@@ -113,7 +113,7 @@
 <script setup lang="ts">
 import { ExternalLink, HardDrive, Key, Loader, Play, RotateCcw, Settings, Shield, Square } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import { TauriAPI } from '@/api/tauri'
@@ -132,8 +132,6 @@ const appStore = useAppStore()
 const firewallEnabled = ref(false)
 const firewallLoading = ref(false)
 const { isCoreRunning, isCoreLoading } = storeToRefs(appStore)
-
-const statusCheckInterval: number | null = null
 
 const toggleCore = async () => {
   try {
@@ -186,7 +184,6 @@ const resetAdminPassword = async () => {
 
 const checkFirewallStatus = async () => {
   if (!isWindows) return
-
   try {
     firewallEnabled.value = await TauriAPI.firewall.check()
   } catch (error) {
@@ -196,10 +193,8 @@ const checkFirewallStatus = async () => {
 
 const toggleFirewallRule = async () => {
   if (!isWindows) return
-
   try {
     firewallLoading.value = true
-
     if (firewallEnabled.value) {
       await TauriAPI.firewall.remove()
       firewallEnabled.value = false
@@ -233,11 +228,5 @@ const openLink = async (url: string) => {
 
 onMounted(async () => {
   checkFirewallStatus()
-})
-
-onUnmounted(() => {
-  if (statusCheckInterval) {
-    clearInterval(statusCheckInterval)
-  }
 })
 </script>
