@@ -218,12 +218,30 @@ jobs:
         with:
           args: --target ${{ matrix.target }}
 
+      - name: Rename And upload Updater(MacOS)
+        if: matrix.target == 'x86_64-apple-darwin' || matrix.target == 'aarch64-apple-darwin'
+        shell: bash
+        run: |
+          TAG=${{ needs.prepare.outputs.version }}
+          VERSION=${TAG#v}
+          SOURCE_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/macos"
+          TARGET_NAME="OpenList-Desktop-${VERSION}-${{ matrix.arch }}.app.tar.gz"
+          if [ -f "$SOURCE_DIR/OpenList Desktop.app.tar.gz" ]; then
+            mv "$SOURCE_DIR/OpenList Desktop.app.tar.gz" "$SOURCE_DIR/$TARGET_NAME"
+            mv "$SOURCE_DIR/OpenList Desktop.app.tar.gz.sig" "$SOURCE_DIR/$TARGET_NAME.sig"
+          fi
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.platform }}-${{ matrix.arch }}-build
           path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/**/*
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.sig
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.rpm
+            src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.tar.gz
           retention-days: 30
   
   build-linux-arm:
@@ -361,11 +379,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Download changelog
-        uses: actions/download-artifact@v7
-        with:
-          name: changelog
-        continue-on-error: true
 
       - name: Download all build artifacts
         uses: actions/download-artifact@v7
@@ -374,38 +387,20 @@ jobs:
           merge-multiple: true
           path: artifacts
 
-      - name: Get release info
-        id: release_info
+      - name: Generate latest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ needs.prepare.outputs.version }}"
           VERSION="${TAG#v}"
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          
-          # Get release assets
-          RELEASE_DATA=$(gh release view "$TAG" --json assets,body,publishedAt 2>/dev/null || echo "{}")
-          echo "release_data<<EOF" >> $GITHUB_OUTPUT
-          echo "$RELEASE_DATA" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Generate latest.json
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ steps.release_info.outputs.tag }}"
-          VERSION="${{ steps.release_info.outputs.version }}"
           REPO="${{ github.repository }}"
           BASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           
-          # Read release notes from release_notes.md (priority) or changelog.md
+          # Read release notes from release_notes.md
           NOTES=""
           if [ -f "release_notes.md" ]; then
             NOTES=$(cat release_notes.md | jq -Rs .)
-          elif [ -f "changelog.md" ]; then
-            NOTES=$(cat changelog.md | jq -Rs .)
           else
             NOTES="\"Release ${TAG}\""
           fi
@@ -439,15 +434,15 @@ jobs:
           
           # Linux x64
           LINUX_X64_DEB_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_amd64.deb"
-          LINUX_X64_DEB_SIG=$(get_signature "artifacts/deb/openlist-desktop_${VERSION}_amd64.deb.sig")
+          LINUX_X64_DEB_SIG=$(get_signature "artifacts/deb/OpenList-Desktop_${VERSION}_amd64.deb.sig")
           
           # Linux arm64
           LINUX_ARM64_DEB_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_arm64.deb"
-          LINUX_ARM64_DEB_SIG=$(get_signature "artifacts/deb/openlist-desktop_${VERSION}_arm64.deb.sig")
+          LINUX_ARM64_DEB_SIG=$(get_signature "artifacts/deb/OpenList-Desktop_${VERSION}_arm64.deb.sig")
 
           # Linux armhf
           LINUX_ARMHF_DEB_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_armhf.deb"
-          LINUX_ARMHF_DEB_SIG=$(get_signature "artifacts/deb/openlist-desktop_${VERSION}_armhf.deb.sig")
+          LINUX_ARMHF_DEB_SIG=$(get_signature "artifacts/deb/OpenList-Desktop_${VERSION}_armhf.deb.sig")
           
           # Create latest.json
           cat > latest.json << EOF

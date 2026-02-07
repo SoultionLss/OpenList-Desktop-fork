@@ -466,15 +466,15 @@ jobs:
           
           # Linux x64
           LINUX_X64_DEB_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_amd64.deb"
-          LINUX_X64_DEB_SIG=$(get_signature "artifacts/deb/openlist-desktop_${VERSION}_amd64.deb.sig")
+          LINUX_X64_DEB_SIG=$(get_signature "artifacts/deb/OpenList-Desktop_${VERSION}_amd64.deb.sig")
           
           # Linux arm64
           LINUX_ARM64_DEB_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_arm64.deb"
-          LINUX_ARM64_DEB_SIG=$(get_signature "artifacts/deb/openlist-desktop_${VERSION}_arm64.deb.sig")
+          LINUX_ARM64_DEB_SIG=$(get_signature "artifacts/deb/OpenList-Desktop_${VERSION}_arm64.deb.sig")
 
           # Linux armhf
           LINUX_ARMHF_DEB_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_armhf.deb"
-          LINUX_ARMHF_DEB_SIG=$(get_signature "artifacts/deb/openlist-desktop_${VERSION}_armhf.deb.sig")
+          LINUX_ARMHF_DEB_SIG=$(get_signature "artifacts/deb/OpenList-Desktop_${VERSION}_armhf.deb.sig")
           
           # Create latest.json
           cat > latest.json << EOF
