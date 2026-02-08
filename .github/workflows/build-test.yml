@@ -226,9 +226,9 @@ jobs:
           VERSION=${TAG#v}
           SOURCE_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/macos"
           TARGET_NAME="OpenList-Desktop-${VERSION}-${{ matrix.arch }}.app.tar.gz"
-          if [ -f "$SOURCE_DIR/OpenList Desktop.app.tar.gz" ]; then
-            mv "$SOURCE_DIR/OpenList Desktop.app.tar.gz" "$SOURCE_DIR/$TARGET_NAME"
-            mv "$SOURCE_DIR/OpenList Desktop.app.tar.gz.sig" "$SOURCE_DIR/$TARGET_NAME.sig"
+          if [ -f "$SOURCE_DIR/OpenList-Desktop.app.tar.gz" ]; then
+            mv "$SOURCE_DIR/OpenList-Desktop.app.tar.gz" "$SOURCE_DIR/$TARGET_NAME"
+            mv "$SOURCE_DIR/OpenList-Desktop.app.tar.gz.sig" "$SOURCE_DIR/$TARGET_NAME.sig"
           fi
 
       - name: Upload artifacts
