@@ -23,9 +23,9 @@ use cmd::os_operate::{
 };
 use cmd::rclone_core::check_rclone_available;
 use cmd::rclone_mount::{
-    check_mount_status, create_rclone_mount_remote_process, get_mount_info_list,
-    rclone_create_remote, rclone_delete_remote, rclone_list_config, rclone_list_remotes,
-    rclone_update_remote, unmount_remote,
+    check_mount_status, get_mount_info_list, mount_remote, rclone_create_remote,
+    rclone_delete_remote, rclone_list_config, rclone_list_remotes, rclone_update_remote,
+    unmount_remote,
 };
 use cmd::updater::{get_current_version, is_auto_check_enabled, set_auto_check_enabled};
 use object::structs::*;
@@ -170,7 +170,7 @@ async fn auto_mount_rclone_remotes_on_login(app_handle: &tauri::AppHandle) -> Re
             name: id.clone(),
             args,
         };
-        match create_rclone_mount_remote_process(create_remote_config, app_state.clone()).await {
+        match mount_remote(create_remote_config, app_state.clone()).await {
             Ok(_) => {
                 log::info!(
                     "Rclone remote '{}' mounted successfully on login",
@@ -231,7 +231,7 @@ pub fn run() {
             rclone_update_remote,
             rclone_delete_remote,
             // Rclone mount process management
-            create_rclone_mount_remote_process,
+            mount_remote,
             unmount_remote,
             check_mount_status,
             get_mount_info_list,

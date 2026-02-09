@@ -1,13 +1,12 @@
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use tauri::State;
 use tokio::task::JoinSet;
-use tokio::time::timeout;
+use tokio::time::{Duration, sleep, timeout};
 
 use crate::conf::rclone_config::{RcloneConfigFile, WebDavRemoteConfig, reveal_password};
 use crate::core::process_manager::{PROCESS_MANAGER, ProcessConfig, ProcessInfo};
@@ -153,7 +152,7 @@ pub async fn rclone_delete_remote(
 }
 
 #[tauri::command]
-pub async fn create_rclone_mount_remote_process(
+pub async fn mount_remote(
     config: MountProcessInput,
     state: State<'_, AppState>,
 ) -> Result<ProcessInfo, String> {
@@ -202,11 +201,10 @@ pub async fn create_rclone_mount_remote_process(
     };
 
     if PROCESS_MANAGER.is_registered(&config.id) {
-        let info = PROCESS_MANAGER.get_status(&config.id)?;
-        if !info.is_running {
-            return PROCESS_MANAGER.start(&config.id);
-        }
-        return Ok(info);
+        let _ = PROCESS_MANAGER.stop(&config.id);
+        sleep(Duration::from_millis(500)).await;
+        let _ = PROCESS_MANAGER.remove(&config.id);
+        sleep(Duration::from_millis(500)).await;
     }
 
     PROCESS_MANAGER.register_and_start(process_config)

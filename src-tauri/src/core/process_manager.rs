@@ -725,7 +725,7 @@ impl ProcessManager {
     pub fn remove(&self, id: &str) -> Result<(), String> {
         let mut processes = self.processes.write();
 
-        if let Some(_) = processes.remove(id) {
+        if processes.remove(id).is_some() {
             drop(processes);
             self.persist_state();
             Ok(())
