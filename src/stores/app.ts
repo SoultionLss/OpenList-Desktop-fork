@@ -5,6 +5,9 @@ import { TauriAPI } from '../api/tauri'
 
 type ActionFn<T = any> = () => Promise<T>
 
+const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+let mediaQueryListener: ((e: MediaQueryListEvent) => void) | null = null
+
 export const useAppStore = defineStore('app', () => {
   const settings = ref<MergedSettings>({
     openlist: { port: 5244, data_dir: '', auto_launch: false, ssl_enabled: false, binary_path: undefined },
@@ -97,7 +100,7 @@ export const useAppStore = defineStore('app', () => {
 
   // Settings
   const loadSettings = () => {
-    tryCatch(async () => {
+    return tryCatch(async () => {
       const res = await TauriAPI.settings.load()
       if (res) settings.value = res
       applyTheme(settings.value.app.theme || 'light')
@@ -457,22 +460,25 @@ export const useAppStore = defineStore('app', () => {
 
   function applyTheme(theme: string) {
     const root = document.documentElement
-    root.classList.remove('light', 'dark', 'auto')
 
+    root.classList.remove('light', 'dark', 'auto')
+    if (mediaQueryListener) {
+      mediaQuery.removeEventListener('change', mediaQueryListener)
+      mediaQueryListener = null
+    }
     if (theme === 'auto') {
       root.classList.add('auto')
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
       root.classList.add(prefersDark ? 'dark' : 'light')
       root.setAttribute('data-theme', prefersDark ? 'dark' : 'light')
-
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      mediaQuery.addEventListener('change', e => {
+      mediaQueryListener = (e: MediaQueryListEvent) => {
         if (settings.value.app.theme === 'auto') {
           root.classList.remove('light', 'dark')
           root.classList.add(e.matches ? 'dark' : 'light')
           root.setAttribute('data-theme', e.matches ? 'dark' : 'light')
         }
-      })
+      }
+      mediaQuery.addEventListener('change', mediaQueryListener)
     } else {
       root.classList.add(theme)
       root.setAttribute('data-theme', theme)
