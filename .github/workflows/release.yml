@@ -146,7 +146,7 @@ jobs:
           yarn run prebuild:dev --target=${{ matrix.target }}
 
       - name: Import Apple Developer Certificate (macOS only)
-        if: matrix.os == 'macos-latest'
+        if: matrix.platform == 'macos' && env.APPLE_CERTIFICATE != ''
         uses: apple-actions/import-codesign-certs@v5
         with:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
@@ -319,9 +319,9 @@ jobs:
           echo "BUILDTIME=$(TZ=Asia/Shanghai date)" >> $GITHUB_ENV
 
       - name: Upload ARM artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: linux-${{ matrix.target }}-artifacts
+          name: linux-${{ matrix.target }}-build
           path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
             src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.rpm
@@ -332,20 +332,15 @@ jobs:
     name: Publish Release
     needs: [ build, release-for-linux-arm]
     runs-on: ubuntu-latest
-    if: always() && needs.build.result == 'success'
+    if: always() && needs.build.result == 'success' && needs.release-for-linux-arm.result == 'success'
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      
-      - name: Download changelog
-        uses: actions/download-artifact@v7
-        with:
-          name: changelog
 
-      - name: Download ARM artifacts
+      - name: Download all build artifacts
         uses: actions/download-artifact@v7
         with:
-          pattern: '*-artifacts'
+          pattern: '*-build'
           merge-multiple: true
           path: artifacts
 
@@ -358,7 +353,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
 
-      - name: Update release with ARM artifacts
+      - name: Update release with all artifacts
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.version }}
@@ -393,36 +388,12 @@ jobs:
           path: artifacts
         continue-on-error: true
 
-      - name: Download ARM artifacts
-        uses: actions/download-artifact@v7
-        with:
-          pattern: '*-artifacts'
-          merge-multiple: true
-          path: artifacts
-        continue-on-error: true
-
-      - name: Get release info
-        id: release_info
+      - name: Generate latest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ inputs.version }}"
           VERSION="${TAG#v}"
-          echo "tag=$TAG" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          
-          # Get release assets
-          RELEASE_DATA=$(gh release view "$TAG" --json assets,body,publishedAt 2>/dev/null || echo "{}")
-          echo "release_data<<EOF" >> $GITHUB_OUTPUT
-          echo "$RELEASE_DATA" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Generate latest.json
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ steps.release_info.outputs.tag }}"
-          VERSION="${{ steps.release_info.outputs.version }}"
           REPO="${{ github.repository }}"
           BASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -431,8 +402,6 @@ jobs:
           NOTES=""
           if [ -f "release_notes.md" ]; then
             NOTES=$(cat release_notes.md | jq -Rs .)
-          elif [ -f "changelog.md" ]; then
-            NOTES=$(cat changelog.md | jq -Rs .)
           else
             NOTES="\"Release ${TAG}\""
           fi
@@ -457,7 +426,7 @@ jobs:
           WIN_ARM64_SIG=$(get_signature "artifacts/nsis/OpenList-Desktop_${VERSION}_arm64-setup.exe.sig")
           
           # macOS arm64 (Apple Silicon)
-          MAC_ARM64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_aarch64.app.tar.gz"
+          MAC_ARM64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}-arm64.app.tar.gz"
           MAC_ARM64_SIG=$(get_signature "artifacts/macos/OpenList-Desktop-${VERSION}-arm64.app.tar.gz.sig")
           
           # macOS x64 (Intel)
@@ -522,7 +491,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ steps.release_info.outputs.tag }}"
+          TAG="${{ inputs.version }}"
           
           # Upload latest.json to the release
           gh release upload "$TAG" latest.json --clobber

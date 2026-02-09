@@ -425,7 +425,7 @@ jobs:
           WIN_ARM64_SIG=$(get_signature "artifacts/nsis/OpenList-Desktop_${VERSION}_arm64-setup.exe.sig")
           
           # macOS arm64 (Apple Silicon)
-          MAC_ARM64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}_aarch64.app.tar.gz"
+          MAC_ARM64_URL="${BASE_URL}/OpenList-Desktop_${VERSION}-arm64.app.tar.gz"
           MAC_ARM64_SIG=$(get_signature "artifacts/macos/OpenList-Desktop-${VERSION}-arm64.app.tar.gz.sig")
           
           # macOS x64 (Intel)
