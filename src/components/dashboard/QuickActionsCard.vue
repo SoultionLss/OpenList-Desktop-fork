@@ -13,39 +13,31 @@
           </div>
         </div>
         <div class="flex flex-wrap gap-2 items-center w-full">
-          <div>
-            <CustomButton v-if="isCoreLoading" :icon="Loader" text="" type="secondary" disabled />
-            <CustomButton
-              v-else-if="isCoreRunning"
-              type="custom"
-              class="bg-danger/80! hover:bg-danger!"
-              text-class="text-white"
-              icon-class="text-white"
-              :icon="Square"
-              :text="t('dashboard.quickActions.stopOpenListCore')"
-              @click="toggleCore"
-            />
-            <CustomButton
-              v-else
-              type="primary"
-              :icon="Play"
-              :text="t('dashboard.quickActions.startOpenListCore')"
-              @click="toggleCore"
-            />
-          </div>
-
+          <CustomButton v-if="isCoreLoading" class="flex-1" :icon="Loader" text="" type="secondary" disabled />
           <CustomButton
-            type="secondary"
-            :disabled="!isCoreRunning || isCoreLoading"
-            :icon="isCoreLoading ? Loader : RotateCcw"
-            :text="t('dashboard.quickActions.restart')"
-            @click="restartCore"
+            v-else-if="isCoreRunning"
+            type="custom"
+            class="bg-danger/80! hover:bg-danger! flex-1"
+            text-class="text-white"
+            icon-class="text-white"
+            :icon="Square"
+            :text="t('dashboard.quickActions.stopOpenListCore')"
+            @click="toggleCore"
+          />
+          <CustomButton
+            v-else
+            type="primary"
+            class="flex-1"
+            :icon="Play"
+            :text="t('dashboard.quickActions.startOpenListCore')"
+            @click="toggleCore"
           />
 
           <CustomButton
             type="secondary"
             :disabled="!isCoreRunning || isCoreLoading"
             :icon="ExternalLink"
+            class="flex-1"
             :text="t('dashboard.quickActions.openWeb')"
             @click="openWebUI"
           />
@@ -138,14 +130,6 @@ const toggleCore = async () => {
     isCoreRunning.value ? await appStore.stopOpenListCore() : await appStore.startOpenListCore()
   } catch (error) {
     console.error('Failed to toggle OpenList Core:', error)
-  }
-}
-
-const restartCore = async () => {
-  try {
-    await appStore.restartOpenListCore()
-  } catch (error) {
-    console.error('Failed to restart core:', error)
   }
 }
 

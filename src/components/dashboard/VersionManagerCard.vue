@@ -5,7 +5,7 @@
       <h4 class="font-semibold text-main">{{ t('dashboard.versionManager.title') }}</h4>
     </div>
     <div class="flex flex-1 items-center justify-center min-h-0">
-      <div class="flex flex-row gap-3 w-full">
+      <div class="flex flex-wrap gap-3 w-full">
         <div class="flex flex-col bg-surface rounded-md border border-border-secondary p-4 shadow-sm flex-1">
           <div class="flex justify-between items-start mb-3 gap-2">
             <div class="flex flex-col gap-1.5 flex-1 min-w-0">

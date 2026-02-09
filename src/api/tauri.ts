@@ -9,10 +9,8 @@ let pendingUpdateInstance: Awaited<ReturnType<typeof check>> = null
 export class TauriAPI {
   // --- OpenList Core management ---
   static core = {
-    create: (): Promise<ProcessInfo> => invoke('create_openlist_core_process'),
     start: (): Promise<ProcessInfo> => invoke('start_openlist_core'),
     stop: (): Promise<ProcessInfo> => invoke('stop_openlist_core'),
-    restart: (): Promise<ProcessInfo> => invoke('restart_openlist_core'),
     getStatus: (): Promise<OpenListCoreStatus> => invoke('get_openlist_core_status'),
   }
 

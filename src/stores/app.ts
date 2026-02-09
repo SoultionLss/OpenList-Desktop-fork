@@ -288,11 +288,11 @@ export const useAppStore = defineStore('app', () => {
   async function startOpenListCore() {
     try {
       isCoreLoading.value = true
-      const createResponse = await TauriAPI.core.create()
-      if (!createResponse || !createResponse.id) {
-        throw new Error('Invalid response from TauriAPI.core.create: missing process ID')
+      const startResponse = await TauriAPI.core.start()
+      if (!startResponse || !startResponse.id) {
+        throw new Error('Invalid response from TauriAPI.core.start: missing process ID')
       }
-      openlistProcessId.value = createResponse.id
+      openlistProcessId.value = startResponse.id
       await refreshOpenListCoreStatus()
 
       await TauriAPI.tray.update(openlistCoreStatus.value.running)
@@ -326,28 +326,6 @@ export const useAppStore = defineStore('app', () => {
         await refreshOpenListCoreStatus()
       } catch (refreshErr) {
         console.error('Failed to refresh service status after stop failure:', refreshErr)
-      }
-      throw err
-    } finally {
-      isCoreLoading.value = false
-    }
-  }
-
-  async function restartOpenListCore() {
-    try {
-      isCoreLoading.value = true
-      await TauriAPI.core.restart()
-      await refreshOpenListCoreStatus()
-      await TauriAPI.tray.update(openlistCoreStatus.value.running)
-    } catch (err: any) {
-      const errorMessage = `Failed to restart core: ${formatError(err)}`
-      error.value = errorMessage
-      console.error('Failed to restart core:', err)
-      try {
-        await refreshOpenListCoreStatus()
-        await safeUpdateTrayMenu(openlistCoreStatus.value.running)
-      } catch (refreshErr) {
-        console.error('Failed to refresh core status after restart failure:', refreshErr)
       }
       throw err
     } finally {
@@ -582,7 +560,6 @@ export const useAppStore = defineStore('app', () => {
 
     startOpenListCore,
     stopOpenListCore,
-    restartOpenListCore,
     refreshOpenListCoreStatus,
     loadLogs,
     clearLogs,

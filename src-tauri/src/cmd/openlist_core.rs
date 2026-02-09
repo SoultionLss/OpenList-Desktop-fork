@@ -46,42 +46,7 @@ fn build_openlist_config(state: State<'_, AppState>) -> Result<ProcessConfig, St
 }
 
 #[tauri::command]
-pub async fn create_openlist_core_process(
-    state: State<'_, AppState>,
-) -> Result<ProcessInfo, String> {
-    let config = build_openlist_config(state)?;
-
-    if PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
-        let info = PROCESS_MANAGER.get_status(OPENLIST_CORE_PROCESS_ID)?;
-        if !info.is_running {
-            return PROCESS_MANAGER.start(OPENLIST_CORE_PROCESS_ID);
-        }
-        return Ok(info);
-    }
-
-    PROCESS_MANAGER.register_and_start(config)
-}
-
-#[tauri::command]
-pub async fn start_openlist_core(_state: State<'_, AppState>) -> Result<ProcessInfo, String> {
-    if !PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
-        return Err(
-            "OpenList Core process not registered. Call create_openlist_core_process first.".into(),
-        );
-    }
-    PROCESS_MANAGER.start(OPENLIST_CORE_PROCESS_ID)
-}
-
-#[tauri::command]
-pub async fn stop_openlist_core(_state: State<'_, AppState>) -> Result<ProcessInfo, String> {
-    if !PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
-        return Err("OpenList Core process not registered.".into());
-    }
-    PROCESS_MANAGER.stop(OPENLIST_CORE_PROCESS_ID)
-}
-
-#[tauri::command]
-pub async fn restart_openlist_core(state: State<'_, AppState>) -> Result<ProcessInfo, String> {
+pub async fn start_openlist_core(state: State<'_, AppState>) -> Result<ProcessInfo, String> {
     let config = build_openlist_config(state)?;
 
     if PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
@@ -92,6 +57,16 @@ pub async fn restart_openlist_core(state: State<'_, AppState>) -> Result<Process
     }
 
     PROCESS_MANAGER.register_and_start(config)
+}
+
+#[tauri::command]
+pub async fn stop_openlist_core(_state: State<'_, AppState>) -> Result<ProcessInfo, String> {
+    if !PROCESS_MANAGER.is_registered(OPENLIST_CORE_PROCESS_ID) {
+        return Err("OpenList Core process not registered.".into());
+    }
+    let raw_info = PROCESS_MANAGER.stop(OPENLIST_CORE_PROCESS_ID);
+    PROCESS_MANAGER.remove(OPENLIST_CORE_PROCESS_ID)?;
+    raw_info
 }
 
 pub async fn get_openlist_core_process_status() -> Result<ProcessInfo, String> {

@@ -68,7 +68,7 @@
       </div>
 
       <div class="rounded-md px-4 bg-bg-secondary">
-        <div class="flex items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <CustomButton
             type="secondary"
             :icon="Code"

@@ -626,13 +626,6 @@ impl ProcessManager {
         Ok(info)
     }
 
-    #[allow(dead_code)]
-    pub fn restart(&self, id: &str) -> Result<ProcessInfo, String> {
-        self.stop(id)?;
-        std::thread::sleep(std::time::Duration::from_millis(200));
-        self.start(id)
-    }
-
     /// Get status of a specific process
     pub fn get_status(&self, id: &str) -> Result<ProcessInfo, String> {
         let mut processes = self.processes.write();
@@ -732,17 +725,7 @@ impl ProcessManager {
     pub fn remove(&self, id: &str) -> Result<(), String> {
         let mut processes = self.processes.write();
 
-        if let Some(mut managed) = processes.remove(id) {
-            if let Some(ref mut child) = managed.child {
-                let _ = child.kill();
-                let _ = child.wait();
-            }
-            if let Some(ext_pid) = managed.external_pid
-                && Self::is_process_alive(ext_pid)
-            {
-                Self::kill_process_by_pid(ext_pid);
-            }
-
+        if let Some(_) = processes.remove(id) {
             drop(processes);
             self.persist_state();
             Ok(())
@@ -751,73 +734,12 @@ impl ProcessManager {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn update_config(&self, id: &str, config: ProcessConfig) -> Result<ProcessInfo, String> {
-        let mut processes = self.processes.write();
-
-        let managed = processes
-            .get_mut(id)
-            .ok_or_else(|| format!("Process with id '{id}' not found"))?;
-
-        if let Some(ref mut child) = managed.child
-            && child.try_wait().is_ok_and(|status| status.is_none())
-        {
-            return Err("Cannot update config while process is running. Stop it first.".into());
-        }
-
-        if let Some(ext_pid) = managed.external_pid
-            && Self::is_process_alive(ext_pid)
-        {
-            return Err("Cannot update config while process is running. Stop it first.".into());
-        }
-
-        managed.config = config;
-
-        Ok(ProcessInfo {
-            id: managed.config.id.clone(),
-            name: managed.config.name.clone(),
-            is_running: false,
-            pid: None,
-            started_at: None,
-            config: managed.config.clone(),
-        })
-    }
-
     pub fn is_registered(&self, id: &str) -> bool {
         self.processes.read().contains_key(id)
     }
 
     pub fn is_running(&self, id: &str) -> bool {
         self.get_status(id).is_ok_and(|info| info.is_running)
-    }
-
-    #[allow(dead_code)]
-    pub fn stop_all(&self) {
-        let mut processes = self.processes.write();
-
-        for (id, managed) in processes.iter_mut() {
-            if let Some(ref mut child) = managed.child {
-                log::info!("Stopping process '{}' during cleanup", id);
-                let _ = child.kill();
-                let _ = child.wait();
-            } else if let Some(ext_pid) = managed.external_pid
-                && Self::is_process_alive(ext_pid)
-            {
-                log::info!(
-                    "Stopping process '{}' (external pid: {}) during cleanup",
-                    id,
-                    ext_pid
-                );
-                Self::kill_process_by_pid(ext_pid);
-            }
-
-            managed.child = None;
-            managed.external_pid = None;
-            managed.started_at = None;
-        }
-
-        drop(processes);
-        self.persist_state();
     }
 }
 

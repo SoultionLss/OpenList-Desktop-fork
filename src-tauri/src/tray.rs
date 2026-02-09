@@ -12,7 +12,6 @@ const ID_HIDE: &str = "hide";
 const ID_RESTART_APP: &str = "restart";
 const ID_SERVICE_START: &str = "start_service";
 const ID_SERVICE_STOP: &str = "stop_service";
-const ID_SERVICE_RESTART: &str = "restart_service";
 
 pub fn create_tray(app_handle: &AppHandle) -> tauri::Result<()> {
     let menu = build_menu(app_handle, false)?;
@@ -66,21 +65,9 @@ fn build_menu(app: &AppHandle, is_running: bool) -> tauri::Result<Menu<tauri::Wr
         is_running,
         None::<&str>,
     )?;
-    let restart_s = MenuItem::with_id(
-        app,
-        ID_SERVICE_RESTART,
-        "重启OpenList",
-        is_running,
-        None::<&str>,
-    )?;
 
-    let service_submenu = Submenu::with_id_and_items(
-        app,
-        "service",
-        "核心控制",
-        true,
-        &[&start_s, &stop_s, &restart_s],
-    )?;
+    let service_submenu =
+        Submenu::with_id_and_items(app, "service", "核心控制", true, &[&start_s, &stop_s])?;
 
     Menu::with_items(
         app,
@@ -120,7 +107,7 @@ async fn handle_menu_event(app: &AppHandle, id: &str) -> Result<(), String> {
                 let _ = w.hide();
             }
         }
-        ID_SERVICE_START | ID_SERVICE_STOP | ID_SERVICE_RESTART => {
+        ID_SERVICE_START | ID_SERVICE_STOP => {
             let action = id.replace("_service", "");
             handle_core_action(app, &action).await?;
             let is_running = action != "stop";
@@ -152,7 +139,6 @@ async fn handle_core_action(app: &AppHandle, action: &str) -> Result<ProcessInfo
     match action {
         "start" => cmd::openlist_core::start_openlist_core(state.clone()).await,
         "stop" => cmd::openlist_core::stop_openlist_core(state.clone()).await,
-        "restart" => cmd::openlist_core::restart_openlist_core(state.clone()).await,
         _ => Err(format!("Unknown core action: {}", action)),
     }
 }

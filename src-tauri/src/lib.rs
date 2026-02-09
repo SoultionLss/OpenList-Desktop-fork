@@ -15,10 +15,7 @@ use cmd::config::{load_settings, reset_settings, save_settings, save_settings_an
 use cmd::firewall::{add_firewall_rule, check_firewall_rule, remove_firewall_rule};
 use cmd::logs::{clear_logs, get_logs};
 use cmd::macos_dock::set_dock_icon_visibility;
-use cmd::openlist_core::{
-    create_openlist_core_process, get_openlist_core_status, restart_openlist_core,
-    start_openlist_core, stop_openlist_core,
-};
+use cmd::openlist_core::{get_openlist_core_status, start_openlist_core, stop_openlist_core};
 use cmd::os_operate::{
     get_available_versions, open_file, open_folder, open_logs_directory, open_openlist_data_dir,
     open_rclone_config_file, open_settings_file, open_url_in_browser, select_directory,
@@ -103,7 +100,7 @@ async fn auto_start_openlist_core_on_login(app_handle: &tauri::AppHandle) -> Res
         .ok_or("Failed to read app settings")?;
     if settings.openlist.auto_launch {
         log::info!("Auto-start on login is enabled, starting OpenList Core process");
-        match create_openlist_core_process(app_state.clone()).await {
+        match start_openlist_core(app_state.clone()).await {
             Ok(_) => {
                 log::info!("OpenList Core process started successfully on login");
             }
@@ -143,7 +140,7 @@ async fn auto_mount_rclone_remotes_on_login(app_handle: &tauri::AppHandle) -> Re
         return Ok(());
     }
     log::info!("Trying to auto-start OpenList Core before mounting remotes");
-    match create_openlist_core_process(app_state.clone()).await {
+    match start_openlist_core(app_state.clone()).await {
         Ok(_) => {
             log::info!("OpenList Core process started successfully before mounting remotes");
         }
@@ -222,10 +219,8 @@ pub fn run() {
         .manage(app_state)
         .invoke_handler(tauri::generate_handler![
             // OpenList Core management
-            create_openlist_core_process,
             start_openlist_core,
             stop_openlist_core,
-            restart_openlist_core,
             get_openlist_core_status,
             // Rclone availability check
             check_rclone_available,
