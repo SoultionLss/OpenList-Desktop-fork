@@ -643,12 +643,12 @@ const commonFlags = [
   },
 ]
 
-const filterList = [
+const filterList = computed(() => [
   { label: t('mount.filters.allStatus'), value: 'all' },
   { label: t('mount.status.mounted'), value: 'mounted' },
   { label: t('mount.status.unmounted'), value: 'unmounted' },
   { label: t('mount.status.error'), value: 'error' },
-]
+])
 
 const statusMap = computed(() => {
   const map: Record<string, 'mounted' | 'unmounted' | 'error' | 'mounting'> = {}

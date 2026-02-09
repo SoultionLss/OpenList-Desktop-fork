@@ -470,14 +470,6 @@ const filteredLogs = computed(() => {
     .filter((log: string | string[]) => !log.includes('/ping'))
     .map(parseLogEntry)
 
-  if (filterLevel.value !== 'all') {
-    logs = logs.filter((log: any) => log.level === filterLevel.value)
-  }
-
-  if (filterSource.value !== 'all') {
-    logs = logs.filter((log: any) => log.source === filterSource.value)
-  }
-
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase()
     logs = logs.filter(

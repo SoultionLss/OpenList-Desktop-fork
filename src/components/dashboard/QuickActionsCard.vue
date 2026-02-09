@@ -150,9 +150,9 @@ const copyAdminPassword = async () => {
   const password = await getAdminPassword()
   if (password) {
     await navigator.clipboard.writeText(password)
-    message.success('Admin password copied: ' + password)
+    message.success(t('dashboard.quickActions.copyAdminPasswordSuccess'))
   } else {
-    message.error('No admin password found.')
+    message.error(t('dashboard.quickActions.copyAdminPasswordFailed'))
   }
 }
 
@@ -160,9 +160,9 @@ const resetAdminPassword = async () => {
   const newPassword = await appStore.resetAdminPassword()
   if (newPassword) {
     await navigator.clipboard.writeText(newPassword)
-    message.success('Admin password reset and copied: ' + newPassword)
+    message.success(t('dashboard.quickActions.resetAdminPasswordSuccess'))
   } else {
-    message.error('Failed to reset admin password. Please check the logs.')
+    message.error(t('dashboard.quickActions.resetAdminPasswordFailed'))
   }
 }
 

@@ -260,6 +260,20 @@
                 :tips="t('settings.app.hideDockIcon.description')"
               />
             </SettingCard>
+            <SettingCard>
+              <SingleSelect
+                v-model="currentLanguage"
+                :key-list="languageOptions.map(item => item.value)"
+                :title="t('settings.app.language.title')"
+                :fronticon="false"
+                :tight="false"
+                :placeholder="languageOptions.find(item => item.value === currentLanguage)?.label || currentLanguage"
+              >
+                <template #item="{ item }">
+                  {{ languageOptions.find(opt => opt.value === item)?.label || item }}
+                </template>
+              </SingleSelect>
+            </SettingCard>
           </SettingSection>
 
           <SettingSection :icon="Github" :title="t('settings.app.ghProxy.title')">
@@ -314,6 +328,7 @@ import CustomNavCard from '@/components/common/CustomNavCard.vue'
 import CustomSwitch from '@/components/common/CustomSwitch.vue'
 import SettingCard from '@/components/common/SettingCard.vue'
 import SettingSection from '@/components/common/SettingSection.vue'
+import SingleSelect from '@/components/common/SingleSelect.vue'
 import useConfirm from '@/hooks/useConfirm'
 import useMessage from '@/hooks/useMessage'
 import { getAdminPassword } from '@/utils/common'
@@ -326,13 +341,24 @@ import { useAppStore } from '../stores/app'
 
 const appStore = useAppStore()
 const route = useRoute()
-const { t } = useTranslation()
+const { t, currentLocale, switchLanguage } = useTranslation()
 const isSaving = ref(false)
 const message = useMessage()
 const confirm = useConfirm()
 const activeTab = ref('openlist')
 const autoStartApp = ref(false)
 const isResettingPassword = ref(false)
+
+const languageOptions = [
+  { label: '中文', value: 'zh' },
+  { label: 'English', value: 'en' },
+]
+
+const currentLanguage = ref(currentLocale.value)
+
+watch(currentLanguage, newLang => {
+  switchLanguage(newLang)
+})
 
 const openlistCoreSettings = reactive({ ...appStore.settings.openlist })
 const rcloneSettings = reactive({ ...appStore.settings.rclone })

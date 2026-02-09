@@ -38,6 +38,8 @@
     "quickActions": {
       "configRclone": "Configure RClone",
       "copyAdminPassword": "Copy admin password",
+      "copyAdminPasswordFailed": "Failed to copy admin password. Please check the logs for more details.",
+      "copyAdminPasswordSuccess": "Admin password copied to clipboard successfully!",
       "firewall": {
         "added": "Port allowed successfully",
         "disable": "Remove Port",
@@ -51,6 +53,8 @@
       "openWeb": "Web",
       "rclone": "RClone",
       "resetAdminPassword": "Reset admin password",
+      "resetAdminPasswordFailed": "Failed to reset admin password. Please check the logs for more details.",
+      "resetAdminPasswordSuccess": "Admin password reset successfully! The new password has been copied to the clipboard.",
       "restart": "Restart",
       "startOpenListCore": "Start",
       "stopOpenListCore": "Stop",
@@ -311,6 +315,9 @@
       "hideDockIcon": {
         "description": "Hide the application from the Dock and only show in the menu bar tray (macOS only, requires restart)",
         "title": "Hide Dock icon (tray only)"
+      },
+      "language": {
+        "title": "Language"
       },
       "links": {
         "openInBrowser": {

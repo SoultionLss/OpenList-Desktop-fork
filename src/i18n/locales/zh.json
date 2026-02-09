@@ -38,6 +38,8 @@
     "quickActions": {
       "configRclone": "配置 RClone",
       "copyAdminPassword": "复制管理员密码",
+      "copyAdminPasswordFailed": "复制管理员密码失败。请查看日志了解详细信息。",
+      "copyAdminPasswordSuccess": "管理员密码已复制到剪贴板！",
       "firewall": {
         "added": "端口放行成功",
         "disable": "移除端口",
@@ -51,6 +53,8 @@
       "openWeb": "网页",
       "rclone": "RClone",
       "resetAdminPassword": "重置管理员密码",
+      "resetAdminPasswordFailed": "重置管理员密码失败。请查看日志了解详细信息。",
+      "resetAdminPasswordSuccess": "管理员密码重置成功！新密码已复制到剪贴板。",
       "restart": "重启",
       "startOpenListCore": "启动",
       "stopOpenListCore": "停止",
@@ -296,7 +300,7 @@
       "config": {
         "openError": "打开设置文件失败",
         "openSuccess": "设置文件打开成功",
-        "subtitle": "访问应用程序配置文件"
+        "subtitle": "打开应用程序配置文件"
       },
       "ghProxy": {
         "api": {
@@ -311,6 +315,9 @@
       "hideDockIcon": {
         "description": "隐藏程序坞图标，仅在菜单栏托盘显示（仅限 macOS，需要重启应用生效）",
         "title": "隐藏程序坞图标（仅托盘）"
+      },
+      "language": {
+        "title": "语言"
       },
       "links": {
         "openInBrowser": {
