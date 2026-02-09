@@ -75,13 +75,13 @@ const isMacOs = computed(() => {
 })
 
 const openLink = async (url: string) => {
-  try {
-    if (appStore.settings.app.open_links_in_browser || isMacOs.value) {
+  if (appStore.settings.app.open_links_in_browser || isMacOs) {
+    try {
       await TauriAPI.files.urlInBrowser(url)
-      return
+    } catch (error) {
+      console.error('Failed to open link:', error)
     }
-  } catch (error) {
-    console.error('Failed to open link:', error)
+    return
   }
   createNewWindow(url, `webview-${Date.now()}`, 'External Link')
 }

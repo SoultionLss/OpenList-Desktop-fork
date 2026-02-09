@@ -200,12 +200,13 @@ const toggleFirewallRule = async () => {
 }
 
 const openLink = async (url: string) => {
-  try {
-    if (appStore.settings.app.open_links_in_browser || isMacOs) {
+  if (appStore.settings.app.open_links_in_browser || isMacOs) {
+    try {
       await TauriAPI.files.urlInBrowser(url)
+    } catch (error) {
+      console.error('Failed to open link:', error)
     }
-  } catch (error) {
-    console.error('Failed to open link:', error)
+    return
   }
   createNewWindow(url, `webview-${Date.now()}`, 'External Link')
 }
