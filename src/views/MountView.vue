@@ -661,7 +661,6 @@ const statusMap = computed(() => {
 const filteredConfigs: ComputedRef<RcloneFormConfig[]> = computed(() => {
   const filtered: RcloneFormConfig[] = []
   const fullRemoteConfigs = appStore.fullRcloneConfigs
-
   for (const config of fullRemoteConfigs) {
     if (!config) continue
 

@@ -49,36 +49,22 @@ export const useAppStore = defineStore('app', () => {
   const mountedConfigs = computed(() => mountInfos.value.filter(mount => mount.status === 'mounted'))
 
   const fullRcloneConfigs = computed<RcloneFormConfig[]>(() => {
-    const result: RcloneFormConfig[] = []
-    for (const [key, config] of Object.entries(remoteConfigs.value)) {
-      let newConfig
-      if (settings.value.rclone.mount_config[key]) {
-        newConfig = {
-          name: key,
-          type: 'webdav',
-          url: config.url,
-          vendor: config.vendor,
-          user: config.user,
-          pass: config.pass,
-          mountPoint: settings.value.rclone.mount_config[key].mountPoint || '',
-          volumeName: settings.value.rclone.mount_config[key].volumeName || '',
-          extraFlags: settings.value.rclone.mount_config[key].extraFlags || [],
-          autoMount: settings.value.rclone.mount_config[key].autoMount ?? false,
-        }
-      } else {
-        newConfig = {
-          ...defaultRcloneFormConfig,
-          name: key,
-          url: config.url,
-          vendor: config.vendor,
-          user: config.user,
-          pass: config.pass,
-        } as RcloneFormConfig
+    const mountConfig = settings.value.rclone.mount_config
+    return Object.entries(remoteConfigs.value).map(([key, config]) => {
+      const saved = mountConfig[key]
+      return {
+        name: key,
+        type: 'webdav',
+        url: config.url,
+        vendor: config.vendor,
+        user: config.user,
+        pass: config.pass,
+        mountPoint: saved?.mountPoint || '',
+        volumeName: saved?.volumeName || '',
+        extraFlags: saved?.extraFlags || [],
+        autoMount: saved?.autoMount ?? false,
       }
-      result.push(newConfig)
-      settings.value.rclone.mount_config[key] = newConfig
-    }
-    return result
+    })
   })
 
   const isCoreRunning = computed(() => openlistCoreStatus.value.running)
@@ -234,10 +220,6 @@ export const useAppStore = defineStore('app', () => {
       error.value = 'Failed to load remote configurations'
       console.error('Failed to load remote configs:', err)
     }
-  }
-
-  function getFullRcloneConfigs(name?: string): RcloneFormConfig[] {
-    return name ? fullRcloneConfigs.value.filter(c => c.name === name) : fullRcloneConfigs.value
   }
 
   async function mountRemote(name: string) {
@@ -539,7 +521,6 @@ export const useAppStore = defineStore('app', () => {
     defaultRcloneFormConfig,
     loadMountInfos,
     deleteRemoteConfig,
-    getFullRcloneConfigs,
     fullRcloneConfigs,
 
     settings,
