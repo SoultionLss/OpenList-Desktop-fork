@@ -391,9 +391,10 @@ const handleSave = async () => {
       await appStore.saveSettings()
     }
 
-    if (needsPasswordUpdate) {
-      const res = await appStore.setAdminPassword(appSettings.admin_password!)
+    if (needsPasswordUpdate && appSettings.admin_password) {
+      const res = await appStore.setAdminPassword(appSettings.admin_password)
       if (res) {
+        originalAdminPassword = appSettings.admin_password
         message.success(t('settings.service.admin.passwordUpdated'))
       } else {
         message.error(t('settings.service.admin.passwordUpdateFailed'))
