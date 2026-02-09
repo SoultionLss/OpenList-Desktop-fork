@@ -96,7 +96,10 @@ pub async fn check_firewall_rule(state: State<'_, AppState>) -> Result<bool, Str
         .port;
 
     if let Some(out) = rule_stdout()? {
-        Ok(out.contains(&port.to_string()))
+        let rule_exists = out.contains(&format!("LocalPort: {port}"))
+            && out.contains("Action: Allow")
+            && out.contains("Protocol: TCP");
+        Ok(rule_exists)
     } else {
         Ok(false)
     }
