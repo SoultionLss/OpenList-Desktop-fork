@@ -251,7 +251,7 @@ impl ProcessManager {
     ) -> bool {
         let actual_exe = proc.exe();
         if let Some(exe_path) = actual_exe {
-            if !exe_path.to_string_lossy().contains(expected_cmd) {
+            if exe_path.to_string_lossy() != expected_cmd {
                 return false;
             }
         } else {
