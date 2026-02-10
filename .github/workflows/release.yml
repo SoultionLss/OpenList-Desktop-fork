@@ -180,6 +180,8 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           # Enable signing and notarization for macOS
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        with:
+          args: --target ${{ matrix.target }}
       
       - name: Rename And upload Updater(MacOS)
         if: matrix.target == 'x86_64-apple-darwin' || matrix.target == 'aarch64-apple-darwin'

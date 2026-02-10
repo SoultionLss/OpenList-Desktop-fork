@@ -214,7 +214,6 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          TAURI_SKIP_SIDECAR_SIGNATURE_CHECK: "true"
         with:
           args: --target ${{ matrix.target }}
 
