@@ -55,7 +55,7 @@ jobs:
           echo "package.json version: $PKG_VERSION"
 
           # Get version from tauri.conf.json
-          TAURI_VERSION=$(jq -r .package.version src-tauri/tauri.conf.json)
+          TAURI_VERSION=$(jq -r .version src-tauri/tauri.conf.json)
           echo "tauri.conf.json version: $TAURI_VERSION"
 
           # Get version from Cargo.toml using grep/sed
@@ -81,6 +81,7 @@ jobs:
           echo "✅ Tag version matches all version files."
 
   build:
+    name: Build and Sign for All Platforms
     needs: [check_tag_version]
     strategy:
       fail-fast: false
@@ -209,6 +210,8 @@ jobs:
   
   release-for-linux-arm:
     name: Release Build for Linux ARM
+    needs: [check_tag_version]
+
     strategy:
       fail-fast: false
       matrix:
