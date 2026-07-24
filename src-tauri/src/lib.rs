@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use tauri::Manager;
+use url::{Host, Url};
 
 mod cmd;
 mod conf;
@@ -33,6 +34,7 @@ use tauri::Emitter;
 
 use crate::cmd::rclone_mount::{MountProcessInput, get_mount_process_id};
 use crate::conf::rclone::RcloneMountConfig;
+use crate::conf::rclone_config::RcloneConfigFile;
 
 #[tauri::command]
 async fn update_tray_menu(
@@ -91,6 +93,17 @@ fn setup_background_update_checker(app_handle: &tauri::AppHandle) {
     });
 }
 
+fn is_local_openlist_url(url: &str) -> bool {
+    Url::parse(url)
+        .map(|url| match url.host() {
+            Some(Host::Domain("localhost")) => true,
+            Some(Host::Ipv4(ip)) => ip.is_loopback(),
+            Some(Host::Ipv6(ip)) => ip.is_loopback(),
+            _ => false,
+        })
+        .unwrap_or(false)
+}
+
 async fn auto_start_openlist_core_on_login(app_handle: &tauri::AppHandle) -> Result<(), String> {
     let app_state = app_handle.state::<AppState>();
     let settings = app_state
@@ -139,13 +152,33 @@ async fn auto_mount_rclone_remotes_on_login(app_handle: &tauri::AppHandle) -> Re
         log::info!("No Rclone remotes configured for auto-mount on login");
         return Ok(());
     }
-    log::info!("Trying to auto-start OpenList Core before mounting remotes");
-    match start_openlist_core(app_state.clone()).await {
-        Ok(_) => {
-            log::info!("OpenList Core process started successfully before mounting remotes");
-        }
-        Err(e) => {
-            log::error!("Failed to start OpenList Core process before mounting remotes: {e}");
+    let has_local_remote = RcloneConfigFile::load_with_custom(app_state.clone())
+        .map(|config| {
+            remotes_to_mount.iter().any(|remote| {
+                config
+                    .remotes
+                    .get(&remote.name)
+                    .and_then(|remote| remote.options.get("url"))
+                    .is_some_and(|url| is_local_openlist_url(url))
+            })
+        })
+        .unwrap_or_else(|e| {
+            log::error!("Failed to load Rclone config before mounting remotes: {e}");
+            false
+        });
+    if !settings.openlist.auto_launch && has_local_remote {
+        log::info!("Trying to auto-start OpenList Core before mounting local remotes");
+        match start_openlist_core(app_state.clone()).await {
+            Ok(_) => {
+                log::info!(
+                    "OpenList Core process started successfully before mounting local remotes"
+                );
+            }
+            Err(e) => {
+                log::error!(
+                    "Failed to start OpenList Core process before mounting local remotes: {e}"
+                );
+            }
         }
     }
     for remote in remotes_to_mount {
@@ -348,4 +381,31 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_local_openlist_url;
+
+    #[test]
+    fn identifies_local_openlist_urls() {
+        for url in [
+            "http://localhost:5244/dav/1",
+            "https://127.0.0.1:5244/dav/1",
+            "http://[::1]:5244/dav/1",
+        ] {
+            assert!(is_local_openlist_url(url));
+        }
+    }
+
+    #[test]
+    fn rejects_remote_openlist_urls() {
+        for url in [
+            "https://openlist.example.com/dav/1",
+            "http://192.168.1.10:5244/dav/1",
+            "not a url",
+        ] {
+            assert!(!is_local_openlist_url(url));
+        }
+    }
 }
