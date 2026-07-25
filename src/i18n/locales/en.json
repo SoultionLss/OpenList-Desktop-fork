@@ -217,6 +217,7 @@
       "mountSettings": "Mount Settings",
       "name": "Name",
       "namePlaceholder": "e.g.mount1",
+      "networkMode": "Mount as Network Drive",
       "password": "Password",
       "passwordPlaceholder": "Password",
       "quickFlags": "Common Used Flags",
@@ -262,7 +263,8 @@
       "updatedSuccessfully": "Remote configuration \"{name}\" updated successfully"
     },
     "meta": {
-      "autoMount": "Auto Mount"
+      "autoMount": "Auto Mount",
+      "networkMode": "Network Drive"
     },
     "stats": {
       "mounted": "Mounted"

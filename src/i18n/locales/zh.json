@@ -217,6 +217,7 @@
       "mountSettings": "挂载设置",
       "name": "名称",
       "namePlaceholder": "例如：mount1",
+      "networkMode": "挂载为网络驱动器",
       "password": "密码",
       "passwordPlaceholder": "密码",
       "quickFlags": "常用标志",
@@ -262,7 +263,8 @@
       "updatedSuccessfully": "远程配置 {name} 更新成功"
     },
     "meta": {
-      "autoMount": "自动挂载"
+      "autoMount": "自动挂载",
+      "networkMode": "网络驱动器"
     },
     "stats": {
       "mounted": "已挂载"
