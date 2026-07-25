@@ -195,6 +195,19 @@ jobs:
           echo "ERROR: Certum authentication failed after 3 attempts"
           exit 1
 
+      - name: Configure Certum Certificate Thumbprint (Windows)
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          echo "=== CONFIGURING CERTUM CERTIFICATE THUMBPRINT ==="
+          CONFIG_PATH="src-tauri/tauri.windows.conf.json"
+          THUMBPRINT="${{ secrets.CERTUM_CERTIFICATE_SHA1 }}"
+          
+          # Update the certificateThumbprint field using jq
+          jq --arg thumbprint "$THUMBPRINT" '.bundle.windows.certificateThumbprint = $thumbprint' "$CONFIG_PATH" > tmp.$$ && mv tmp.$$ "$CONFIG_PATH"
+          
+          echo "Certificate thumbprint configured: $THUMBPRINT"
+
       - name: Build the app
         uses: tauri-apps/tauri-action@v0
         env:
