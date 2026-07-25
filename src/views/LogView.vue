@@ -426,8 +426,6 @@ const parseLogEntry = (logText: string) => {
   const originalText = logText.trim()
 
   let level = 'info'
-  let timestamp = ''
-  let source = 'openlist'
   let message = cleanText
 
   const levelMatch = cleanText.match(/^(WARN|ERROR|INFO|DEBUG|info|debug|warn|error)/i)
@@ -436,13 +434,10 @@ const parseLogEntry = (logText: string) => {
   }
 
   const timestampMatch = cleanText.match(/(\d{4}[-/]\d{2}[-/]\d{2}[T\s-]*\d{2}:\d{2}:\d{2})/)
-  if (timestampMatch) {
-    timestamp = timestampMatch[1]
-  } else {
-    timestamp = chrono.parseDate(cleanText)?.toISOString().replace('T', ' ').substring(0, 19) || ''
-  }
-
-  source = filterSource.value
+  const timestamp = timestampMatch
+    ? timestampMatch[1]
+    : chrono.parseDate(cleanText)?.toISOString().replace('T', ' ').substring(0, 19) || ''
+  const source = filterSource.value
 
   message = message
     .replace(/^(WARN|ERROR|INFO|DEBUG)\s*/i, '')
