@@ -179,7 +179,8 @@
         "Network": "Network",
         "Performance": "Performance",
         "Security": "Security",
-        "WebDAV Specific": "WebDAV Specific"
+        "WebDAV Specific": "WebDAV Specific",
+        "Windows Specific": "Windows Specific"
       },
       "flagDescriptions": {
         "allow-other": "Allow other users to access the mount",
@@ -208,6 +209,7 @@
         "vfs-cache-mode-minimal": "Cache only file metadata",
         "vfs-cache-mode-writes": "Cache local writes, upload file contents after writing completes",
         "vfs-read-chunk-size": "Read chunk size (default 128M)",
+        "volname": "Set Windows volume name after mount",
         "webdav-bearer-token": "Custom bearer token",
         "webdav-headers": "Set custom HTTP headers"
       },
