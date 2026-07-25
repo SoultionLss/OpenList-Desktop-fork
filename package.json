@@ -45,7 +45,6 @@
     "web:preview": "vite preview"
   },
   "resolutions": {
-    "glob": "^10.5.0",
     "js-yaml": "^4.3.0",
     "tmp": "^0.2.4",
     "rollup": "^4.59.0",
@@ -74,23 +73,24 @@
     "vue-router": "^5.0.2"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.1.18",
     "@tauri-apps/cli": "^2.10.0",
     "@types/node": "^24.3.0",
-    "@typescript-eslint/eslint-plugin": "^8.54.0",
-    "@typescript-eslint/parser": "^8.54.0",
+    "@typescript-eslint/eslint-plugin": "^8.65.0",
+    "@typescript-eslint/parser": "^8.65.0",
     "@vitejs/plugin-vue": "^6.0.4",
     "adm-zip": "^0.6.0",
     "cross-env": "^10.0.0",
     "czg": "^1.12.0",
-    "dpdm": "^3.14.0",
-    "eslint": "^9.39.2",
+    "dpdm": "^4.2.0",
+    "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsonc": "^2.21.0",
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-unicorn": "^62.0.0",
-    "eslint-plugin-vue": "^10.7.0",
+    "eslint-plugin-vue": "^10.10.0",
     "fs-extra": "^11.3.3",
     "https-proxy-agent": "^7.0.6",
     "husky": "^9.1.7",
@@ -100,9 +100,9 @@
     "tailwindcss": "^4.1.18",
     "tar": "^7.5.18",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.54.0",
+    "typescript-eslint": "^8.65.0",
     "vite": "^7.3.5",
-    "vue-eslint-parser": "^10.2.0",
+    "vue-eslint-parser": "^10.4.1",
     "vue-tsc": "^3.2.4"
   }
 }
