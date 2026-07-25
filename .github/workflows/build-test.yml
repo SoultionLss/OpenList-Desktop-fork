@@ -14,16 +14,17 @@ env:
   RUST_BACKTRACE: short
   TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
   TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
-  # macOS signing and notarization
+  # macOS signing and notarization (optional for testing)
   APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
   APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
   APPLE_ID: ${{ secrets.APPLE_ID }}
   APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
   APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
   APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-  # Windows self pfx
-  WINDOWS_PFX: ${{ secrets.WINDOWS_PFX }}
-  WINDOWS_PFX_PASSWORD: ${{ secrets.WINDOWS_PFX_PASSWORD }}
+  # Certum cloud code signing for Windows
+  CERTUM_OTP_URI: ${{ secrets.CERTUM_OTP_URI }}
+  CERTUM_USERNAME: ${{ secrets.CERTUM_USERNAME }}
+  CERTUM_CERTIFICATE_SHA1: ${{ secrets.CERTUM_CERTIFICATE_SHA1 }}
 
 concurrency:
   group: "${{ github.workflow }} - ${{ github.head_ref || github.ref }}"
@@ -177,17 +178,45 @@ jobs:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
 
-      - name: Decode and Setup PFX Certificate (Windows)
-        if: matrix.platform == 'windows'
-        shell: pwsh
+      - name: Setup Certum Code Signing (Windows)
+        shell: bash
         run: |
-           $certDir = "certificate"
-           New-Item -ItemType Directory -Force -Path $certDir | Out-Null
-           $pfxPath = Join-Path $certDir "certificate.pfx"
-           $certBytes = [Convert]::FromBase64String("${{ secrets.WINDOWS_PFX }}")
-           [IO.File]::WriteAllBytes($pfxPath, $certBytes)
-           $password = ConvertTo-SecureString "${{ secrets.WINDOWS_PFX_PASSWORD }}" -AsPlainText -Force
-           Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\CurrentUser\My -Password $password | Out-Null
+          echo "=== SETTING UP CERTUM CODE SIGNING FOR WINDOWS ==="
+          echo "Installing SimplySign Desktop and configuring for automatic authentication"
+
+          chmod +x ./.github/scripts/install-simplysign.sh
+          ./.github/scripts/install-simplysign.sh
+
+          echo "Configuring registry for automatic login dialog..."
+          powershell -ExecutionPolicy Bypass -File "./.github/scripts/configure-simplysign-registry.ps1"
+
+          echo "Certum signing environment ready"
+
+      - name: Authenticate Certum (Windows)
+        shell: bash
+        env:
+          CERTUM_OTP_URI: ${{ secrets.CERTUM_OTP_URI }}
+          CERTUM_USERNAME: ${{ secrets.CERTUM_USERNAME }}
+          CERTUM_CERTIFICATE_SHA1: ${{ secrets.CERTUM_CERTIFICATE_SHA1 }}
+        run: |
+          echo "=== CERTUM AUTHENTICATION ==="
+          echo "Authenticating with Certum cloud certificate using TOTP"
+
+          for attempt in 1 2 3; do
+            echo "Authentication attempt ${attempt}/3"
+            if powershell -ExecutionPolicy Bypass -File "./.github/scripts/connect-simplySign-enhanced.ps1"; then
+              echo "Authentication completed"
+              exit 0
+            fi
+
+            if [ "$attempt" -lt 3 ]; then
+              echo "Authentication attempt failed, retrying in 10 seconds..."
+              sleep 10
+            fi
+          done
+
+          echo "ERROR: Certum authentication failed after 3 attempts"
+          exit 1
 
       - name: Build the app
         if: matrix.platform == 'windows' || matrix.platform == 'linux'

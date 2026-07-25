@@ -4,9 +4,9 @@
   "bundle": {
     "targets": ["nsis"],
     "windows": {
-      "certificateThumbprint": "e488bef576a1a53f9a1a344d2e8b2625a192dcb5",
+      "certificateThumbprint": "",
       "digestAlgorithm": "sha256",
-      "timestampUrl": "http://timestamp.digicert.com",
+      "timestampUrl": "http://time.certum.pl",
       "webviewInstallMode": {
         "type": "embedBootstrapper",
         "silent": true
