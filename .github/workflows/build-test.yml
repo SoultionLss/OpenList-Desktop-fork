@@ -179,6 +179,7 @@ jobs:
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
 
       - name: Setup Certum Code Signing (Windows)
+        if: matrix.platform == 'windows'
         shell: bash
         run: |
           echo "=== SETTING UP CERTUM CODE SIGNING FOR WINDOWS ==="
@@ -193,6 +194,7 @@ jobs:
           echo "Certum signing environment ready"
 
       - name: Authenticate Certum (Windows)
+        if: matrix.platform == 'windows'
         shell: bash
         env:
           CERTUM_OTP_URI: ${{ secrets.CERTUM_OTP_URI }}
